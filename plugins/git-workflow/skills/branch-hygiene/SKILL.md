@@ -168,16 +168,21 @@ helping.
    ```
 
 5. **Close the issues the merge did not** — this one is about the PR that just
-   merged, not the rebased ones. GitHub honours `Closes #N` only when
-   the PR's base is the repo's **default** branch, so in a gitflow repo every
-   closing keyword on a `develop`-based PR does nothing:
+   merged, not the rebased ones. GitHub honours `Closes #N` only when the PR's
+   base is the repo's **default** branch, and it reads the *commit* message as
+   well as the body. In a gitflow repo that splits the two cases: a keyword in
+   the body of a `develop`-based PR does nothing and never will, because the
+   release pull request does not inherit its constituents' bodies; a keyword in
+   the *commit* message fires later, when the promotion pushes that commit to
+   the default branch. So write the keyword into the commit message, and check
+   what actually closed before closing anything by hand:
 
    ```bash
    gh pr view <n> --json closingIssuesReferences -q '.closingIssuesReferences[].number'
    ```
 
-   Empty output means nothing was closed. Read the intent off the body instead —
-   that is where the keywords were written:
+   Empty output means nothing has closed *yet*. Read the intent off the body,
+   which is where the keywords were written:
 
    ```bash
    gh pr view <n> --json body -q .body |
@@ -193,8 +198,11 @@ helping.
    gh issue close <n> --comment "Fixed in #<pr>, merged to <branch> as <sha>."
    ```
 
-   Skip this where the PR's base *is* the default branch — there the keywords
-   fired and a manual close would be noise.
+   Skip this where the PR's base *is* the default branch: there the keywords
+   fired already. Skip it too where the keyword went into the commit message and
+   a promotion is due, because that one will close itself. One issue closed a
+   second after its release merged, from the squash message of the pull request
+   that fixed it.
 
 6. **Re-snapshot PR statuses** — re-run step 2's `gh pr list`. GitHub computes
    `mergeable` asynchronously, so a query fired straight after the push answers
