@@ -19,8 +19,9 @@ Reach for it when a document promises behaviour:
 - before merging a change to a runbook whose steps someone will follow
 
 It does not fire for prose that ships no commands, for a check or a test, which
-is a different discipline, or where CI already runs the procedure on every push,
-which is a stronger proof than any fixture.
+is a different discipline, or where CI already runs the procedure against the
+same awkward cases on every push. A CI job over an ordinary checkout is not
+that: it proves the happy path and leaves the awkward shapes unproven.
 
 ## Why the old rule gets run too
 
