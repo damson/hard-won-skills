@@ -11,7 +11,7 @@ you don't have to win them the hard way too.*
 [![Coverage](https://codecov.io/gh/damson/hard-won-skills/branch/develop/graph/badge.svg)](https://codecov.io/gh/damson/hard-won-skills/branch/develop)
 [![Made for Claude Code](https://img.shields.io/badge/made%20for-Claude%20Code-d97757.svg)](https://claude.com/claude-code)
 
-👋 **Welcome!** This is a marketplace of **39 skills in 5 themed plugins**:
+👋 **Welcome!** This is a marketplace of **40 skills in 5 themed plugins**:
 small, careful procedures your agent picks up automatically when a task calls
 for them: rebasing a stack of PRs without losing one, proving a screenshot test
 actually compared pixels, probing a migration without leaving a trace.
@@ -60,11 +60,11 @@ example; start with any link below.
 |---|---|---|
 | **[git-workflow](plugins/git-workflow/README.md)** | 16 | Branch, worktree and pull-request hygiene |
 | **[agent-config](plugins/agent-config/README.md)** | 9 | Writing and auditing agent instruction files |
-| **[verification](plugins/verification/README.md)** | 5 | Proving a check can fail before trusting it |
+| **[verification](plugins/verification/README.md)** | 6 | Proving a check can fail before trusting it |
 | **[data-safety](plugins/data-safety/README.md)** | 5 | Writes that are hard to undo |
 | **[mobile-ui](plugins/mobile-ui/README.md)** | 4 | Android / Compose screenshots, Figma components, on-device checks |
 
-Not sure where to begin? **[verification](#verification)** is five skills,
+Not sure where to begin? **[verification](#verification)** is six skills,
 takes a minute to read, and changes how you look at every green checkmark
 you'll ever see again. (And if you only ever install one plugin, that's the
 one we'd hand you.)
@@ -130,20 +130,24 @@ about one page into a checked answer about every page like it.
 
 ### verification
 
-Five skills for one failure: trusting something nobody has checked. One makes
+Six skills for one failure: trusting a signal nobody has checked. One makes
 you break the thing on purpose and watch the check go red; one runs that loop
 over a batch of guards, where a filter selecting nothing and a mutation changing
 nothing both read as a pass; one makes you run a dependency and observe its
-behaviour instead of asserting what its naming implies; one is for the moment a
-signal and reality disagree, and sends you to the authoritative record before
-you debug work that was never broken; and the last points the same discipline at
-a sentence, when a layout requirement has round-tripped twice and another
+behaviour instead of asserting what its naming implies; one turns a documented
+procedure loose on a fixture holding every case it claims to handle, and makes
+you run the rule it replaced beside it, because a fix that passes on the first
+attempt has usually failed to contain the case; one is for the moment a signal
+and reality disagree, and sends you to the authoritative record before you debug
+work that was never broken; and the last points the same discipline at a
+sentence, when a layout requirement has round-tripped twice and another
 paragraph will only be misread the same way.
 
 [`prove-the-check-can-fail`](plugins/verification/skills/prove-the-check-can-fail/README.md) ·
 [`verify-dependency-behaviour`](plugins/verification/skills/verify-dependency-behaviour/README.md) ·
 [`diagnose-a-lying-signal`](plugins/verification/skills/diagnose-a-lying-signal/README.md) ·
 [`mutation-proof-harness`](plugins/verification/skills/mutation-proof-harness/README.md) ·
+[`prove-a-procedure-on-a-fixture`](plugins/verification/skills/prove-a-procedure-on-a-fixture/README.md) ·
 [`render-the-candidates`](plugins/verification/skills/render-the-candidates/README.md)
 
 ### data-safety
