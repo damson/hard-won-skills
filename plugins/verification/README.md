@@ -1,6 +1,6 @@
 # verification
 
-Four skills for the same failure: believing something that has never been
+Five skills for the same failure: believing something that has never been
 observed doing what it claims, or a summary of it that nobody checked.
 
 ```bash
@@ -26,6 +26,7 @@ changes how you read every green checkmark that follows.
 | [`verify-dependency-behaviour`](skills/verify-dependency-behaviour/README.md) | When docs are absent and naming is suggestive: read the artifact that actually runs, and quote the constant, not the conclusion |
 | [`diagnose-a-lying-signal`](skills/diagnose-a-lying-signal/README.md) | When a check, badge or exit code disagrees with reality: read the authoritative record before debugging work that was never broken |
 | [`mutation-proof-harness`](skills/mutation-proof-harness/README.md) | Run the break-it-and-watch-it-go-red loop over several guards at once, refusing to count a filter that selected nothing or a mutation that changed nothing |
+| [`prove-a-procedure-on-a-fixture`](skills/prove-a-procedure-on-a-fixture/README.md) | Build a throwaway fixture holding every case a documented procedure claims to handle, run its published commands verbatim, and record what the rule it replaced answered |
 
 Each skill's README carries its triggers and a worked example; the `SKILL.md`
 beside it is the procedure the agent follows.
