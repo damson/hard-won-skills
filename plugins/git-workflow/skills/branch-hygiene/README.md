@@ -3,9 +3,10 @@
 Cleans up after a merge to `develop` or `main`: retargets any stacked PRs
 *before* the parent merges, rebases the open PRs the merge left `CONFLICTING`,
 prunes the worktrees and branches the merge orphaned, and closes the issues
-whose `Closes #N` keywords silently did nothing because the PR's base was not
-the default branch. The failure it prevents is quiet accumulation: stale
-branches, stranded children, issues that stay open forever.
+whose `Closes #N` keywords silently did nothing because they were written in a
+pull request body rather than a commit message. The failure it prevents is quiet
+accumulation: stale branches, stranded children, issues that stay open
+forever.
 
 Read [SKILL.md](SKILL.md) for the procedure. This file is what it does and how
 to reach it.
@@ -49,8 +50,9 @@ work and now show `CONFLICTING`. The skill:
    squash-merge at all. Measured 2026-09-02 on one repo: 47 stale branches,
    every one with a MERGED PR, and `--merged` listed almost none of them.
 5. Reads the merged PR's body for closing keywords, confirms GitHub fired none
-   (`closingIssuesReferences` comes back empty on a develop-based PR), and
-   closes each issue by hand citing the merge commit.
+   (`closingIssuesReferences` comes back empty on a develop-based PR), and closes
+   by hand only the ones no promotion will close: a keyword in the *commit*
+   message fires on its own when the promotion reaches the default branch.
 
 The report is one line per PR:
 

@@ -55,7 +55,16 @@ you cannot release nothing.
 Marketplace tags are CalVer and plugin versions are semver on purpose. The tag
 answers *when*; a plugin's version answers *what changed in it*.
 
-## Four couplings that will not announce themselves
+## Five couplings that will not announce themselves
+
+**One dispatch promotes; tagging needs a second.** The release pull request
+auto-merges under `GITHUB_TOKEN`, and a push made with that token does not
+trigger workflows, so the `push: main` run that would tag never starts. The
+first dispatch leaves `main` promoted and the versions bumped with no tag; a
+second runs the tag job against it. The tell is `gh run list --workflow=Release`
+showing no `push` event for the merge, only the dispatch you asked for. Cost two
+dispatches on 2026-09-05, for `v2026.09.05.1`.
+
 
 **The propose job needs a repository setting that is off by default.** It opens
 the release PR with `GITHUB_TOKEN`, which requires *Settings → Actions →
