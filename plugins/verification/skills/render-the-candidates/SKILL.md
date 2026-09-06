@@ -36,6 +36,12 @@ a sentence too, so it repeats the round with better vocabulary.
    anyone has seen it, which is the failure this skill exists to prevent. Name
    each in the user's own words, not yours.
 
+   The cap is a budget, never a licence to drop the fourth quietly. If more than
+   three survive the merge, list every one of them in a single line each with
+   its numbers from step 1, and ask which three to render. The reading you would
+   have discarded is the one they have been trying to describe often enough that
+   this is worth a turn.
+
 3. **Build each one as a picture.** Not a description of a picture.
    - Prefer a render **through the real code path** — call the actual mapping,
      the actual layout, the actual component. A hand-placed mock-up can show a

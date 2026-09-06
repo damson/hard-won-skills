@@ -46,7 +46,10 @@ Three things, in order of how often they end the argument on their own:
   candidates are distinct if they differ in anything under dispute: a number, or
   where a named element sits, including its order and its alignment. Only when
   every disputed quantity and placement agrees are they one reading described
-  twice, and offering both then makes the choice look harder than it is.
+  twice, and offering both then makes the choice look harder than it is. When
+  more than three survive that test, the cap does not license dropping the
+  fourth: the readings are listed with their numbers and the user picks which
+  three get rendered.
 - **Each option carries its price.** What stops working, what code goes dead,
   what the user gives up. A choice presented without its cost gets answered
   again a week later.
@@ -82,8 +85,12 @@ different edge, so they do not merge.
 Step 3 builds both through the real layout code rather than sketching them,
 which is where the second reading turns out to reflow the content area at the
 rotation boundary. A hand-placed mock-up would have shown neither the reflow nor
-its cost. Both renders are drawn at one scale, aligned on a common edge, with
-891dp and 411dp marked on the images themselves.
+its cost.
+
+Step 4 puts the two renders at one scale, aligned on a common edge, with 891dp
+and 411dp drawn onto the images rather than written underneath them. Neither is
+cropped along the axis in dispute, which would have made the comparison a
+framing choice.
 
 Step 5 asks once, with the price attached: the first reading keeps one layout
 and a control position that never moves, but wastes the short edge in landscape;
