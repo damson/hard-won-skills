@@ -28,10 +28,13 @@ a sentence too, so it repeats the round with better vocabulary.
    plausible the moment its number is written down.
 
 2. **Enumerate the readings, and cap them at three.** Two readings are distinct
-   only if step 1 gives them **different numbers**, or if they put a named
-   element on a different edge. Same numbers and same placement means one
-   reading described twice — merge it. Name each in the user's own words, not
-   yours.
+   if they differ in **anything under dispute**: a number from step 1, or where
+   a named element sits — which edge, which order, which alignment. Merge only
+   when every disputed quantity and every placement is identical. Two screens
+   can agree on an edge and a dimension and still order or align their contents
+   differently, and merging on the coarser test discards a candidate before
+   anyone has seen it, which is the failure this skill exists to prevent. Name
+   each in the user's own words, not yours.
 
 3. **Build each one as a picture.** Not a description of a picture.
    - Prefer a render **through the real code path** — call the actual mapping,
@@ -53,7 +56,9 @@ a sentence too, so it repeats the round with better vocabulary.
 5. **Ask, with the consequence attached.** One `AskUserQuestion`, one option per
    candidate, and each option says what it costs — what stops working, what code
    becomes dead, what the user gives up. A choice presented without its price is
-   answered again later.
+   answered again later. Where the host offers no such tool, a numbered list in
+   a single message does the same work, provided the answer is written back into
+   the record rather than left in the scrollback.
 
 6. **Only then implement.** And keep the renders: they are the before/after for
    the pull request body, and they date-stamp what was agreed.
@@ -69,6 +74,11 @@ a sentence too, so it repeats the round with better vocabulary.
   cheap to build and cheap to change, build it and show the result. The trigger
   for this skill is a requirement that has *already* round-tripped, which is what
   makes the render cheaper than the next guess.
+- **Nothing here can produce a picture** — no harness, no headless renderer, no
+  way to screenshot the real path. Say so, then run steps 1 and 2 anyway and ask
+  on the numbers: a labelled comparison of measurements is weaker than a render
+  and far stronger than a third paragraph. What you must not do is quietly
+  promote a sketch into the evidence slot the render was going to fill.
 - **The user has already answered the geometric question.** Re-asking a settled
   one reads as not having listened. Check the transcript for a rule they stated
   — "left and right are always from the portrait perspective" — before drafting

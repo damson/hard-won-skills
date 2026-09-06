@@ -42,10 +42,11 @@ Three things, in order of how often they end the argument on their own:
 - **The numbers come first.** A side edge is 891dp upright and 411dp turned.
   Written down, one reading usually stops being plausible before anything is
   rendered.
-- **The readings are capped at three, and merged when they agree.** Two
-  candidates are distinct only if they produce different numbers or put a named
-  element on a different edge. Otherwise they are one reading described twice,
-  and offering both makes the choice look harder than it is.
+- **The readings are capped at three, and merged only on a full match.** Two
+  candidates are distinct if they differ in anything under dispute: a number, or
+  where a named element sits, including its order and its alignment. Only when
+  every disputed quantity and placement agrees are they one reading described
+  twice, and offering both then makes the choice look harder than it is.
 - **Each option carries its price.** What stops working, what code goes dead,
   what the user gives up. A choice presented without its cost gets answered
   again a week later.
@@ -61,6 +62,36 @@ Three things, in order of how often they end the argument on their own:
 - **The user may already have answered.** A rule stated earlier, such as "left
   and right are always from the portrait perspective", outranks a fresh set of
   options that ignores it, and re-asking reads as not having listened.
+
+## Example
+
+A tablet layout is asked for twice. "Put the controls along the longest edge",
+then, after the first build, "no, the longest edge". The second sentence is the
+first sentence, and that repetition is the trigger.
+
+Step 1 writes the numbers instead of the words. The device is 891dp on one side
+and 411dp on the other. Upright, the longest edge is the vertical one; turned,
+it is the horizontal one. The same four words name a different edge in each
+case, which is why two more paragraphs would not have helped.
+
+Step 2 yields two readings, not three: controls pinned to the physical long side
+of the device whatever the orientation, or controls pinned to whichever side is
+longest right now, moving when the device turns. They put a named element on a
+different edge, so they do not merge.
+
+Step 3 builds both through the real layout code rather than sketching them,
+which is where the second reading turns out to reflow the content area at the
+rotation boundary. A hand-placed mock-up would have shown neither the reflow nor
+its cost. Both renders are drawn at one scale, aligned on a common edge, with
+891dp and 411dp marked on the images themselves.
+
+Step 5 asks once, with the price attached: the first reading keeps one layout
+and a control position that never moves, but wastes the short edge in landscape;
+the second uses the space and buys an orientation-change path that the reflow
+makes expensive.
+
+The answer arrives in one turn, and the two renders go into the pull request
+body as the record of what was agreed.
 
 ## Related
 
