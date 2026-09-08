@@ -103,8 +103,8 @@ percentage.
 Step 2 does not recompute the base. Main's own push run has already uploaded its
 normalised totals as a fixed-name artifact, and the pull request job downloads the
 newest one, which is what keeps the delta from doubling every run's CI time. Line
-coverage comes back 41.2% on main against 47.3% here, and branch coverage 26.0%
-against 25.3%.
+coverage comes back 41.2% on main against 47.3% here, and branch coverage 25.1%
+against 24.4%.
 
 The comment is written once and thereafter edited. The body opens with an HTML
 comment marker, invisible when rendered and findable in the raw body, and the job
