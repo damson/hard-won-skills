@@ -25,7 +25,10 @@ refuses to call it done on a signal that has not been checked.
    and whether the release is tagged by hand or by a workflow.
 
    ```bash
-   ls docs/releas* RELEASING* CONTRIBUTING* 2>/dev/null
+   # a glob list would be wrong here: in zsh an unmatched pattern aborts the
+   # whole command, so one missing file hides every policy file that is present
+   find . -maxdepth 2 \( -iname "RELEASING*" -o -iname "CONTRIBUTING*" \
+     -o -path "./docs/releas*" \) -print 2>/dev/null
    grep -rln "release" .github/workflows/
    ```
 
