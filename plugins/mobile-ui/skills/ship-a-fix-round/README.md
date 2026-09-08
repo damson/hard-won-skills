@@ -71,6 +71,10 @@ Step 4 finds the gate in the repo's own README and captures it with `pipefail`
 set. The gate ends in a `tee`, so without that line it would have reported the
 status of `tee` and called a red build green.
 
+Step 5 lands the work as four commits rather than one, so the inset fix and the
+measurement fix stay separable if either has to be reverted, and appends a round
+note to the pull request body saying what this round answered and what it did not.
+
 Step 6 is where the round would otherwise have shipped a lie. The assemble task
 is taken from the README, and the artifact that comes out is checked against the
 timestamp of the last commit:
@@ -85,6 +89,11 @@ apk=$(find . -name '*.apk' -newer "$ref" | head -1); rm -f "$ref"
 The first run finds nothing, because the build had been skipped by a cache. The
 file that would have been handed over was the previous round's, with the right
 name and the right short SHA and none of the four fixes in it.
+
+Step 7 watches CI against the pushed commit's full SHA rather than the branch,
+because the branch-level answer was still describing the previous head for the
+first half-minute and would have reported green for a commit that no longer
+existed.
 
 The user gets one APK, and a report naming three findings fixed, one deferred
 with its reason, and the "feels slow" claim as unsettled: nothing on an emulator
