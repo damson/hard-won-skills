@@ -70,7 +70,12 @@ works from one that reads as though it does.
      }
      inb && /^[ \t]*(```|~~~)[ \t]*$/ { match($0, /[`~]/)
                                        if (substr($0, RSTART, 1) == fence) exit }
-     inb { print substr($0, pad + 1) }
+     inb { line = $0
+           # strip the fence indent, but only where it IS indent: a body line
+           # less indented than its fence would otherwise lose real characters
+           if (substr(line, 1, pad) ~ /^[ \t]*$/) line = substr(line, pad + 1)
+           else sub(/^[ \t]*/, "", line)
+           print line }
    ' "$DOC" > raw.sh
    [ -s raw.sh ] || { echo "no bash block $BLOCK in $DOC"; exit 1; }
    sed "s|<owner>/<repo>|$REPO|g" raw.sh > block.sh
@@ -95,7 +100,10 @@ works from one that reads as though it does.
    character it opened with, so a block quoting the other one stays intact. It
    also tolerates indentation and strips it, because a block inside a numbered
    step is indented and a pattern anchored at column one silently extracts
-   nothing from it. Stripping matters as much as matching: a heredoc
+   nothing from it. It strips only what is actually indent: a body line less
+   indented than its fence keeps its first characters, which a blind `substr`
+   eats. That failure is the nastiest kind, because the shortened line often
+   still parses. Stripping matters as much as matching: a heredoc
    whose terminator arrives with three spaces in front of it does not terminate,
    so an extraction that keeps the indent hangs on text that runs correctly when
    pasted.
