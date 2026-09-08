@@ -62,9 +62,15 @@ works from one that reads as though it does.
    FIXTURE=/tmp/fixture-1     # the throwaway tree from step 3
 
    awk -v want="$BLOCK" '
-     /^[ \t]*```bash$/ { n++; if (n == want) { pad = index($0, "`") - 1; inb = 1 }; next }
-     /^[ \t]*```$/     { if (inb) exit; next }
-     inb               { print substr($0, pad + 1) }
+     /^[ \t]*(```|~~~)(bash|sh|shell)$/ {
+       n++
+       if (n == want) { match($0, /[`~]/); pad = RSTART - 1
+                        fence = substr($0, RSTART, 1); inb = 1 }
+       next
+     }
+     inb && /^[ \t]*(```|~~~)[ \t]*$/ { match($0, /[`~]/)
+                                       if (substr($0, RSTART, 1) == fence) exit }
+     inb { print substr($0, pad + 1) }
    ' "$DOC" > raw.sh
    [ -s raw.sh ] || { echo "no bash block $BLOCK in $DOC"; exit 1; }
    sed "s|<owner>/<repo>|$REPO|g" raw.sh > block.sh
@@ -82,9 +88,14 @@ works from one that reads as though it does.
    directory it inherits, and inheriting your checkout is how a documentation
    check deletes real work.
 
-   The fence match tolerates indentation and strips it, because a block inside a
-   numbered step is indented and a pattern anchored at column one silently
-   extracts nothing from it. Stripping matters as much as matching: a heredoc
+   The fence match accepts every spelling a shell block is written in — `bash`,
+   `sh` and `shell`, behind backticks or tildes — because a matcher narrower than
+   the documents it is pointed at reports "no block here" for a document full of
+   them, and that reads as nothing to verify. It closes only on the fence
+   character it opened with, so a block quoting the other one stays intact. It
+   also tolerates indentation and strips it, because a block inside a numbered
+   step is indented and a pattern anchored at column one silently extracts
+   nothing from it. Stripping matters as much as matching: a heredoc
    whose terminator arrives with three spaces in front of it does not terminate,
    so an extraction that keeps the indent hangs on text that runs correctly when
    pasted.
