@@ -1,6 +1,6 @@
 # mobile-ui
 
-Android / Compose screenshots, Figma components and on-device checks: four
+Android / Compose screenshots, Figma components and on-device checks: five
 skills against the UI test that reports success while testing nothing.
 
 ```bash
@@ -27,6 +27,7 @@ its own build wiring wins.
 | [`android-screenshot-baseline-verify`](skills/android-screenshot-baseline-verify/README.md) | Run the *verify* task, then confirm comparisons actually happened before reporting a pass |
 | [`figma-to-compose-component`](skills/figma-to-compose-component/README.md) | Build a Compose component from a Figma node (after checking the design system doesn't already have it), bound to theme tokens, covered by a screenshot test |
 | [`android-verify-on-device`](skills/android-verify-on-device/README.md) | When no test can hold the claim: drive a real device without trusting a stale frame, a missed tap, or a capture of the wrong screen |
+| [`ship-a-fix-round`](skills/ship-a-fix-round/README.md) | When a device-testing report comes back as a list: root-cause every finding, defeat each new test before trusting it, run the repo's own gate, and hand over a build that answers all of them |
 
 Each skill's README carries its triggers and a worked example; the `SKILL.md`
 beside it is the procedure the agent follows.
