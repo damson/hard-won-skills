@@ -50,7 +50,9 @@ class of problem is spent fixing something that was never broken.
      --jq '.jobs[].steps[] | select(.conclusion != "success") | {name, conclusion}'
 
    # An image is not data: parse the text node, never grep the markup
-   curl -s "<badge-url>" | tr '>' '\n' | grep -E '^(unknown|[0-9]+%)'
+   # -x, not ^: unanchored at the end this returns "100%</text", and twice over,
+   # because a badge draws its text once as a shadow and once as the fill
+   curl -s "<badge-url>" | tr '<>' '\n\n' | grep -xE 'unknown|[0-9]+%' | head -1
    ```
 
    The commands are one host's; the move is not. Anywhere else, find the endpoint
