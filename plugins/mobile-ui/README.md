@@ -31,3 +31,15 @@ its own build wiring wins.
 
 Each skill's README carries its triggers and a worked example; the `SKILL.md`
 beside it is the procedure the agent follows.
+
+## If one of these misfires
+
+Every skill here was extracted from a real session, which means it is proven
+where it was written and nowhere else. Yours is a different project, so the first
+report of a command that errors, a flag that has vanished or an assumption that
+no longer holds will probably be yours.
+
+- [Report a stale skill](https://github.com/damson/hard-won-skills/issues/new?template=stale-skill.yml)
+- [Propose a new one](https://github.com/damson/hard-won-skills/issues/new?template=skill-proposal.yml), for
+  something that went wrong and would go wrong again
+- [CONTRIBUTING](https://github.com/damson/hard-won-skills/blob/main/CONTRIBUTING.md) has the bar for both
