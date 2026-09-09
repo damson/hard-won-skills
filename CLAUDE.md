@@ -31,8 +31,10 @@ directives below are agent-only.
   independent of whoever wrote the diff.
 - After a fix push, CodeRabbit often posts no new review object; its **check
   flipping to SUCCESS on the new head** is the signal that the push was
-  reviewed. Read the check, not the reviews list, before retriggering, which
-  spends quota to be told the commit was already reviewed.
+  reviewed, so read the check rather than the reviews list before retriggering
+  and spending quota. The exception is the dangerous one: a spent free-OSS
+  quota posts "Review limit reached" and the check goes SUCCESS having read
+  nothing. Read the newest comment body before merging (#89, #90).
 - The release PR (`develop → main`) merges with a **merge commit, never a
   squash** — why, and what a squash costs: `docs/releases.md`.
 

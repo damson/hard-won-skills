@@ -31,7 +31,9 @@ must say yes, or it logs why it is holding and exits:
    three days. It is enforced in the job rather than in the cron expression
    because GitHub's schedule has no clean three-day form: `*/3` on day-of-month
    restarts every month, leaving a one-day gap after the 31st and a four-day one
-   in February.
+   in February. The age is measured from the **committer date of the commit the
+   tag points at**, not from when the tag was created, so a tag applied later to
+   an older commit opens the gate sooner than its own age suggests.
 3. **Is there no release PR already open?** If there is, it refreshes that one.
 
 `workflow_dispatch` bypasses the three-day gate. It never bypasses the other two:
