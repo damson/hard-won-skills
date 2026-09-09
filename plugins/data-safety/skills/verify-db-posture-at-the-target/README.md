@@ -51,22 +51,28 @@ The catalog, on the objects the change names rather than the migration that was
 written:
 
 ```sql
-select c.relname, c.relrowsecurity, count(p.polname) as policies
+select n.nspname, c.relname, c.relrowsecurity, count(p.polname) as policies
 from pg_class c
+join pg_namespace n on n.oid = c.relnamespace
 left join pg_policy p on p.polrelid = c.oid
-where c.relname = 'entries'
-group by 1, 2;
+where c.relkind = 'r' and n.nspname = 'public' and c.relname = 'entries'
+group by 1, 2, 3;
 ```
 
 `relrowsecurity = t` with `policies = 0` is the deny-all state above. That one
-row is the whole finding, and no migration file states it.
+row is the whole finding, and no migration file states it. Qualify the schema
+and the relation kind: `entries` unqualified matches a same-named table in any
+schema on the search path, and the row you read may not be the one the endpoint
+serves.
 
 The role, including the service account that does the work, not only `anon` and
 `authenticated`:
 
 ```sql
-select has_table_privilege('anon', 'entries', 'select')      as anon_select,
-       has_function_privilege('anon', 'admin_reset()', 'execute') as anon_exec;
+select r                                                         as role,
+       has_table_privilege(r, 'public.entries', 'select')         as tbl_select,
+       has_function_privilege(r, 'public.admin_reset()', 'execute') as fn_exec
+from unnest(array['anon', 'authenticated', 'service_worker']) as r;
 ```
 
 A privilege reaching a role through `PUBLIC` does not appear when `proacl` is
@@ -77,22 +83,40 @@ filter does not.
 The API, as the caller rather than about the caller:
 
 ```bash
-curl -s -o /dev/null -w '%{http_code}\n' \
+: "${PUBLISHABLE_KEY:?set it}" "${PROJECT_URL:?set it}"
+curl -sS -w '\nHTTP %{http_code}\n' \
   -H "apikey: $PUBLISHABLE_KEY" \
-  "$PROJECT_URL/rest/v1/entries?select=id&limit=1"
+  "$PROJECT_URL/rest/v1/entries?select=id&limit=1" || echo "curl failed: $?"
 ```
 
-Both directions are the check: what should be readable returns rows, and what
-should be closed returns a refusal rather than an empty list. Fetching this
-through an MCP browser tool proves nothing, because it can carry deployment
-protection the anonymous caller does not have.
+**Keep the body.** Discarding it with `-o /dev/null` and reading only the status
+code destroys the distinction this whole skill exists to make: `200` with rows
+and `200` with `[]` are the same status code, and the second is the deny-all
+bug. Print both.
+
+Both directions are the check. What should be readable returns rows, so read
+them. What should be closed has two legitimately different answers, and they
+mean different things: a role with no table grant is refused outright with `401`
+or `403`, while a role that holds the grant but meets a policy admitting nobody
+gets `200` and `[]`. Only the first is legible on its own. An empty `200` is the
+ambiguous one, so before believing it, confirm with a trusted role that the
+table has rows to withhold; otherwise you cannot tell a closed door from an
+empty room.
+
+Fetching any of this through an MCP browser tool proves nothing, because it can
+carry deployment protection the anonymous caller does not have.
 
 Where the database has no HTTP layer, connect as the untrusted role and run the
 statement:
 
 ```bash
-psql "$URL" -c "set role anon; select id from entries limit 1;"
+psql "$ANON_URL" -c "select current_user; select id from public.entries limit 1;"
 ```
+
+Connect as the role, rather than assuming it. `set role anon` from a superuser
+session needs membership and keeps `BYPASSRLS` where the login role carries it,
+so it can read rows the real caller never would. Selecting `current_user` first
+is the cheap proof that the connection is who you think.
 
 ## Related
 

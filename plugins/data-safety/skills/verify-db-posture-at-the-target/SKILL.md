@@ -37,12 +37,16 @@ live in.
    obvious revoke can measure as a no-op while reading as correct.
 
 3. **API.** GET the REST surface with the publishable key, the one that ships in
-   the browser bundle. This is the layer the catalog cannot answer. Confirm both
-   directions: what should be readable returns rows, and what should be closed
-   returns a refusal rather than an empty list. An MCP fetch proves nothing
-   here, because it bypasses deployment protection; use `curl`. Where the
-   database has no HTTP layer, connect as the untrusted role itself and run the
-   statement: the point is to be the caller, not to describe them.
+   the browser bundle. This is the layer the catalog cannot answer. Keep the
+   response body: a status code alone cannot tell rows from an empty list, and
+   that is the distinction. What should be readable returns rows. What should be
+   closed refuses outright when the role holds no grant, but answers `200` with
+   an empty list when it holds the grant and no policy admits it, so read an
+   empty result against a trusted-role baseline confirming the table has rows to
+   withhold. An MCP fetch proves nothing here, because it bypasses deployment
+   protection; use `curl`. Where the database has no HTTP layer, connect as the
+   untrusted role itself and run the statement: the point is to be the caller,
+   not to describe them.
 
 4. **Advisor, where the platform has one.** Re-run it and diff against the list
    from before the change. Classify every survivor out loud as deliberate,
