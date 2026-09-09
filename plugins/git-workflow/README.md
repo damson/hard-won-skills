@@ -1,6 +1,6 @@
 # git-workflow
 
-Branch, worktree and pull-request hygiene: 16 skills for the moments where
+Branch, worktree and pull-request hygiene: 17 skills for the moments where
 git and GitHub quietly do something other than what everyone at the keyboard
 believed.
 
@@ -13,8 +13,9 @@ A squash-merged branch reads as unmerged forever, so cleanup silently skips it.
 A child PR keeps running checks against a branch nobody will push to again. A
 screenshot renders for you (authenticated) and breaks for every reviewer. A
 scheduled workflow merged to the wrong branch is simply never registered, and
-nothing errors. These skills exist because someone watched each of those
-happen.
+nothing errors. A review bot that has spent its quota reports the same green as
+one that read every line. These skills exist because someone watched each of
+those happen.
 
 ## The skills
 
@@ -36,6 +37,7 @@ happen.
 | [`merge-on-go-ahead`](skills/merge-on-go-ahead/README.md) | Merge only what the user authorised, at the head they authorised, in the method the repo prefers, waiting out the recomputation between dependent merges |
 | [`watch-what-the-merge-triggered`](skills/watch-what-the-merge-triggered/README.md) | Watch the `on: push` run a merge starts, pinned to the merge commit: the first and only exercise of merge-time credentials |
 | [`rescue-a-shared-checkout`](skills/rescue-a-shared-checkout/README.md) | Sort the uncommitted changes in a tree with more than one writer into already-safe, at-risk and still-being-written, and land only the middle group |
+| [`stand-in-for-a-blocked-review`](skills/stand-in-for-a-blocked-review/README.md) | Tell a review that found nothing from one that never ran, and commission an independent one when a green mark is covering for a spent quota |
 
 Each skill's README carries its triggers and a worked example; the `SKILL.md`
 beside it is the procedure the agent follows.
