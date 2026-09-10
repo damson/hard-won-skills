@@ -55,13 +55,13 @@ select n.nspname, c.relname, c.relrowsecurity, count(p.polname) as policies
 from pg_class c
 join pg_namespace n on n.oid = c.relnamespace
 left join pg_policy p on p.polrelid = c.oid
-where c.relkind = 'r' and n.nspname = 'public' and c.relname = 'entries'
+where c.relkind = 'r' and n.nspname = 'public' and c.relname = 'widgets'
 group by 1, 2, 3;
 ```
 
 `relrowsecurity = t` with `policies = 0` is the deny-all state above. That one
 row is the whole finding, and no migration file states it. Qualify the schema
-and the relation kind: `entries` unqualified matches a same-named table in any
+and the relation kind: `widgets` unqualified matches a same-named table in any
 schema on the search path, and the row you read may not be the one the endpoint
 serves.
 
@@ -70,7 +70,7 @@ The role, including the service account that does the work, not only `anon` and
 
 ```sql
 select r                                                         as role,
-       has_table_privilege(r, 'public.entries', 'select')         as tbl_select,
+       has_table_privilege(r, 'public.widgets', 'select')         as tbl_select,
        has_function_privilege(r, 'public.admin_reset()', 'execute') as fn_exec
 from unnest(array['anon', 'authenticated', 'service_worker']) as r;
 ```
@@ -86,7 +86,7 @@ The API, as the caller rather than about the caller:
 : "${PUBLISHABLE_KEY:?set it}" "${PROJECT_URL:?set it}"
 curl -sS -w '\nHTTP %{http_code}\n' \
   -H "apikey: $PUBLISHABLE_KEY" \
-  "$PROJECT_URL/rest/v1/entries?select=id&limit=1" || echo "curl failed: $?"
+  "$PROJECT_URL/rest/v1/widgets?select=id&limit=1" || echo "curl failed: $?"
 ```
 
 **Keep the body.** Discarding it with `-o /dev/null` and reading only the status
@@ -110,7 +110,7 @@ Where the database has no HTTP layer, connect as the untrusted role and run the
 statement:
 
 ```bash
-psql "$ANON_URL" -c "select current_user; select id from public.entries limit 1;"
+psql "$ANON_URL" -c "select current_user; select id from public.widgets limit 1;"
 ```
 
 Connect as the role, rather than assuming it. `set role anon` from a superuser

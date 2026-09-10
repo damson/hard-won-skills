@@ -104,13 +104,13 @@ Postgres refuses `CREATE OR REPLACE` when the **return type** changes. If you re
 
 In order of preference:
 
-**(a) Don't redefine.** Add a sibling function under a new name (`search_entries_v2`), and deprecate the old one in a follow-up PR. External consumers stay on `v1` until they migrate.
+**(a) Don't redefine.** Add a sibling function under a new name (`search_widgets_v2`), and deprecate the old one in a follow-up PR. External consumers stay on `v1` until they migrate.
 
 **(b) Drop and recreate** — only if you're sure no external consumer depends on the old shape:
 ```sql
-drop function if exists public.search_entries(text, text, text, int);
+drop function if exists public.search_widgets(text, text, text, int);
 
-create function public.search_entries(...)
+create function public.search_widgets(...)
   returns table(...)
   language sql stable as $$ ... $$;
 ```
