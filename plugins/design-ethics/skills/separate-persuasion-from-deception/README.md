@@ -32,20 +32,23 @@ template. Cheap fix, not a finding.
 
 The second is the trial itself, and it fails the understanding test with a gap
 that fits in a sentence: the user would say the trial ends, and what happens is
-that it converts to a paid year. Equal prominence then decides how bad it is.
-Give "renews at the full annual price on 14 March" the size and weight of the
-Start trial button and the step still works, which means the flow was not
-leaning on the omission, so this is a disclosure fix rather than a deception.
+that it converts to a paid year. Step 4 settles severity on its own, and money
+the user did not agree to spend makes it blocking. What equal prominence adds is
+the remedy, not a discount on the rating: give "renews at the full annual price
+on 14 March" the size and weight of the Start trial button, and the step still
+converts, so the flow was not leaning on the omission and one sentence closes
+it. Had it stopped converting, the same finding would have needed the offer
+rethought rather than disclosed.
 
 The third fails properly. Cancelling runs seven steps against signup's two,
 and step five offers a discount before it offers the cancel. The numbers are
 the finding, and rating by loss makes it blocking, because the user keeps
 paying for a subscription they have already decided to end.
 
-The report is one blocking finding, one disclosure fix, one cheap default, and
-an honest alternative for each. What it is not is three findings of equal
-weight, which is how this report usually arrives and why it usually gets
-skimmed.
+The report is two blocking findings, one closed by a sentence and the other
+needing the cancel path rebuilt, plus one cheap default, with an honest
+alternative for each. What it is not is three findings of equal weight, which is
+how this report usually arrives and why it usually gets skimmed.
 
 ## Why it is shaped like this
 

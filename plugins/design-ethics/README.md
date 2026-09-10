@@ -25,6 +25,9 @@ after it.
 |---|---|
 | [`separate-persuasion-from-deception`](skills/separate-persuasion-from-deception/README.md) | Name what the user can lose, test every decision point for a gap between understanding and outcome, equal prominence, symmetric friction and default ownership, then rate by loss rather than on a scale that drifts |
 
+Each skill's README carries its triggers and a worked example; the `SKILL.md`
+beside it is the procedure the agent follows.
+
 ## If this one misfires
 
 The likely failure is a false positive, and it is the expensive one: flag a

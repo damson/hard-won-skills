@@ -74,7 +74,11 @@ where that gets checked.
    or a right they cannot recover? Yes makes the finding blocking. No makes it a
    usability finding, and it belongs to ordinary design review, reported as
    such. Ratings that skip this question inflate, and an inflated report gets
-   read once.
+   read once. The four tests decide whether there is a finding and what would
+   fix it; they never soften the rating. A gap that costs the user money stays
+   blocking even where equal prominence shows one sentence would close it,
+   because that result tells you the remedy is cheap and not that the harm is
+   small.
 
 5. **Cite a rule only where it changes what you must do.** A regulation named
    for weight is noise, and it trains the reader to skim the ones that matter.
