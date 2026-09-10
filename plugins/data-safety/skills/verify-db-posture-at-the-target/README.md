@@ -144,10 +144,18 @@ Where the database has no HTTP layer, connect as the untrusted role and run the
 statement:
 
 ```bash
+: "${ANON_URL:?set it}"
 # libpq defaults to sslmode=prefer, which falls back to plaintext without saying so
 PGSSLMODE=verify-full \
 psql "$ANON_URL" -c "select current_user; select id from public.entries limit 1;"
 ```
+
+`verify-full` is not free: libpq verifies against `~/.postgresql/root.crt` and
+does **not** fall back to the operating system's trust store, so with no such
+file the command fails on the certificate rather than connecting in the clear.
+That is the right direction to fail, but the error names the certificate and not
+the cause, so point `PGSSLROOTCERT` at the provider's CA bundle before deciding
+the database is unreachable.
 
 Connect as the role, rather than assuming it. `set role anon` from a superuser
 session needs membership and keeps `BYPASSRLS` where the login role carries it,
