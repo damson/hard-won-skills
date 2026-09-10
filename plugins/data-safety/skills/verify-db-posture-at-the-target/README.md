@@ -58,7 +58,7 @@ select n.nspname, c.relname, c.relrowsecurity,
 from pg_class c
 join pg_namespace n on n.oid = c.relnamespace
 left join pg_policy p on p.polrelid = c.oid
-where c.relkind = 'r' and n.nspname = 'public' and c.relname = 'entries'
+where c.relkind = 'r' and n.nspname = 'public' and c.relname = 'widgets'
 group by 1, 2, 3;
 ```
 
@@ -75,7 +75,7 @@ policies exist, and none of them lets anyone read.
 
 **No rows at all is a third answer, and it is not a clean one.** It means no
 relation of that name in that schema, so there is nothing to report as secure.
-Qualify the schema and the relation kind: `entries` unqualified matches a
+Qualify the schema and the relation kind: `widgets` unqualified matches a
 same-named table in any schema on the search path, and the row you read may not
 be the one the endpoint serves.
 
@@ -84,7 +84,7 @@ The role, including the service account that does the work, not only `anon` and
 
 ```sql
 select r                                                         as role,
-       has_table_privilege(r, 'public.entries', 'select')         as tbl_select,
+       has_table_privilege(r, 'public.widgets', 'select')         as tbl_select,
        has_function_privilege(r, 'public.admin_reset()', 'execute') as fn_exec
 -- `service_worker` stands in for whatever this deployment calls the account
 -- that does the work; name yours, or the matrix omits the role that matters
@@ -104,7 +104,7 @@ The API, as the caller rather than about the caller:
 case "$PROJECT_URL" in https://*) ;; *) echo "refusing a non-HTTPS target"; exit 1;; esac
 curl -sS -w '\nHTTP %{http_code}\n' \
   -H "apikey: $PUBLISHABLE_KEY" \
-  "$PROJECT_URL/rest/v1/entries?select=id&limit=1" || echo "curl failed: $?"
+  "$PROJECT_URL/rest/v1/widgets?select=id&limit=1" || echo "curl failed: $?"
 ```
 
 **Keep the body.** Discarding it with `-o /dev/null` and reading only the status
@@ -127,8 +127,8 @@ whole diagnosis:
 ```bash
 : "${ADMIN_URL:?the baseline needs a trusted connection}"
 curl -sS -w '\nHTTP %{http_code}\n' -H "apikey: $PUBLISHABLE_KEY" \
-  "$PROJECT_URL/rest/v1/entries?select=id&limit=1"        # the untrusted caller
-psql "$ADMIN_URL" -c 'select count(*) from public.entries;'  # the baseline
+  "$PROJECT_URL/rest/v1/widgets?select=id&limit=1"        # the untrusted caller
+psql "$ADMIN_URL" -c 'select count(*) from public.widgets;'  # the baseline
 ```
 
 `200` with `[]` from the first and a count above zero from the second is the
@@ -147,7 +147,7 @@ statement:
 : "${ANON_URL:?set it}"
 # libpq defaults to sslmode=prefer, which falls back to plaintext without saying so
 PGSSLMODE=verify-full \
-psql "$ANON_URL" -c "select current_user; select id from public.entries limit 1;"
+psql "$ANON_URL" -c "select current_user; select id from public.widgets limit 1;"
 ```
 
 `verify-full` is not free: libpq verifies against `~/.postgresql/root.crt` and
