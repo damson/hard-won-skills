@@ -11,7 +11,7 @@ you don't have to win them the hard way too.*
 [![Coverage](https://codecov.io/gh/damson/hard-won-skills/branch/develop/graph/badge.svg)](https://codecov.io/gh/damson/hard-won-skills/branch/develop)
 [![Made for Claude Code](https://img.shields.io/badge/made%20for-Claude%20Code-d97757.svg)](https://claude.com/claude-code)
 
-👋 **Welcome!** This is a marketplace of **42 skills in 5 themed plugins**:
+👋 **Welcome!** This is a marketplace of **43 skills in 6 themed plugins**:
 small, careful procedures your agent picks up automatically when a task calls
 for them: rebasing a stack of PRs without losing one, proving a screenshot test
 actually compared pixels, probing a migration without leaving a trace.
@@ -63,6 +63,7 @@ example; start with any link below.
 | **[verification](plugins/verification/README.md)** | 6 | Proving a check can fail before trusting it |
 | **[data-safety](plugins/data-safety/README.md)** | 5 | Writes that are hard to undo |
 | **[mobile-ui](plugins/mobile-ui/README.md)** | 5 | Android / Compose screenshots, Figma components, on-device checks |
+| **[design-ethics](plugins/design-ethics/README.md)** | 1 | Whether a money or consent flow persuades or deceives |
 
 Not sure where to begin? **[verification](#verification)** is six skills,
 takes a minute to read, and changes how you look at every green checkmark
@@ -184,6 +185,17 @@ answers every finding rather than most of them.
 [`figma-to-compose-component`](plugins/mobile-ui/skills/figma-to-compose-component/README.md) ·
 [`android-verify-on-device`](plugins/mobile-ui/skills/android-verify-on-device/README.md) ·
 [`ship-a-fix-round`](plugins/mobile-ui/skills/ship-a-fix-round/README.md)
+
+### design-ethics
+
+Persuasion and deception use the same contrast, defaults and sequence, so the
+technique never settles which one a flow is doing. What settles it is whether
+the user's understanding of what they agreed to matches what happens. Name what
+they can lose, test each decision point, and rate by loss rather than on a
+scale that drifts upward under pressure. Runs again after the visual pass,
+because polish gives a default force it did not have in structure.
+
+[`separate-persuasion-from-deception`](plugins/design-ethics/skills/separate-persuasion-from-deception/README.md)
 
 ## 🧬 What a skill here looks like
 

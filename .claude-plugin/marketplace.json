@@ -50,6 +50,15 @@
       },
       "category": "development",
       "source": "./plugins/mobile-ui"
+    },
+    {
+      "name": "design-ethics",
+      "description": "Persuasion that stays honest. Check a flow that handles money, consent or cancellation for the gap between what the user understood and what happens, using tests that survive an argument rather than a catalogue that invites matching.",
+      "author": {
+        "name": "Damien Dagnet"
+      },
+      "category": "design",
+      "source": "./plugins/design-ethics"
     }
   ]
 }
