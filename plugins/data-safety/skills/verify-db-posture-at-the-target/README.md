@@ -51,27 +51,43 @@ The catalog, on the objects the change names rather than the migration that was
 written:
 
 ```sql
-select n.nspname, c.relname, c.relrowsecurity, count(p.polname) as policies
+select n.nspname, c.relname, c.relrowsecurity,
+       count(*) filter (where p.polcmd in ('r', '*') and p.polpermissive)
+         as permissive_select_policies,
+       count(p.polname) as policies_any_command
 from pg_class c
 join pg_namespace n on n.oid = c.relnamespace
 left join pg_policy p on p.polrelid = c.oid
-where c.relkind = 'r' and n.nspname = 'public' and c.relname = 'widgets'
+where c.relkind = 'r' and n.nspname = 'public' and c.relname = 'entries'
 group by 1, 2, 3;
 ```
 
-`relrowsecurity = t` with `policies = 0` is the deny-all state above. That one
-row is the whole finding, and no migration file states it. Qualify the schema
-and the relation kind: `widgets` unqualified matches a same-named table in any
-schema on the search path, and the row you read may not be the one the endpoint
-serves.
+`relrowsecurity = t` with `permissive_select_policies = 0` is the deny-all state
+above. That one row is the whole finding, and no migration file states it.
+
+Count the policies that can admit a *read*, not the policies that exist. A bare
+`count(p.polname)` is satisfied by a policy for another command entirely, so a
+table carrying only an `UPDATE` policy reports a reassuring non-zero while
+`SELECT` is still deny-all. Restrictive policies never grant on their own
+either, whatever their command, which is why `polpermissive` is in the filter.
+Both counts are printed because their disagreement is itself the diagnosis:
+policies exist, and none of them lets anyone read.
+
+**No rows at all is a third answer, and it is not a clean one.** It means no
+relation of that name in that schema, so there is nothing to report as secure.
+Qualify the schema and the relation kind: `entries` unqualified matches a
+same-named table in any schema on the search path, and the row you read may not
+be the one the endpoint serves.
 
 The role, including the service account that does the work, not only `anon` and
 `authenticated`:
 
 ```sql
 select r                                                         as role,
-       has_table_privilege(r, 'public.widgets', 'select')         as tbl_select,
+       has_table_privilege(r, 'public.entries', 'select')         as tbl_select,
        has_function_privilege(r, 'public.admin_reset()', 'execute') as fn_exec
+-- `service_worker` stands in for whatever this deployment calls the account
+-- that does the work; name yours, or the matrix omits the role that matters
 from unnest(array['anon', 'authenticated', 'service_worker']) as r;
 ```
 
@@ -84,9 +100,11 @@ The API, as the caller rather than about the caller:
 
 ```bash
 : "${PUBLISHABLE_KEY:?set it}" "${PROJECT_URL:?set it}"
+# the response IS the evidence, so refuse a transport that can rewrite it
+case "$PROJECT_URL" in https://*) ;; *) echo "refusing a non-HTTPS target"; exit 1;; esac
 curl -sS -w '\nHTTP %{http_code}\n' \
   -H "apikey: $PUBLISHABLE_KEY" \
-  "$PROJECT_URL/rest/v1/widgets?select=id&limit=1" || echo "curl failed: $?"
+  "$PROJECT_URL/rest/v1/entries?select=id&limit=1" || echo "curl failed: $?"
 ```
 
 **Keep the body.** Discarding it with `-o /dev/null` and reading only the status
@@ -103,6 +121,22 @@ ambiguous one, so before believing it, confirm with a trusted role that the
 table has rows to withhold; otherwise you cannot tell a closed door from an
 empty room.
 
+That confirmation is two commands, and which pair of answers you get is the
+whole diagnosis:
+
+```bash
+: "${ADMIN_URL:?the baseline needs a trusted connection}"
+curl -sS -w '\nHTTP %{http_code}\n' -H "apikey: $PUBLISHABLE_KEY" \
+  "$PROJECT_URL/rest/v1/entries?select=id&limit=1"        # the untrusted caller
+psql "$ADMIN_URL" -c 'select count(*) from public.entries;'  # the baseline
+```
+
+`200` with `[]` from the first and a count above zero from the second is the
+deny-all finding: rows exist and the anonymous caller is admitted by no policy.
+`200` with `[]` and a count of zero is not a finding at all, because the table
+is empty and the probe has told you nothing either way. Report which of the two
+you saw, and never the first half alone.
+
 Fetching any of this through an MCP browser tool proves nothing, because it can
 carry deployment protection the anonymous caller does not have.
 
@@ -110,8 +144,18 @@ Where the database has no HTTP layer, connect as the untrusted role and run the
 statement:
 
 ```bash
-psql "$ANON_URL" -c "select current_user; select id from public.widgets limit 1;"
+: "${ANON_URL:?set it}"
+# libpq defaults to sslmode=prefer, which falls back to plaintext without saying so
+PGSSLMODE=verify-full \
+psql "$ANON_URL" -c "select current_user; select id from public.entries limit 1;"
 ```
+
+`verify-full` is not free: libpq verifies against `~/.postgresql/root.crt` and
+does **not** fall back to the operating system's trust store, so with no such
+file the command fails on the certificate rather than connecting in the clear.
+That is the right direction to fail, but the error names the certificate and not
+the cause, so point `PGSSLROOTCERT` at the provider's CA bundle before deciding
+the database is unreachable.
 
 Connect as the role, rather than assuming it. `set role anon` from a superuser
 session needs membership and keeps `BYPASSRLS` where the login role carries it,

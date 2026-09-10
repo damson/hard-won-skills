@@ -28,7 +28,11 @@ live in.
 1. **Catalog.** Query the objects the change names, never the migration you
    just wrote: `pg_class.relrowsecurity`, `pg_policy`, `pg_proc.proacl` and
    `proconfig`, `information_schema.role_table_grants`. A migration is a
-   statement of intent; this is the outcome.
+   statement of intent; this is the outcome. Count only the policies that can
+   admit the command you care about (`polcmd in ('r', '*')` for a read) and only
+   the permissive ones: a table carrying one `UPDATE` policy reports a
+   reassuring non-zero while reads are still deny-all. An empty result set is a
+   third answer, not a clean one, and it means the relation is not there.
 
 2. **Role.** Ask `has_table_privilege` and `has_function_privilege` for each
    role that matters, including the service account that actually performs the
@@ -44,9 +48,12 @@ live in.
    an empty list when it holds the grant and no policy admits it, so read an
    empty result against a trusted-role baseline confirming the table has rows to
    withhold. An MCP fetch proves nothing here, because it bypasses deployment
-   protection; use `curl`. Where the database has no HTTP layer, connect as the
-   untrusted role itself and run the statement: the point is to be the caller,
-   not to describe them.
+   protection; use `curl`. The response is the evidence, so refuse a transport
+   that could rewrite it: require `https` for the HTTP probe, and pin
+   `sslmode=verify-full` for a direct connection, because libpq defaults to
+   `prefer` and falls back to plaintext silently. Where the database has no HTTP
+   layer, connect as the untrusted role itself and run the statement: the point
+   is to be the caller, not to describe them.
 
 4. **Advisor, where the platform has one.** Re-run it and diff against the list
    from before the change. Classify every survivor out loud as deliberate,
