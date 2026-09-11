@@ -80,9 +80,9 @@ Both of these are the same root cause and have one fix, below.
 
 ## Releasing under an App token
 
-The workflow mints an installation token when two secrets are present and falls
-back to `GITHUB_TOKEN` when they are not, so the pipeline is unchanged until the
-App exists. Creating it is the only manual step left in this repo's release path:
+The workflow mints an installation token when a repository variable names the App
+and a secret holds its private key, and falls back to `GITHUB_TOKEN` when they
+are absent, so the pipeline is unchanged until the App exists. Creating it is the only manual step left in this repo's release path:
 
 1. **Settings > Developer settings > GitHub Apps > New GitHub App**, owned by the
    same account as the repository. Homepage URL can be the repository. Uncheck
