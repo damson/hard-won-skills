@@ -1,13 +1,13 @@
 ---
 name: mutation-proof-harness
 description: >
-  Use when about to prove that newly added guards can fail — a checker, a lint,
-  a CI script, a validation function — and more than one needs proving. Fires on
+  Use when about to prove that newly added guards can fail: a checker, a lint,
+  a CI script, a validation function, and more than one needs proving. Fires on
   "prove the check can fail", "mutation proof", "watch it go red", and whenever
   a PR test plan is about to claim a guard was proved. Owns the SCRIPT: the
   baseline that stops a typo'd filter reading as a pass, the diff that stops a
   no-op mutation reading as a working guard, and the restore. Do NOT fire for a
-  single ad-hoc mutation, or to decide WHETHER a guard is worth proving —
+  single ad-hoc mutation, or to decide WHETHER a guard is worth proving:
   prove-the-check-can-fail owns that.
 ---
 
@@ -72,7 +72,7 @@ for f in "${FILTERS[@]}"; do
 done
 ```
 
-Adapt the grep to the runner's "nothing ran" wording — it differs per tool and
+Adapt the grep to the runner's "nothing ran" wording, which differs per tool and
 is the one string this depends on.
 
 ### 4. Mutate, diff, run, restore
@@ -82,7 +82,7 @@ mutate () {                      # <file> <perl-expr> <filter> <label>
   # An interrupt between the edit and the restore leaves the guard mutated in
   # the working tree, and the tally never prints, so nothing points at it.
   trap 'git checkout -- "$1"; trap - INT TERM; return 130' INT TERM
-  # `-pi` is line-at-a-time. Use `-0pi` when the anchor spans lines — and then
+  # `-pi` is line-at-a-time. Use `-0pi` when the anchor spans lines, and then
   # read the warning about first-match below, which only bites in that mode.
   perl -pi -e "$2" "$1"
   if git diff --quiet -- "$1"; then echo "STALE $4"; bad=$((bad+1)); return; fi
@@ -157,22 +157,22 @@ Each cost a round to diagnose:
 - **`/` as the delimiter fights the content.** Use `s{…}{…}` when the target
   holds a regex, a path or a URL.
 - **`-0pi` slurps and replaces once.** In that mode add `/g` deliberately, or
-  make the anchor unique — not merely distinctive-looking.
+  make the anchor unique, not merely distinctive-looking.
 - **A single-quoted shell string cannot hold a single quote.** Switching to
   double quotes adds a second expansion layer, and the escapes are per layer:
   `\$` is consumed by the shell and reaches perl as a bare `$`, which perl then
-  interpolates — the failure this list opens with. Perl's own `\$` needs
+  interpolates, the failure this list opens with. Perl's own `\$` needs
   `\\\$` written in the double-quoted string. `${VAR:?…}` is worse: it aborts
   the shell when the array is *defined*, before any mutation runs. Prefer an
   anchor with no quotes and no `$` in it.
 
 ## When to STOP
 
-- **Only one guard to prove** — do it inline; a script for one mutation is
+- **Only one guard to prove**: do it inline; a script for one mutation is
   ceremony.
 - **The baseline is red** before any mutation. Fix that first; mutating a
   failing suite measures nothing.
-- **A mutation cannot be expressed as a text substitution** — a behaviour that
+- **A mutation cannot be expressed as a text substitution**: a behaviour that
   needs a different fixture or a stubbed clock is a test to write, not a
   mutation to make.
 - **The file is not committed.** Step 1, and it is not negotiable: the restore

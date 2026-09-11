@@ -40,7 +40,7 @@ silent passes hide.
    that matters: a filter selecting no tests exits 0, so every mutation after it
    is measured against nothing. The check greps the runner's own "nothing ran"
    wording, which differs per tool.
-4. **Mutate, diff, run, restore** — with the diff printed every time.
+4. **Mutate, diff, run, restore**, with the diff printed every time.
    `git diff --quiet` catches only the total misses; the printed diff is what
    catches a mutation that changed the wrong line, which `--quiet` reports as a
    success. A `trap` restores the file if the run is interrupted, so a hang
@@ -50,8 +50,8 @@ silent passes hide.
    already handled the case; under `perl -0pi` only the first match was
    replaced and it hit the wrong branch; the filter's test never imports the
    file you mutated. Retarget, re-run, and report the retarget.
-6. **Report the count and that the baseline ran** —
-   `proved-able-to-fail: 8   not-proved: 1` — with `git status --short` clean,
+6. **Report the count and that the baseline ran**:
+   `proved-able-to-fail: 8   not-proved: 1`, with `git status --short` clean,
    because every mutation was restored.
 
 "Eight of nine went red first time" is what makes the ninth worth reading.
