@@ -106,11 +106,30 @@ before diagnosing anything else, here or anywhere.
 
 That run gates nothing, which is why the propose job runs the two
 validators itself and posts the result as the `validate` status on the same
-head commit. Read a release PR's checks, not the Actions tab; and since
-2026-09-04 `ci.yml` ignores pull requests into `main` so the phantom row is not
-created at all. A hotfix PR into `main` from a branch other than `develop`
-therefore needs `validate` from a `workflow_dispatch` run on that branch, which
-lands on the same commit and satisfies protection.
+head commit. Read a release PR's checks, not the Actions tab.
+
+**The first fix for the phantom row broke the hotfix path, silently.** From
+2026-09-04, `ci.yml` excluded pull requests into `main` by branch, which removed
+the red row and also removed the only route by which *any other* pull request
+into `main` could obtain the `validate` context protection requires. A hotfix
+opened from a branch other than `develop` could not reach a mergeable state at
+all, and nothing said so: the check sits pending forever, which looks like a
+queue rather than a contradiction. It is the worst possible time for that, since
+a hotfix exists because something is already broken.
+
+Since 2026-09-11 the exclusion is a job-level condition instead of a branch
+filter: `ci.yml` runs on every pull request, and the `validate` job is skipped
+only on a pull request whose base is `main` and whose head is `develop`, which is
+the promotion and nothing else. The event check is part of the condition and not
+decoration: `github.base_ref` and `github.head_ref` are empty outside a pull
+request, so without it a push to `main` would still run the job by accident of
+two empty strings rather than by intent. A skipped job creates no check run, so the promotion still
+satisfies protection with the status the propose job posted, the Actions tab
+gains no red row, and every other pull request into `main` is checked the
+ordinary way. The general rule this violated is worth keeping in view: **a
+required context must be produced by something that runs on every pull request
+into that base**, and a branch filter, a path filter and a release-only job all
+break it the same way.
 
 ## Holding a release
 

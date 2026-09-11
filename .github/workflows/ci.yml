@@ -11,8 +11,13 @@ on:
   # something gets ignored. A pull request into main from anywhere else is a hotfix: run this
   # workflow on its branch with workflow_dispatch and the `validate` check that
   # branch protection wants lands on the same head commit.
+  # Every pull request, including the ones into main. The release promotion is
+  # the single exception and it is skipped at the job below, not here: excluding
+  # it by branch was leaving every OTHER pull request into main with no route to
+  # the `validate` context that protection requires, so a hotfix opened from any
+  # branch but develop could never reach a mergeable state. That is the shape
+  # that bites while something is already broken.
   pull_request:
-    branches-ignore: [main]
   push:
     branches: [main, develop]
   workflow_dispatch:
@@ -31,6 +36,18 @@ jobs:
   # it silently un-gates the release, so the protection rule and this name have to
   # move together.
   validate:
+    # The release promotion posts this status itself, from a real run of these
+    # same commands, and its auto-merge lands about a second after the status
+    # appears. A job that checked out here would have the merge ref pulled from
+    # under it and record zero jobs, no logs and conclusion `failure`: a red that
+    # always means nothing, which is how a red that means something gets
+    # ignored. Skipping the job creates no check run at all, so the promotion
+    # keeps the status it posted and the Actions tab stays honest. Every other
+    # pull request into main, a hotfix from any branch, runs and gets the check.
+    if: >-
+      !(github.event_name == 'pull_request'
+        && github.base_ref == 'main'
+        && github.head_ref == 'develop')
     runs-on: ubuntu-latest
     permissions:
       contents: read
