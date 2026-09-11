@@ -22,7 +22,7 @@ a sentence too, so it repeats the round with better vocabulary.
 ## Procedure
 
 1. **Say the numbers first.** Whatever the disagreement is measured in (dp,
-   pixels, aspect ratio, count) state the actual figures for each reading, in
+   pixels, aspect ratio, count), state the actual figures for each reading, in
    one line each. Often this alone ends it: "a side edge is 891dp upright and
    411dp turned" is not a matter of opinion, and one reading usually stops being
    plausible the moment its number is written down.

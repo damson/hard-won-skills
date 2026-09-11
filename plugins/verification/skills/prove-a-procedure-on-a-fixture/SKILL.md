@@ -133,7 +133,7 @@ works from one that reads as though it does.
 
    Extract and run its block by step 4, against the same fixture, and write both
    answers down. Where there is no earlier revision (a procedure published for
-   the first time) there is nothing to compare: say the counterfactual was not
+   the first time), there is nothing to compare: say the counterfactual was not
    available, rather than reporting one you did not run.
 
 7. **Re-run against the text as published**, after the merge, not against your
