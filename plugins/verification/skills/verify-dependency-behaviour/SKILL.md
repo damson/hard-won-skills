@@ -1,13 +1,13 @@
 ---
 name: verify-dependency-behaviour
 description: >
-  Use when about to state or rely on how a third-party JVM/Android library behaves —
-  a default value, whether a field is omitted or null, which branch a task takes —
+  Use when about to state or rely on how a third-party JVM/Android library behaves
+  (a default value, whether a field is omitted or null, which branch a task takes)
   and the docs are absent, ambiguous, or the naming suggests something the code may
   not do. Fire when a plan says "set X to its strict value" without evidence X is not
   already strict, when a field's name and its type disagree, or when a check passes
   and you cannot say which comparison it made. Do NOT fire when the behaviour can be
-  run and observed — run it.
+  run and observed, run it.
 ---
 
 # Verify dependency behaviour from the artifact
@@ -16,7 +16,7 @@ A library's name, its field names and its README are all claims. The bytecode is
 runs. Where they disagree the bytecode wins, and the disagreement is silent: a "fix"
 that changes nothing, or a number wrong by a factor of a hundred.
 
-Complements `prove-the-check-can-fail` — that skill asks whether your check would
+Complements `prove-the-check-can-fail`: that skill asks whether your check would
 catch the bug, this one asks whether the library does what its name implies.
 
 ## Procedure
@@ -24,7 +24,7 @@ catch the bug, this one asks whether the library does what its name implies.
 1. **State the claim** in one sentence, with what changes if it is false. A claim that
    changes no decision is not worth the detour.
 
-2. **Prefer observation.** If the behaviour can be triggered and measured, do that —
+2. **Prefer observation.** If the behaviour can be triggered and measured, do that:
    it is cheaper and exercises the real path. Decompile only what running cannot
    reveal: a default you would have to override to see, a serialization shape, a
    branch not reachable from your inputs.
@@ -38,10 +38,10 @@ catch the bug, this one asks whether the library does what its name implies.
    An empty result means the artifact never resolved into this cache, not that it
    does not exist: force resolution (run the build, or
    `./gradlew <module>:dependencies --configuration runtimeClasspath`) and check
-   the Maven local repo — `~/.m2/repository`, unless `~/.m2/settings.xml` moves it —
+   the Maven local repo (`~/.m2/repository`, unless `~/.m2/settings.xml` moves it)
    since mavenLocal and repo-local caches live outside the Gradle one.
 
-   A `-sources.jar` beside it is better than bytecode — read that and skip to step 5.
+   A `-sources.jar` beside it is better than bytecode: read that and skip to step 5.
    For a Gradle plugin, the jar under `<plugin-id>/<version>/` holds the task classes.
 
 4. **Inspect.**
@@ -57,10 +57,10 @@ catch the bug, this one asks whether the library does what its name implies.
      signature.
    - **Serialization shape** lives in the generated `$Companion`; whether nulls are
      written or omitted is set wherever the `Json {}` builder is configured, which
-     can sit outside that class — search the `javap` output case-insensitively for
-     `explicitNulls` and `encodeDefaults` (kotlinx.serialization — the JVM form is
+     can sit outside that class, so search the `javap` output case-insensitively for
+     `explicitNulls` and `encodeDefaults` (kotlinx.serialization, whose JVM form is
      `setExplicitNulls`) or `serializeNulls` (Moshi/Gson).
-   - **Which branch a task takes** — decompile the top-level `…Kt` class holding the
+   - **Which branch a task takes**: decompile the top-level `…Kt` class holding the
      function, and read the conditional.
 
 5. **Report the evidence, not the conclusion.** Quote the constant or the instruction.
@@ -73,14 +73,14 @@ catch the bug, this one asks whether the library does what its name implies.
   field called `*_count` may hold bytes. If a value's magnitude surprises you when you
   first see real data, that is the signal.
 - **A no-op reads like a tightening.** Setting an option to a value that is already the
-  default advertises a guarantee nobody added — worse than leaving it alone.
+  default advertises a guarantee nobody added, which is worse than leaving it alone.
 - **Version skew.** Decompile the version actually resolving in this build, not the
   newest in the cache. `./gradlew :app:dependencies` settles it.
 
 ## When to STOP
 
 - **A version-matched sources jar, or the tagged source for that exact version,
-  exists.** Read it — bytecode is the fallback, not the goal.
+  exists.** Read it: bytecode is the fallback, not the goal.
 - **The claim does not change a decision.** Curiosity is not a trigger.
 - **It is first-party code.** Read the source.
 - **The class is obfuscated.** Say the claim is unverified rather than guessing from

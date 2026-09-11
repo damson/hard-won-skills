@@ -37,7 +37,7 @@ class of problem is spent fixing something that was never broken.
    | "No matches" | whether the command ran at all |
 
 3. **Read the source, not a rendering of it.** Fetch the record and quote what
-   it says. Three renderings that routinely mislead — `<o>/<r>` is the owner and
+   it says. Three renderings that routinely mislead, where `<o>/<r>` is the owner and
    repository, `<id>` the run id the surface itself names:
 
    ```bash
@@ -98,6 +98,6 @@ class of problem is spent fixing something that was never broken.
   not fixable from the repository, and guessing at repo-side fixes for it burns
   time and leaves debris.
 - **Two independent reads disagree.** Before blaming a cache, check they asked
-  the same question — same commit, same branch, same scope — and that both were
+  the same question (same commit, same branch, same scope) and that both were
   taken after the last write. Once they were, it is a cache or a lagging
   replica: wait or bypass it explicitly, and conclude nothing until they agree.
