@@ -119,8 +119,11 @@ a hotfix exists because something is already broken.
 
 Since 2026-09-11 the exclusion is a job-level condition instead of a branch
 filter: `ci.yml` runs on every pull request, and the `validate` job is skipped
-only when the base is `main` and the head is `develop`, which is the promotion
-and nothing else. A skipped job creates no check run, so the promotion still
+only on a pull request whose base is `main` and whose head is `develop`, which is
+the promotion and nothing else. The event check is part of the condition and not
+decoration: `github.base_ref` and `github.head_ref` are empty outside a pull
+request, so without it a push to `main` would still run the job by accident of
+two empty strings rather than by intent. A skipped job creates no check run, so the promotion still
 satisfies protection with the status the propose job posted, the Actions tab
 gains no red row, and every other pull request into `main` is checked the
 ordinary way. The general rule this violated is worth keeping in view: **a
