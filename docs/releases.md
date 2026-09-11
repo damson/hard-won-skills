@@ -59,13 +59,54 @@ answers *when*; a plugin's version answers *what changed in it*.
 
 ## Five couplings that will not announce themselves
 
-**One dispatch promotes; tagging needs a second.** The release pull request
-auto-merges under `GITHUB_TOKEN`, and a push made with that token does not
-trigger workflows, so the `push: main` run that would tag never starts. The
-first dispatch leaves `main` promoted and the versions bumped with no tag; a
-second runs the tag job against it. The tell is `gh run list --workflow=Release`
-showing no `push` event for the merge, only the dispatch you asked for. Cost two
-dispatches on 2026-09-05, for `v2026.09.05.1`.
+**One dispatch promotes; tagging needs a second, until the App token is
+configured.** The release pull request auto-merges under `GITHUB_TOKEN`, and a
+push made with that token does not trigger workflows, so the `push: main` run
+that would tag never starts. The first dispatch leaves `main` promoted and the
+versions bumped with no tag; a second runs the tag job against it. The tell is
+`gh run list --workflow=Release` showing no `push` event for the merge, only the
+dispatch you asked for. Cost two dispatches on 2026-09-05, for `v2026.09.05.1`,
+and again on 2026-09-08 and 2026-09-09.
+
+**The same missing event also swallows issue closing**, which is the half nobody
+looks for. A squash commit saying `Closes #86` reached `main` with the promotion
+on 2026-09-08 and the issue was still open the next day, along with two others;
+all three were closed by hand. A keyword in a pull request body would not have
+helped either, because that path needs the pull request's base to be the default
+branch, and a feature pull request targets `develop`. Put the keyword in the
+commit message, then check the issue rather than assuming.
+
+Both of these are the same root cause and have one fix, below.
+
+## Releasing under an App token
+
+The workflow mints an installation token when two secrets are present and falls
+back to `GITHUB_TOKEN` when they are not, so the pipeline is unchanged until the
+App exists. Creating it is the only manual step left in this repo's release path:
+
+1. **Settings > Developer settings > GitHub Apps > New GitHub App**, owned by the
+   same account as the repository. Homepage URL can be the repository. Uncheck
+   **Webhook > Active**; nothing here listens to one.
+2. Repository permissions: **Contents** read and write (push the tag and the
+   back-merge), **Pull requests** read and write (open and merge the promotion),
+   **Commit statuses** read and write (post `validate`), **Metadata** read, which
+   GitHub adds by itself.
+3. **Install** the App on this repository only, then generate a private key.
+4. Add one repository **variable** and one repository **secret**:
+   `RELEASE_APP_ID` as a variable (the numeric App ID, not the client ID) and
+   `RELEASE_APP_PRIVATE_KEY` as a secret (the whole `.pem`, `BEGIN` and `END`
+   lines included). The variable, not a secret, because the step that mints the
+   token is gated on that value and `secrets` is not an available context in a
+   step-level `if`; an App ID is not confidential in any case. Getting this
+   backwards leaves the step permanently skipped, which looks exactly like an App
+   that was never installed.
+
+Then one dispatch is enough, because the promotion's push raises the event the
+`push: main` trigger listens for, and a commit-message closing keyword closes its
+issue. The way to confirm it is working is not that a release succeeded, since a
+release succeeds either way: it is `gh run list --workflow=Release` showing a
+`push` event for the merge commit. Until that line appears, assume the fallback
+is still in use and tag with a second dispatch.
 
 
 **The propose job needs a repository setting that is off by default.** It opens
