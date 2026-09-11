@@ -41,10 +41,29 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
+      # A push made with GITHUB_TOKEN raises no event, and this pipeline pays for
+      # that twice: the `push: main` run that would tag never starts, and the
+      # closing keywords the promotion carries never close their issues. An App
+      # installation token does raise events. Until the App exists this step is
+      # skipped and every fallback below resolves to GITHUB_TOKEN, so the
+      # pipeline behaves exactly as it does today.
+      - name: Mint a token whose pushes raise events
+        id: apptoken
+        # gated on a repository VARIABLE, not a secret: `secrets` is not an
+        # available context in a step-level `if`, so that spelling would have
+        # been invalid here. An App ID is not confidential anyway.
+        if: ${{ vars.RELEASE_APP_ID != '' }}
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          app-id: ${{ vars.RELEASE_APP_ID }}
+          private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
+
       - uses: actions/checkout@v7
         with:
           ref: main
           fetch-depth: 0
+          # the pushes below inherit this token, which is the whole point
+          token: ${{ steps.apptoken.outputs.token || secrets.GITHUB_TOKEN }}
 
       - name: Decide whether main needs a tag
         id: decide
@@ -114,7 +133,7 @@ jobs:
       - name: Tag and publish
         if: success() && steps.decide.outputs.skip == 'false'
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ steps.apptoken.outputs.token || secrets.GITHUB_TOKEN }}
           TAG: ${{ steps.decide.outputs.tag }}
         run: |
           set -euo pipefail
@@ -135,7 +154,7 @@ jobs:
       - name: Bring develop back level with main
         if: success() && steps.decide.outputs.skip == 'false'
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ steps.apptoken.outputs.token || secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
           git fetch origin develop --quiet
@@ -168,10 +187,28 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
+      # A push made with GITHUB_TOKEN raises no event, and this pipeline pays for
+      # that twice: the `push: main` run that would tag never starts, and the
+      # closing keywords the promotion carries never close their issues. An App
+      # installation token does raise events. Until the App exists this step is
+      # skipped and every fallback below resolves to GITHUB_TOKEN, so the
+      # pipeline behaves exactly as it does today.
+      - name: Mint a token whose pushes raise events
+        id: apptoken
+        # gated on a repository VARIABLE, not a secret: `secrets` is not an
+        # available context in a step-level `if`, so that spelling would have
+        # been invalid here. An App ID is not confidential anyway.
+        if: ${{ vars.RELEASE_APP_ID != '' }}
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          app-id: ${{ vars.RELEASE_APP_ID }}
+          private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
+
       - uses: actions/checkout@v7
         with:
           ref: develop
           fetch-depth: 0
+          token: ${{ steps.apptoken.outputs.token || secrets.GITHUB_TOKEN }}
 
       - name: Gates — changes to release, and three days since the last one
         id: gate
@@ -233,7 +270,7 @@ jobs:
         id: pr
         if: success() && steps.gate.outputs.skip == 'false'
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ steps.apptoken.outputs.token || secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
           existing=$(gh pr list --base main --head develop --state open \
@@ -265,7 +302,7 @@ jobs:
       - name: Run the suite and report it as the required check
         if: success() && steps.gate.outputs.skip == 'false'
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ steps.apptoken.outputs.token || secrets.GITHUB_TOKEN }}
           REPO: ${{ github.repository }}
           SHA: ${{ steps.pr.outputs.sha }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
@@ -286,7 +323,7 @@ jobs:
       - name: Let it merge itself once the checks pass
         if: success() && steps.gate.outputs.skip == 'false'
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ steps.apptoken.outputs.token || secrets.GITHUB_TOKEN }}
           NUMBER: ${{ steps.pr.outputs.number }}
         run: |
           set -euo pipefail
