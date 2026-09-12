@@ -2,7 +2,7 @@
 name: render-the-candidates
 description: >
   Use when a requirement about layout, geometry or visual arrangement has
-  round-tripped twice without converging — you changed the code, the user
+  round-tripped twice without converging: you changed the code, the user
   restated the requirement, and it is still not what they meant. Fires on
   "still don't end up", "that's still wrong", "I'm still confused by", "it had
   been correctly designed", and on your own impulse to write a third paragraph
@@ -13,7 +13,7 @@ description: >
 
 # Render the candidates
 
-Words like *left*, *longest edge* and *alongside* each name two things — an edge
+Words like *left*, *longest edge* and *alongside* each name two things: an edge
 of the device or an edge of the display, the long side now or the long side once
 it turns. Two people can agree on every sentence and mean different screens, and
 neither can see which reading the other took. A third paragraph is judged against
@@ -21,15 +21,15 @@ a sentence too, so it repeats the round with better vocabulary.
 
 ## Procedure
 
-1. **Say the numbers first.** Whatever the disagreement is measured in — dp,
-   pixels, aspect ratio, count — state the actual figures for each reading, in
+1. **Say the numbers first.** Whatever the disagreement is measured in (dp,
+   pixels, aspect ratio, count), state the actual figures for each reading, in
    one line each. Often this alone ends it: "a side edge is 891dp upright and
    411dp turned" is not a matter of opinion, and one reading usually stops being
    plausible the moment its number is written down.
 
 2. **Enumerate the readings, and cap them at three.** Two readings are distinct
    if they differ in **anything under dispute**: a number from step 1, or where
-   a named element sits — which edge, which order, which alignment. Merge only
+   a named element sits: which edge, which order, which alignment. Merge only
    when every disputed quantity and every placement is identical. Two screens
    can agree on an edge and a dimension and still order or align their contents
    differently, and merging on the coarser test discards a candidate before
@@ -43,7 +43,7 @@ a sentence too, so it repeats the round with better vocabulary.
    this is worth a turn.
 
 3. **Build each one as a picture.** Not a description of a picture.
-   - Prefer a render **through the real code path** — call the actual mapping,
+   - Prefer a render **through the real code path**: call the actual mapping,
      the actual layout, the actual component. A hand-placed mock-up can show a
      screen the code cannot produce, and then the decision is made against a
      lie.
@@ -60,7 +60,7 @@ a sentence too, so it repeats the round with better vocabulary.
    framing choice rather than evidence.
 
 5. **Ask, with the consequence attached.** One `AskUserQuestion`, one option per
-   candidate, and each option says what it costs — what stops working, what code
+   candidate, and each option says what it costs: what stops working, what code
    becomes dead, what the user gives up. A choice presented without its price is
    answered again later. Where the host offers no such tool, a numbered list in
    a single message does the same work, provided the answer is written back into
@@ -80,12 +80,12 @@ a sentence too, so it repeats the round with better vocabulary.
   cheap to build and cheap to change, build it and show the result. The trigger
   for this skill is a requirement that has *already* round-tripped, which is what
   makes the render cheaper than the next guess.
-- **Nothing here can produce a picture** — no harness, no headless renderer, no
+- **Nothing here can produce a picture**: no harness, no headless renderer, no
   way to screenshot the real path. Say so, then run steps 1 and 2 anyway and ask
   on the numbers: a labelled comparison of measurements is weaker than a render
   and far stronger than a third paragraph. What you must not do is quietly
   promote a sketch into the evidence slot the render was going to fill.
 - **The user has already answered the geometric question.** Re-asking a settled
   one reads as not having listened. Check the transcript for a rule they stated
-  — "left and right are always from the portrait perspective" — before drafting
+  ("left and right are always from the portrait perspective") before drafting
   options that ignore it.

@@ -15,27 +15,27 @@ A green check is not evidence until it has been seen red: passing proves it ran,
 failing proves it was looking at the right thing. A check that cannot fail is worse
 than no check, because it gets reported as coverage.
 
-Complements `superpowers:verification-before-completion` — that skill asks "did the
+Complements `superpowers:verification-before-completion`: that skill asks "did the
 command pass?", this one asks "would it have caught the bug?".
 
 ## Procedure
 
 1. **Name the defect.** One sentence: what wrong state does this check exist to
-   catch? If that cannot be stated, the check has no purpose yet — fix that first.
+   catch? If that cannot be stated, the check has no purpose yet, so fix that first.
 
 2. **Introduce the defect.** The smallest edit that produces it: corrupt the golden,
    invert the condition, delete the guard, remove the `await`. Prefer a temporary
    edit you can revert exactly: `cp <file> "$TMPDIR/orig"` first, restore with
-   `cp "$TMPDIR/orig" <file>`. Never `git checkout <file>` — that also discards any
+   `cp "$TMPDIR/orig" <file>`. Never `git checkout <file>`, which also discards any
    uncommitted work the file already had.
 
-3. **Run the check the way CI runs it.** Same task, same flags — lifted from the
+3. **Run the check the way CI runs it.** Same task, same flags, lifted from the
    workflow YAML or pipeline config, not reconstructed from memory. Then read the
    output.
    - **Still green → suspect the check is inert.** Before concluding, rule out the
      innocent causes: a cached pass (next bullet), a task name, filter or file
      pattern that never selected the check, and a mutated file the run does not
-     read — compare the reported test count for a test; for a lint or scan step,
+     read: compare the reported test count for a test; for a lint or scan step,
      compare the files-scanned count or echo the input list. Only when those hold
      is the check inert. Stop there: that finding matters more than whatever you
      were originally doing.
@@ -57,8 +57,8 @@ command pass?", this one asks "would it have caught the bug?".
 ## Sharp edges
 
 - **A check can pass against nothing at all.** Some frameworks only assert when
-  driven by their own runner — screenshot libraries are the classic case, where
-  the ordinary test task captures nothing and passes regardless — and a test
+  driven by their own runner (screenshot libraries are the classic case, where
+  the ordinary test task captures nothing and passes regardless) and a test
   asserting on pixels, layout or graphics passes the same way against a stub that
   draws nothing. Introduce a visible defect; if the check does not notice, it was
   never looking.
@@ -71,35 +71,35 @@ command pass?", this one asks "would it have caught the bug?".
   invocation*, not just in a local one-off command.
 - **A check that shares its rule with what it checks proves nothing.** A scan that
   confirms a regex by running that regex counts its own false positives as
-  confirmations. Validate with a DIFFERENT rule — the near-miss it must not match,
+  confirmations. Validate with a DIFFERENT rule: the near-miss it must not match,
   or the side you did not count.
 - **Mutate every SHAPE the check's matcher can meet, not one instance of one
   shape.** A check that recognises its subject by pattern is only proved against
   the patterns you fed it, and the ones you skip are exactly where it is blind.
   A CI guard comparing two lists of command-line flags was proved by changing a
   flag that takes a value, went red, and shipped; its matcher required an `=`, so
-  every valueless flag in the same list — `--verify`, `--merge` — drifted past it
+  every valueless flag in the same list (`--verify`, `--merge`) drifted past it
   reporting a match. One mutation per shape the pattern admits: with a value and
   without, at the start of a line and mid-line, quoted and bare.
-- **Delete ONE occurrence, not all.** A rule stated twice by design — a policy's
+- **Delete ONE occurrence, not all.** A rule stated twice by design (a policy's
   `USING` and its `WITH CHECK`, a value repeated per environment, a guard in both
-  branches of a fork — survives a presence assertion (`toContain`, `grep -q`)
+  branches of a fork) survives a presence assertion (`toContain`, `grep -q`)
   when either half is removed, so the mutation that should go red stays green.
   Assert the COUNT, then mutate each occurrence in turn. The halves usually do
   different work: an admin who cannot edit their own row under `USING` but whose
   `WITH CHECK` forgot to say so can still write one.
 - **A run that read nothing reports perfectly.** Over an empty input set every
-  assertion holds — 0 failures, all green, indistinguishable from a clean run.
+  assertion holds: 0 failures, all green, indistinguishable from a clean run.
   Assert on the INPUT count (files opened, rows read) before believing the result:
   a partial run produces a believable figure and gets quoted.
 
 ## When to STOP
 
-- **Test-driven work** — the test was already seen failing; do not redo it.
+- **Test-driven work**: the test was already seen failing; do not redo it.
 - **Breaking it is unsafe or irreversible** (production data, a live migration, a
   destructive deploy). Reason it through instead, and say plainly in the report that
   the check was not empirically falsified.
-- **Third-party check with a documented, trusted failure mode** — point at the
+- **Third-party check with a documented, trusted failure mode**: point at the
   documentation rather than staging a failure.
 - **The defect cannot be introduced without a large rewrite.** Say so; that itself
   suggests the check is coupled to something it should not be.

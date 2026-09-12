@@ -45,7 +45,7 @@ The deliverable is a role × capability matrix for the PR body.
    `begin`, not after.
 
 1. **Name the invariant and record it before touching anything.** One count on
-   the table the migration must *not* reach — `entries`, or whatever the change
+   the table the migration must *not* reach — `widgets`, or whatever the change
    claims to leave alone. Step 6 re-reads it after the rollback; without the
    number beforehand, "did that touch anything?" has no answer.
 

@@ -59,13 +59,54 @@ answers *when*; a plugin's version answers *what changed in it*.
 
 ## Five couplings that will not announce themselves
 
-**One dispatch promotes; tagging needs a second.** The release pull request
-auto-merges under `GITHUB_TOKEN`, and a push made with that token does not
-trigger workflows, so the `push: main` run that would tag never starts. The
-first dispatch leaves `main` promoted and the versions bumped with no tag; a
-second runs the tag job against it. The tell is `gh run list --workflow=Release`
-showing no `push` event for the merge, only the dispatch you asked for. Cost two
-dispatches on 2026-09-05, for `v2026.09.05.1`.
+**One dispatch promotes; tagging needs a second, until the App token is
+configured.** The release pull request auto-merges under `GITHUB_TOKEN`, and a
+push made with that token does not trigger workflows, so the `push: main` run
+that would tag never starts. The first dispatch leaves `main` promoted and the
+versions bumped with no tag; a second runs the tag job against it. The tell is
+`gh run list --workflow=Release` showing no `push` event for the merge, only the
+dispatch you asked for. Cost two dispatches on 2026-09-05, for `v2026.09.05.1`,
+and again on 2026-09-08 and 2026-09-09.
+
+**The same missing event also swallows issue closing**, which is the half nobody
+looks for. A squash commit saying `Closes #86` reached `main` with the promotion
+on 2026-09-08 and the issue was still open the next day, along with two others;
+all three were closed by hand. A keyword in a pull request body would not have
+helped either, because that path needs the pull request's base to be the default
+branch, and a feature pull request targets `develop`. Put the keyword in the
+commit message, then check the issue rather than assuming.
+
+Both of these are the same root cause and have one fix, below.
+
+## Releasing under an App token
+
+The workflow mints an installation token when a repository variable names the App
+and a secret holds its private key, and falls back to `GITHUB_TOKEN` when they
+are absent, so the pipeline is unchanged until the App exists. Creating it is the only manual step left in this repo's release path:
+
+1. **Settings > Developer settings > GitHub Apps > New GitHub App**, owned by the
+   same account as the repository. Homepage URL can be the repository. Uncheck
+   **Webhook > Active**; nothing here listens to one.
+2. Repository permissions: **Contents** read and write (push the tag and the
+   back-merge), **Pull requests** read and write (open and merge the promotion),
+   **Commit statuses** read and write (post `validate`), **Metadata** read, which
+   GitHub adds by itself.
+3. **Install** the App on this repository only, then generate a private key.
+4. Add one repository **variable** and one repository **secret**:
+   `RELEASE_APP_ID` as a variable (the numeric App ID, not the client ID) and
+   `RELEASE_APP_PRIVATE_KEY` as a secret (the whole `.pem`, `BEGIN` and `END`
+   lines included). The variable, not a secret, because the step that mints the
+   token is gated on that value and `secrets` is not an available context in a
+   step-level `if`; an App ID is not confidential in any case. Getting this
+   backwards leaves the step permanently skipped, which looks exactly like an App
+   that was never installed.
+
+Then one dispatch is enough, because the promotion's push raises the event the
+`push: main` trigger listens for, and a commit-message closing keyword closes its
+issue. The way to confirm it is working is not that a release succeeded, since a
+release succeeds either way: it is `gh run list --workflow=Release` showing a
+`push` event for the merge commit. Until that line appears, assume the fallback
+is still in use and tag with a second dispatch.
 
 
 **The propose job needs a repository setting that is off by default.** It opens
@@ -106,11 +147,30 @@ before diagnosing anything else, here or anywhere.
 
 That run gates nothing, which is why the propose job runs the two
 validators itself and posts the result as the `validate` status on the same
-head commit. Read a release PR's checks, not the Actions tab; and since
-2026-09-04 `ci.yml` ignores pull requests into `main` so the phantom row is not
-created at all. A hotfix PR into `main` from a branch other than `develop`
-therefore needs `validate` from a `workflow_dispatch` run on that branch, which
-lands on the same commit and satisfies protection.
+head commit. Read a release PR's checks, not the Actions tab.
+
+**The first fix for the phantom row broke the hotfix path, silently.** From
+2026-09-04, `ci.yml` excluded pull requests into `main` by branch, which removed
+the red row and also removed the only route by which *any other* pull request
+into `main` could obtain the `validate` context protection requires. A hotfix
+opened from a branch other than `develop` could not reach a mergeable state at
+all, and nothing said so: the check sits pending forever, which looks like a
+queue rather than a contradiction. It is the worst possible time for that, since
+a hotfix exists because something is already broken.
+
+Since 2026-09-11 the exclusion is a job-level condition instead of a branch
+filter: `ci.yml` runs on every pull request, and the `validate` job is skipped
+only on a pull request whose base is `main` and whose head is `develop`, which is
+the promotion and nothing else. The event check is part of the condition and not
+decoration: `github.base_ref` and `github.head_ref` are empty outside a pull
+request, so without it a push to `main` would still run the job by accident of
+two empty strings rather than by intent. A skipped job creates no check run, so the promotion still
+satisfies protection with the status the propose job posted, the Actions tab
+gains no red row, and every other pull request into `main` is checked the
+ordinary way. The general rule this violated is worth keeping in view: **a
+required context must be produced by something that runs on every pull request
+into that base**, and a branch filter, a path filter and a release-only job all
+break it the same way.
 
 ## Holding a release
 

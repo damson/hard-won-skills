@@ -1,7 +1,7 @@
 ---
 name: prove-a-procedure-on-a-fixture
 description: >
-  Use before claiming that a documented procedure's commands work — a skill, a
+  Use before claiming that a documented procedure's commands work: a skill, a
   runbook, a README whose steps a reader pastes into a terminal. Fires on "this
   handles renames and deletions", "the block is paste-and-run", "the step is
   fixed", and on answering any review finding about embedded shell. Do NOT fire
@@ -50,7 +50,7 @@ works from one that reads as though it does.
    reader cannot run.
 
    Extracting rather than retyping is the whole of this step. Retyping silently
-   repairs what you are trying to test — a fixture that passes because you fixed
+   repairs what you are trying to test: a fixture that passes because you fixed
    a placeholder on the way in has proved nothing about the published text.
 
    ```bash
@@ -89,12 +89,12 @@ works from one that reads as though it does.
    hunts: an unset `$BLOCK` selects nothing, an unset `$REPO` silently drops the
    substitution, and a hard-coded filename runs the wrong document. The block
    runs *inside the fixture* for the same reason step 3 puts the fixture outside
-   your tree — a relative `git` or `rm` in the extracted text lands on whatever
+   your tree, because a relative `git` or `rm` in the extracted text lands on whatever
    directory it inherits, and inheriting your checkout is how a documentation
    check deletes real work.
 
-   The fence match accepts every spelling a shell block is written in — `bash`,
-   `sh` and `shell`, behind backticks or tildes — because a matcher narrower than
+   The fence match accepts every spelling a shell block is written in (`bash`,
+   `sh` and `shell`, behind backticks or tildes) because a matcher narrower than
    the documents it is pointed at reports "no block here" for a document full of
    them, and that reads as nothing to verify. It closes only on the fence
    character it opened with, so a block quoting the other one stays intact. It
@@ -132,8 +132,8 @@ works from one that reads as though it does.
    ```
 
    Extract and run its block by step 4, against the same fixture, and write both
-   answers down. Where there is no earlier revision — a procedure published for
-   the first time — there is nothing to compare: say the counterfactual was not
+   answers down. Where there is no earlier revision (a procedure published for
+   the first time), there is nothing to compare: say the counterfactual was not
    available, rather than reporting one you did not run.
 
 7. **Re-run against the text as published**, after the merge, not against your
@@ -160,12 +160,12 @@ works from one that reads as though it does.
 - **The procedure needs a credential, a paid service or a device** a fixture
   cannot stand in for. Say which step is unverified rather than verifying the
   cheap half and reporting the whole.
-- **The claim is about judgement, not behaviour** — when to escalate, whose
+- **The claim is about judgement, not behaviour**: when to escalate, whose
   call a merge is. There is nothing to run; review it as prose.
 - **CI already runs the procedure against the same awkward cases**, each with a
   recorded verdict. That is continuous proof and a fixture adds nothing; point
   at the job instead. A job that runs the procedure over an ordinary checkout is
-  not that — it proves the happy path and leaves every shape in step 2 unproven.
+  not that: it proves the happy path and leaves every shape in step 2 unproven.
 - **You did not write the document.** Extracted blocks run with your
   credentials, your network and your filesystem. Read one before running it, and
   run a block from outside your own repository somewhere disposable, or not at

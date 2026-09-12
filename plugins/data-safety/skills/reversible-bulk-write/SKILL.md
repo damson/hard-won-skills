@@ -16,7 +16,7 @@ A bulk write is judged by what you can undo, not by what you intended.
 ## Procedure
 
 1. **Name the invariant.** One measurable fact this write must NOT change, and
-   its value right now — "`entries` stays 1,541", "no row leaves `approved`".
+   its value right now — "`widgets` stays 1,541", "no row leaves `approved`".
    Record the number before touching anything. Without it, "did that go
    correctly?" has no answer, only a vibe.
    - Default when nothing obvious presents itself: `count(*)` on the table the
@@ -51,7 +51,7 @@ A bulk write is judged by what you can undo, not by what you intended.
    something other than what ran.
 
 5. **Report both numbers** — before and after, plus the invariant. "Queue
-   598 → 2,371, `entries` unchanged at 1,541" is a verifiable claim;
+   598 → 2,371, `widgets` unchanged at 1,541" is a verifiable claim;
    "imported successfully" is not.
 
 ## Sharp edges

@@ -32,10 +32,10 @@ It deliberately does **not** fire for:
 
 The deliverable is a report of both numbers, not an adjective:
 
-> Queue 598 → 2,371, `entries` unchanged at 1,541.
+> Queue 598 → 2,371, `widgets` unchanged at 1,541.
 
 That is a verifiable claim; "imported successfully" is not. The invariant
-(`entries` stays 1,541) was recorded *before* the write; the projected count
+(`widgets` stays 1,541) was recorded *before* the write; the projected count
 (2,371) came from a dry run of every stage before any stage applied; and the
 rollback existed first, scoped to what this operation created (a batch id, an
 `intake_source`, a timestamp window), never a bare `delete from <table>`.
