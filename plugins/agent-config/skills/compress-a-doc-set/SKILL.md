@@ -52,6 +52,12 @@ Decide the owner by what the file is *for*, not by which copy reads best:
 reference explains, checklists assert, procedures order, READMEs route. The
 other copies become a link, or go.
 
+Where a file is genuinely two of those, **the owner is the file a reader has
+open at the moment they need the fact.** A safety rule needed while running a
+procedure lives in the procedure, even though a reference file also explains
+it. When that still ties, the more specific file wins over the more general
+one, because a reader arrives at the general one only by search.
+
 **This step is the compression.** Expect most of the reduction here.
 
 ### 4. Ask what should not exist at all
@@ -72,15 +78,25 @@ transitions and the sentence that announces what the next sentence will say.
 ### 6. Enforce it mechanically, and see the guard fail once
 
 A cap the linter checks, so the next contributor cannot undo this by accident.
-Prove it can fail before trusting it: pad a file past the cap, watch it go red,
-remove the padding.
+
+Set the cap from the set you just cut, not from taste: take the longest file
+that survived step 5 and round up. A cap below a file you decided to keep makes
+the guard wrong on day one and teaches everyone to ignore it.
 
 ```bash
+CAP=$(git ls-files '*.md' | xargs wc -l | awk '$2!="total"{print $1}' \
+        | sort -n | tail -1)                     # the longest survivor
+CAP=$(( (CAP + 9) / 10 * 10 ))                   # round up to a readable number
+echo "cap: $CAP"
+
 for f in $(git ls-files '*.md'); do
   n=$(wc -l < "$f" | tr -d ' ')
   [ "$n" -le "$CAP" ] || echo "FAIL: $f: $n lines, over the $CAP-line cap"
 done
 ```
+
+Then prove it can fail: pad a file past the cap, watch it go red, remove the
+padding. A guard never seen failing is a guard nobody has tested.
 
 ### 7. Report the delta, and what you refused to cut
 
