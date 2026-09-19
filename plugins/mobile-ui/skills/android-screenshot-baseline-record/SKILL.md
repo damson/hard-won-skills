@@ -77,9 +77,18 @@ second. Two conventions, and the obvious filter fails differently under each:
 `*Foo*Screenshot*` catches both pairs. The silent row is the dangerous one, and
 it is the one neither the task output nor the file list will mention.
 
-Grep the test source for `^class .*Screenshot` before choosing the pattern: a
-file listing is not a class listing, and the variant you are missing is usually
-inside a file you already looked at.
+List the classes before choosing the pattern. A file listing is not a class
+listing, and the variant you are missing is usually inside a file you already
+looked at:
+
+```bash
+grep -rnE '^[[:space:]]*(internal |private )?class .*Screenshot' \
+  "<module>/src/test" --include='*.kt'
+```
+
+The leading-whitespace class and the optional modifiers matter: an anchored
+`^class` misses a declaration that is indented or marked `internal`, and
+missing one is the failure this whole paragraph is about.
 
 `--tests` narrows which tests *run*, not which baselines get *written*. Screenshot plugins commonly re-emit every golden the module owns, so expect all their mtimes to move even on a single-test re-record. The filter is still worth passing — it is just not the thing that makes step 4's answer trustworthy.
 

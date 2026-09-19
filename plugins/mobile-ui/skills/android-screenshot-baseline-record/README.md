@@ -44,7 +44,8 @@ Recording a first baseline for a new `BadgeScreenshotTest` in `:library:ui`:
    fresh renders; `--rerun-tasks` does not clear them), then the record task
    under a pattern wide enough to catch theme-variant siblings, which often
    share one file and one abstract base
-   with `--tests "…BadgeScreenshotTest*"`.
+   with `--tests "…*Badge*Screenshot*"`, wide enough to catch a theme-variant
+   sibling class such as `BadgeLightScreenshotTest`.
 4. **Prove it wrote something**: `git status --short "$BASE"` is the command
    that matters, because it separates the three outcomes:
    - `??`: a new baseline was written (what we want here)
