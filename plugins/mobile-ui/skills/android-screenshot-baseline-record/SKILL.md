@@ -64,6 +64,15 @@ Note the count. Without a before-number, "it recorded" is unfalsifiable.
 
 `:clean` first. Screenshot plugins copy from an intermediates directory into the baseline directory, and a stale render left there by an earlier run is copied over the fresh one. `--rerun-tasks` and `--no-build-cache` do **not** clear intermediates; only cleaning does.
 
+**Widen the pattern past the class you have in mind.** Theme variants are
+commonly two concrete classes over one abstract base, and they often sit in a
+single file named after only one of them: `FooScreenshotTest` and
+`FooLightScreenshotTest`. A filter of `*FooScreenshotTest*` cannot match the
+second, so the run reports BUILD SUCCESSFUL with one of the two goldens still
+missing, and neither the task output nor the file list says so. `*Foo*Screenshot*`
+catches both. Grep the test source for `^class .*Screenshot` before choosing the
+pattern: a file listing is not a class listing.
+
 `--tests` narrows which tests *run*, not which baselines get *written*. Screenshot plugins commonly re-emit every golden the module owns, so expect all their mtimes to move even on a single-test re-record. The filter is still worth passing — it is just not the thing that makes step 4's answer trustworthy.
 
 If the module has no `--tests` filter support for that task, run it unfiltered and rely on step 4 to tell you what actually changed.

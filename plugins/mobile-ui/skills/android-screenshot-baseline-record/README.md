@@ -42,6 +42,8 @@ Recording a first baseline for a new `BadgeScreenshotTest` in `:library:ui`:
    count. Without a before-number, "it recorded" is unfalsifiable.
 3. **Record scoped**: `:clean` first (stale intermediates get copied over
    fresh renders; `--rerun-tasks` does not clear them), then the record task
+   under a pattern wide enough to catch theme-variant siblings, which often
+   share one file and one abstract base
    with `--tests "…BadgeScreenshotTest*"`.
 4. **Prove it wrote something**: `git status --short "$BASE"` is the command
    that matters, because it separates the three outcomes:
