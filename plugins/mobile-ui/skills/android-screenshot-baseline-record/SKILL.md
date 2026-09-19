@@ -64,6 +64,36 @@ Note the count. Without a before-number, "it recorded" is unfalsifiable.
 
 `:clean` first. Screenshot plugins copy from an intermediates directory into the baseline directory, and a stale render left there by an earlier run is copied over the fresh one. `--rerun-tasks` and `--no-build-cache` do **not** clear intermediates; only cleaning does.
 
+**Widen the pattern past the class you have in mind.** Theme variants are
+commonly two concrete classes over one abstract base, and they often sit in a
+single file named after only one of them, so a file listing does not reveal the
+second. Two conventions, and the obvious filter fails differently under each:
+
+| Classes | `--tests "*FooScreenshotTest*"` | Failure |
+|---|---|---|
+| `FooScreenshotTest` + `FooLightScreenshotTest` | matches 1 of 2 | **silent**: BUILD SUCCESSFUL, half the goldens still missing |
+| `FooDarkScreenshotTest` + `FooLightScreenshotTest` | matches 0 of 2 | loud: the task fails with no tests found, or records nothing |
+
+`*Foo*Screenshot*` catches both pairs. The silent row is the dangerous one, and
+it is the one neither the task output nor the file list will mention.
+
+List the classes before choosing the pattern. A file listing is not a class
+listing, and the variant you are missing is usually inside a file you already
+looked at:
+
+```bash
+grep -rnE '^[[:space:]]*[a-z ]*class .*Screenshot' \
+  "<module>/src/test" --include='*.kt'
+```
+
+Match any modifiers rather than a bare `class`: an anchored `^class` misses a
+declaration that is indented or marked `internal`, `open` or `abstract`, and
+missing one is the failure this whole paragraph is about. The abstract base
+will appear in the output and is **not** selectable, since `--tests` cannot run
+a class it cannot instantiate. It is still the useful line: the concrete
+classes to filter on are the ones extending it, and seeing them together is
+what tells you how many there are.
+
 `--tests` narrows which tests *run*, not which baselines get *written*. Screenshot plugins commonly re-emit every golden the module owns, so expect all their mtimes to move even on a single-test re-record. The filter is still worth passing — it is just not the thing that makes step 4's answer trustworthy.
 
 If the module has no `--tests` filter support for that task, run it unfiltered and rely on step 4 to tell you what actually changed.
