@@ -82,13 +82,17 @@ listing, and the variant you are missing is usually inside a file you already
 looked at:
 
 ```bash
-grep -rnE '^[[:space:]]*(internal |private )?class .*Screenshot' \
+grep -rnE '^[[:space:]]*[a-z ]*class .*Screenshot' \
   "<module>/src/test" --include='*.kt'
 ```
 
-The leading-whitespace class and the optional modifiers matter: an anchored
-`^class` misses a declaration that is indented or marked `internal`, and
-missing one is the failure this whole paragraph is about.
+Match any modifiers rather than a bare `class`: an anchored `^class` misses a
+declaration that is indented or marked `internal`, `open` or `abstract`, and
+missing one is the failure this whole paragraph is about. The abstract base
+will appear in the output and is **not** selectable, since `--tests` cannot run
+a class it cannot instantiate. It is still the useful line: the concrete
+classes to filter on are the ones extending it, and seeing them together is
+what tells you how many there are.
 
 `--tests` narrows which tests *run*, not which baselines get *written*. Screenshot plugins commonly re-emit every golden the module owns, so expect all their mtimes to move even on a single-test re-record. The filter is still worth passing — it is just not the thing that makes step 4's answer trustworthy.
 
