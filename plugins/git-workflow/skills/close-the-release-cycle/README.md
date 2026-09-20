@@ -32,12 +32,16 @@ entry. The skill checks `gh release list` rather than trusting the merge.
 commit until the tag is moved, so a fix ships and does not arrive. Moving it is
 one `PATCH` with `force=true`, and it is invisible if skipped.
 
-**A skipped or squashed back-merge.** A promotion merged with `--squash` puts a
-commit on the release branch that the integration branch holds no ancestor of.
-Both trees still match, so nothing looks wrong until the *next* promotion opens
-as `CONFLICTING`, one release later, in a PR unrelated to the mistake. The skill
+**A squashed promotion.** Merged with `--squash`, it puts a commit on the
+release branch that the integration branch holds no ancestor of. Both trees
+still match, so nothing looks wrong until the *next* promotion opens as
+`CONFLICTING`, one release later, in a PR unrelated to the mistake. The skill
 merges promotions with a merge commit and treats a conflicting promotion as
 evidence of an earlier unclosed cycle.
+
+A back-merge *skipped* after a merge-commit promotion is a different thing and
+usually harmless: it carries no content, and the skill says how to tell the two
+apart before spending a PR on it.
 
 ## Example
 
