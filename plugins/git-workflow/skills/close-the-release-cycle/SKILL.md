@@ -129,8 +129,10 @@ refuses to call it done on a signal that has not been checked.
      `required` for a healthy merge-commit repo as soon as work resumes.
 
    Both were run against a two-branch fixture carrying one merge-commit
-   promotion and one squashed promotion; only the `--no-merges` form separates
-   them, returning 0 and 1.
+   promotion and one squashed promotion. Only the `--no-merges` form separates
+   them: it prints **no lines** after the merge-commit promotion and **one
+   line**, the squash commit, after the squashed one. Read the output, not the
+   exit status, which is 0 either way.
 
    `bookkeeping` is the normal result of a **merge-commit** promotion: the
    release branch already contains the integration branch, the next promotion
@@ -141,7 +143,8 @@ refuses to call it done on a signal that has not been checked.
    nothing else.
 
    `required` means the release branch holds history the integration branch
-   cannot reach, which happens in exactly two ways:
+   cannot reach. Anything committed there and not merged back qualifies, a
+   revert or a version bump included; the two that produce it most often are:
 
    - the promotion was **squashed**, so the release branch holds a commit the
      integration branch has no ancestor of;
