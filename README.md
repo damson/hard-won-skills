@@ -11,7 +11,7 @@ you don't have to win them the hard way too.*
 [![Coverage](https://codecov.io/gh/damson/hard-won-skills/branch/develop/graph/badge.svg)](https://codecov.io/gh/damson/hard-won-skills/branch/develop)
 [![Made for Claude Code](https://img.shields.io/badge/made%20for-Claude%20Code-d97757.svg)](https://claude.com/claude-code)
 
-👋 **Welcome!** This is a marketplace of **44 skills in 6 themed plugins**:
+👋 **Welcome!** This is a marketplace of **45 skills in 6 themed plugins**:
 small, careful procedures your agent picks up automatically when a task calls
 for them: rebasing a stack of PRs without losing one, proving a screenshot test
 actually compared pixels, probing a migration without leaving a trace.
@@ -59,7 +59,7 @@ example; start with any link below.
 | Plugin | Skills | What it is for |
 |---|---|---|
 | **[git-workflow](plugins/git-workflow/README.md)** | 17 | Branch, worktree and pull-request hygiene |
-| **[agent-config](plugins/agent-config/README.md)** | 9 | Writing and auditing agent instruction files |
+| **[agent-config](plugins/agent-config/README.md)** | 10 | Writing and auditing agent instruction files |
 | **[verification](plugins/verification/README.md)** | 6 | Proving a check can fail before trusting it |
 | **[data-safety](plugins/data-safety/README.md)** | 6 | Writes that are hard to undo |
 | **[mobile-ui](plugins/mobile-ui/README.md)** | 5 | Android / Compose screenshots, Figma components, on-device checks |
@@ -118,12 +118,14 @@ merge looking reviewed when nothing read them.
 ### agent-config
 
 Audit a `CLAUDE.md` stack for contradictions and duplication, keep a config file
-a pointer rather than a copy of its sibling, notice when a repeated instruction
+a pointer rather than a copy of its sibling, cut a doc set that has grown by
+finding the facts written in three places, notice when a repeated instruction
 should become a skill, validate a skill against a real project before trusting
 it, capture a long session's learnings before compacting, and turn a finding
 about one page into a checked answer about every page like it.
 
 [`agent-config-audit`](plugins/agent-config/skills/agent-config-audit/README.md) ·
+[`compress-a-doc-set`](plugins/agent-config/skills/compress-a-doc-set/README.md) ·
 [`claude-md-pointer-check`](plugins/agent-config/skills/claude-md-pointer-check/README.md) ·
 [`redundancy-check-before-ship`](plugins/agent-config/skills/redundancy-check-before-ship/README.md) ·
 [`skill-opportunity-finder`](plugins/agent-config/skills/skill-opportunity-finder/README.md) ·

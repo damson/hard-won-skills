@@ -1,6 +1,6 @@
 # agent-config
 
-Writing and auditing agent instruction files: eight skills for keeping a
+Writing and auditing agent instruction files: ten skills for keeping a
 `CLAUDE.md` stack honest, and for noticing when a session has taught you
 something worth writing down.
 
@@ -22,6 +22,7 @@ consent-gated: they evaluate *you*, so they never fire unsolicited.
 | Skill | What it does |
 |---|---|
 | [`agent-config-audit`](skills/agent-config-audit/README.md) | Resolve which instruction files actually load, then audit the stack for contradictions, duplication, bloat and boundary violations |
+| [`compress-a-doc-set`](skills/compress-a-doc-set/README.md) | Cut a doc set that has grown: duplicated facts and whole files first, prose last, with the delta measured |
 | [`claude-md-pointer-check`](skills/claude-md-pointer-check/README.md) | Before writing a CLAUDE.md: if a sibling already covers it, write a pointer plus the Claude-only delta, not a copy |
 | [`redundancy-check-before-ship`](skills/redundancy-check-before-ship/README.md) | Before committing prose rules: grep each added rule against what the reader already has loaded, ship only the net-new |
 | [`skill-opportunity-finder`](skills/skill-opportunity-finder/README.md) | Spot the instruction you've repeated three times and propose the skill it should become |
