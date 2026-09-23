@@ -127,12 +127,32 @@ working may have opened a pull request minutes ago, and a rescue then lands a
 staler copy of the same lines, to be closed later as superseded:
 
 ```bash
-gh pr list --state open --search '<a distinctive phrase from the file>'
+# --search reads titles, bodies and comments, never the changed lines, so ask
+# each open pull request for its own diff instead
+found=""
+for n in $(gh pr list --state open --json number --jq '.[].number'); do
+  if gh pr diff "$n" 2>/dev/null | grep -qF '<a distinctive phrase from the file>'
+    then echo "#$n carries it"; found=y
+  fi
+done
+# say the empty case out loud: silence here is the answer that sends you on to
+# rescue the file, so it should never be indistinguishable from a command that
+# did not run
+[ -n "$found" ] || echo "no open pull request carries it"
 ```
 
-A hit means the content is theirs to finish and yours to leave alone. This costs
-one call and is the only check here that can tell a live writer from a stopped
-one, because it reads what they did rather than when a file was touched.
+A hit means the content is theirs to finish and yours to leave alone. This is the
+only check here that can tell a live writer from a stopped one, because it reads
+what they did rather than when a file was touched, and it costs one call per open
+pull request rather than one call in total.
+
+**Do not reach for `gh pr list --search` here**, which is the obvious form and
+the wrong one: its index covers titles, bodies and comments, so a phrase that
+exists only in a diff returns nothing, with exit status `0` and no output. The
+step then reports "nobody has published it" and sends you on to rescue the file,
+which is the destructive answer, on the exact case this check was added to catch.
+`grep -qF` rather than `-q`, because a fragment of code usually contains
+characters a regex would read as syntax.
 
 ```bash
 stat -f '%Sm %N' <paths>   # BSD/macOS
