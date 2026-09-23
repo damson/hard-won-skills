@@ -38,8 +38,12 @@ conditions.
   approval for every target, and is triggered either by an argument to the skill
   (`prompt-all`, `--prompt-all`, `ask-all`) or by a plain-language request in the
   same invocation: "ask me about everything", "prompt for all", "review each
-  one", "don't write anything without asking". No mode runs the other way: there
-  is no setting that makes a skill apply itself.
+  one", "don't write anything without asking". Those are examples of the intent,
+  not a list to match exactly. **Read the invocation for the intent, and resolve
+  anything arguable towards prompt-all**, because the two mistakes are not
+  equal: reading a plain "auto" as prompt-all costs a question, and missing a
+  request to be asked writes to the user's files against their stated wish. No
+  mode runs the other way: there is no setting that makes a skill apply itself.
 - Defer (one line, then stop) if a high-stakes op is in flight: scan the last
   ~5 turns for a deploy / merge / rebase / migration / incident command whose
   completion was never confirmed (confirmed = its success output is in the
@@ -60,8 +64,15 @@ missed one costs nothing. For each keeper, pick a target, **versioned first**:
 |---|---|---|
 | `CLAUDE.md` / `AGENTS.md` (team-shared) | Repo-wide facts future sessions need | 3, always ask |
 | personal preference files, the ones `readlink ~/.claude/*.md` resolves into the config repo (none resolving → no such layer exists; route to memory) | Personal cross-project preferences | 3, always ask |
-| ordinary documentation: a file under `docs/`, a reference page, a sibling `README.md` | Procedure and rationale too long for an instruction file | 2, auto |
+| ordinary documentation: a file under `docs/`, a doc it links to, a sibling `README.md` | Procedure and rationale too long for an instruction file | 2, auto |
 | memory store (`~/.claude/…/memory/`), **last** | Durable facts fitting no versioned file (un-versioned, lowest priority) | 1, auto |
+
+**An instruction file is class 3 wherever it sits.** A `CLAUDE.md` or `AGENTS.md`
+inside `docs/` is still an instruction file, and a `docs/` page an instruction
+file imports is still class 2: the class follows what a file IS and what loads
+it, never the directory it happens to live in. Decide it by asking whether an
+agent reads this file at the start of every session, and when that is genuinely
+unclear, treat it as class 3 and ask.
 
 The class decides who applies the line, never where it belongs: route by the
 table's middle column first, then read the class off the row you landed on.
@@ -94,7 +105,7 @@ the same classes as Step 2's routing table, and sort it before touching a file:
 | Class | Target | Outcome |
 |---|---|---|
 | 1. Memory | the memory store | Apply automatically when it clears the bar below, else discard |
-| 2. Ordinary documentation | a file under `docs/`, a reference page, a sibling `README.md` | Apply automatically when it clears the bar below, else discard |
+| 2. Ordinary documentation | a file under `docs/`, a doc it links to, a sibling `README.md` | Apply automatically when it clears the bar below, else discard |
 | 3. Agent instruction files | `CLAUDE.md`, `AGENTS.md`, a personal preference file | **Always ask**, with the audit in hand (below). A candidate that fails the keep-test is discarded rather than asked about |
 | 4. Skills | a new or materially changed `SKILL.md` | **Always ask** (Step 7 owns the procedure) |
 
@@ -180,7 +191,7 @@ After applying:
   first read), conciseness (nothing restated), completeness (no undefined
   branch), consistency (no two rules disagree), actionability (every step maps
   to a command or edit). Anchors: 5 = no violation found; 4 = one minor; 3 =
-  a violation a future session would trip on; 2–1 = actively misleading. Map
+  a violation a future session would trip on; 2 or 1 = actively misleading. Map
   the /25 total as the harness does: A ≥ 23, B ≥ 20, C ≥ 17, D ≥ 14, else F.
 - A score regression or a violated repo rule (a file kept as a one-line pointer
   fattened, a character the repo's lint bans, anything a secret scanner would
@@ -249,8 +260,10 @@ happened without having been asked:
 - **Applied after approval**: every instruction-file change (with the audit
   state it was prompted under: audited, audit unavailable, audit skipped for
   time), every skill created, and in prompt-all everything else.
-- **Discarded**: the candidate in a few words, and which half of the bar it
-  failed.
+- **Discarded**: the candidate in a few words, and why. For a memory or
+  documentation candidate that is which half of the bar it failed; for any
+  candidate of any class it may instead be that the keep-test refused it, which
+  happens before the bar is ever applied.
 
 Then the scores, the memory entries written, any declined skill suggestions, and
 the resume-brief path. Then say:
