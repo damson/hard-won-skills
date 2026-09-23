@@ -122,6 +122,52 @@ because the checkout had not been fast-forwarded.
 Rescuing a file mid-edit lands half a thought and, worse, the writer's next save
 silently reverts your commit.
 
+**First ask whether they have already published it.** A writer who is still
+working may have opened a pull request minutes ago, and a rescue then lands a
+staler copy of the same lines, to be closed later as superseded:
+
+```bash
+# --search reads titles, bodies and comments, never the changed lines, so ask
+# each open pull request for its own diff instead
+# an unavailable `gh` must not read as "nothing published": that is the same
+# silence, arriving one step earlier
+if ! command -v gh >/dev/null 2>&1 || ! gh auth status >/dev/null 2>&1
+  then echo "gh missing or unauthenticated: this check did NOT run and is not evidence"
+  else
+    found=""
+    for n in $(gh pr list --state open --json number --jq '.[].number'); do
+      if gh pr diff "$n" 2>/dev/null | grep -qF '<a distinctive phrase from the file>'
+        then echo "#$n carries it"; found=y
+      fi
+    done
+    [ -n "$found" ] || echo "no open pull request carries it"
+fi
+```
+
+A hit means the content is theirs to finish and yours to leave alone. This is the
+only check here that can tell a live writer from a stopped one, because it reads
+what they did rather than when a file was touched, and it costs one call per open
+pull request rather than one call in total.
+
+Where it says it did not run, it has told you nothing and the timestamp checks
+below carry the whole decision on their own, so treat the writer as possibly live
+rather than as absent.
+
+Read the hit before acting on it, and know what the query does not cover. It
+matches any open pull request carrying that text, so a common line can match
+somebody else's work, which costs you a rescue you could have made. It asks for
+open ones only, so a pull request closed an hour ago, often the sign of a writer
+mid-rework, does not appear at all, and that is the direction that costs you the
+file.
+
+**Do not reach for `gh pr list --search` here**, which is the obvious form and
+the wrong one: its index covers titles, bodies and comments, so a phrase that
+exists only in a diff returns nothing, with exit status `0` and no output. The
+step then reports "nobody has published it" and sends you on to rescue the file,
+which is the destructive answer, on the exact case this check was added to catch.
+`grep -qF` rather than `-q`, because a fragment of code usually contains
+characters a regex would read as syntax.
+
 ```bash
 stat -f '%Sm %N' <paths>   # BSD/macOS
 stat -c '%y %n' <paths>    # GNU
