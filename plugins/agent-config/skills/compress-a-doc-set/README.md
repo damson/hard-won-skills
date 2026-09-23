@@ -38,10 +38,16 @@ Should not exist (step 4)
   prompts/  (4 files, 210 lines) duplicated four installed skills
   famous-projects.md (44 lines) marked inferred, never verified
 
-Result: 1744 → 854 lines, cap of 100 lines/file enforced in CI
+Result: 991 → 854 lines in this round, 1744 → 854 across all three
+Cap of 100 lines/file enforced in CI
 ```
 
-The two prose rounds together found less than the duplication pass did alone.
+The two prose rounds removed 753 lines and this one removed 137, so the
+duplication pass was not the larger haul. It was the one that could reach what
+the other two had walked past twice: a directory duplicating four installed
+skills is invisible to any amount of sentence tightening, and it was still there
+after two rounds of looking. That is the argument for the order, and it is about
+what each pass can see rather than how much it removes.
 
 Two judgement calls it encodes: repetition is sometimes load-bearing, so a
 one-way-line safety fact stated in the checklist a person actually runs is kept
