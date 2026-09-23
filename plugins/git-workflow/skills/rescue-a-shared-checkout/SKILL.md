@@ -129,22 +129,29 @@ staler copy of the same lines, to be closed later as superseded:
 ```bash
 # --search reads titles, bodies and comments, never the changed lines, so ask
 # each open pull request for its own diff instead
-found=""
-for n in $(gh pr list --state open --json number --jq '.[].number'); do
-  if gh pr diff "$n" 2>/dev/null | grep -qF '<a distinctive phrase from the file>'
-    then echo "#$n carries it"; found=y
-  fi
-done
-# say the empty case out loud: silence here is the answer that sends you on to
-# rescue the file, so it should never be indistinguishable from a command that
-# did not run
-[ -n "$found" ] || echo "no open pull request carries it"
+# an unavailable `gh` must not read as "nothing published": that is the same
+# silence, arriving one step earlier
+if ! command -v gh >/dev/null 2>&1 || ! gh auth status >/dev/null 2>&1
+  then echo "gh missing or unauthenticated: this check did NOT run and is not evidence"
+  else
+    found=""
+    for n in $(gh pr list --state open --json number --jq '.[].number'); do
+      if gh pr diff "$n" 2>/dev/null | grep -qF '<a distinctive phrase from the file>'
+        then echo "#$n carries it"; found=y
+      fi
+    done
+    [ -n "$found" ] || echo "no open pull request carries it"
+fi
 ```
 
 A hit means the content is theirs to finish and yours to leave alone. This is the
 only check here that can tell a live writer from a stopped one, because it reads
 what they did rather than when a file was touched, and it costs one call per open
 pull request rather than one call in total.
+
+Where it says it did not run, it has told you nothing and the timestamp checks
+below carry the whole decision on their own, so treat the writer as possibly live
+rather than as absent.
 
 **Do not reach for `gh pr list --search` here**, which is the obvious form and
 the wrong one: its index covers titles, bodies and comments, so a phrase that
