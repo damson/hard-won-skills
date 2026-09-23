@@ -122,6 +122,18 @@ because the checkout had not been fast-forwarded.
 Rescuing a file mid-edit lands half a thought and, worse, the writer's next save
 silently reverts your commit.
 
+**First ask whether they have already published it.** A writer who is still
+working may have opened a pull request minutes ago, and a rescue then lands a
+staler copy of the same lines, to be closed later as superseded:
+
+```bash
+gh pr list --state open --search '<a distinctive phrase from the file>'
+```
+
+A hit means the content is theirs to finish and yours to leave alone. This costs
+one call and is the only check here that can tell a live writer from a stopped
+one, because it reads what they did rather than when a file was touched.
+
 ```bash
 stat -f '%Sm %N' <paths>   # BSD/macOS
 stat -c '%y %n' <paths>    # GNU
