@@ -122,6 +122,52 @@ because the checkout had not been fast-forwarded.
 Rescuing a file mid-edit lands half a thought and, worse, the writer's next save
 silently reverts your commit.
 
+**First ask whether they have already published it.** A writer who is still
+working may have opened a pull request minutes ago, and a rescue then lands a
+staler copy of the same lines, to be closed later as superseded:
+
+```bash
+# --search reads titles, bodies and comments, never the changed lines, so ask
+# each open pull request for its own diff instead
+# an unavailable `gh` must not read as "nothing published": that is the same
+# silence, arriving one step earlier
+if ! command -v gh >/dev/null 2>&1 || ! gh auth status >/dev/null 2>&1
+  then echo "gh missing or unauthenticated: this check did NOT run and is not evidence"
+  else
+    found=""
+    for n in $(gh pr list --state open --json number --jq '.[].number'); do
+      if gh pr diff "$n" 2>/dev/null | grep -qF '<a distinctive phrase from the file>'
+        then echo "#$n carries it"; found=y
+      fi
+    done
+    [ -n "$found" ] || echo "no open pull request carries it"
+fi
+```
+
+A hit means the content is theirs to finish and yours to leave alone. This is the
+only check here that can tell a live writer from a stopped one, because it reads
+what they did rather than when a file was touched, and it costs one call per open
+pull request rather than one call in total.
+
+Where it says it did not run, it has told you nothing and the timestamp checks
+below carry the whole decision on their own, so treat the writer as possibly live
+rather than as absent.
+
+Read the hit before acting on it, and know what the query does not cover. It
+matches any open pull request carrying that text, so a common line can match
+somebody else's work, which costs you a rescue you could have made. It asks for
+open ones only, so a pull request closed an hour ago, often the sign of a writer
+mid-rework, does not appear at all, and that is the direction that costs you the
+file.
+
+**Do not reach for `gh pr list --search` here**, which is the obvious form and
+the wrong one: its index covers titles, bodies and comments, so a phrase that
+exists only in a diff returns nothing, with exit status `0` and no output. The
+step then reports "nobody has published it" and sends you on to rescue the file,
+which is the destructive answer, on the exact case this check was added to catch.
+`grep -qF` rather than `-q`, because a fragment of code usually contains
+characters a regex would read as syntax.
+
 ```bash
 stat -f '%Sm %N' <paths>   # BSD/macOS
 stat -c '%y %n' <paths>    # GNU
@@ -200,13 +246,66 @@ diff -q <source> <copy> || echo "MISMATCH"
 Cheap, and it catches an editor that reflowed on save or a copy that silently
 truncated. Byte-identical or start again.
 
-### 5. Re-check the source before you open anything
+### 5. Audit what you are about to land, against the branch itself
+
+Step 1 asked whether each path differs from the branch. Nothing so far has asked
+whether what a path *says* is already on the branch somewhere else, and that is
+the duplicate a rescue produces on its own: a hunk correctly classified `AHEAD`,
+landed at its own path, while the same guidance has sat at a different path for
+weeks.
+
+Ask the fetched remote ref, never a checkout that happens to be nearby. A clone
+49 commits behind answered "nothing is duplicated" about a policy its own branch
+had carried for three releases, and that answer reads exactly like a thorough
+search.
+
+```bash
+# Name the ref. A grep with no ref reads the INDEX, which by now holds the
+# rescue: a tracked hunk matches itself and reads as a duplicate, while an
+# untracked copy is not searched at all and reads as new. Both answers are
+# about your own copy rather than about the branch.
+# -F, because a fragment of prose or code contains characters a regex reads as
+# syntax.
+git -C "$DEST" fetch "$REMOTE" --quiet
+while IFS= read -r phrase; do
+  hits=$(git -C "$DEST" grep -lF -- "$phrase" "$REMOTE/$BASE" 2>/dev/null)
+  if [ -n "$hits" ]
+    then printf 'DUPLICATE? %s\n%s\n' "$phrase" "$hits"
+    else echo "NEW       $phrase"
+  fi
+done < "$PHRASES"   # two or three distinctive sentences per rescued hunk, one per line
+```
+
+A hit at the rescued path itself is that file's own earlier copy. A hit anywhere
+else is the finding, and every one is read before it is acted on: a phrase
+generic enough to match twice was never evidence of anything.
+
+Each rescued hunk then lands in one of three states, and only the first is a
+commit:
+
+| Verdict | What the branch holds | What to do with the hunk |
+|---|---|---|
+| `NEW` | nothing like it | land it, with step 8's honesty note |
+| `DUPLICATE` | the same content, elsewhere | leave it out, and cite where it already lives in the pull request |
+| `STALE` | a premise the draft was written before | file it as an issue quoting the draft, rather than landing prose the branch contradicts |
+
+`STALE` has no grep behind it: it is a judgement about a premise, and the cheap
+version of that judgement is to resolve what the draft names. A path, a flag or
+a command the branch no longer carries dates the draft on its own, and
+`git cat-file -e "$REMOTE/$BASE:<path>"` settles a path in one call.
+
+**Audit, do not edit.** The rescued words are somebody else's claim, and
+rewriting them to fit the branch lands your sentences under their name, which is
+exactly what step 8 exists to prevent. A finding belongs in the pull request
+body, where the writer can answer it.
+
+### 6. Re-check the source before you open anything
 
 Between the copy and the push, the writer may have moved. Re-run step 4: an
 unchanged source means the branch captures everything, and that sentence belongs
 in the pull request rather than being assumed.
 
-### 6. Land the rescue branch from the worktree, never from the shared tree
+### 7. Land the rescue branch from the worktree, never from the shared tree
 
 Chain it, so a failed stage or a rejected push cannot be followed by a pull
 request describing work that never left the machine, and give `commit` its
@@ -219,7 +318,7 @@ git -C "$DEST" add -A &&
   gh pr create --base "$BASE" --head <branch>
 ```
 
-### 7. Attribute honestly, and mark what you cannot verify
+### 8. Attribute honestly, and mark what you cannot verify
 
 The claims in rescued work were made by someone with context you do not have.
 Land them as reported, and put the limit in the pull request as an unticked box,
@@ -232,7 +331,7 @@ where an unticked box is the point rather than an omission:
 
 A rescued claim asserted as your own finding is worse than an unrescued file.
 
-### 8. Only then discard, and re-classify first
+### 9. Only then discard, and re-classify first
 
 After the branch merges, the shared tree's copies are usually **stale**, not
 ahead: review findings will have improved them on the branch. Stale and ahead
@@ -293,5 +392,8 @@ still has is not a superset, and discarding loses them.
   test that does not parse. Landing it commits a draft under your name.
 - **Everything classifies as LANDED.** There is nothing to rescue; fast-forward
   and say so in one line.
+- **Every rescued hunk audits as `DUPLICATE`.** The branch is already carrying
+  the work under another path, so there is nothing to land. Say where it lives
+  and close.
 - **The work belongs to someone else's branch or merge.** Report it; do not
   adopt commits whose history you were not asked to touch.

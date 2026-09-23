@@ -1,6 +1,6 @@
 # agent-config
 
-Writing and auditing agent instruction files: eight skills for keeping a
+Writing and auditing agent instruction files: ten skills for keeping a
 `CLAUDE.md` stack honest, and for noticing when a session has taught you
 something worth writing down.
 
@@ -22,12 +22,13 @@ consent-gated: they evaluate *you*, so they never fire unsolicited.
 | Skill | What it does |
 |---|---|
 | [`agent-config-audit`](skills/agent-config-audit/README.md) | Resolve which instruction files actually load, then audit the stack for contradictions, duplication, bloat and boundary violations |
+| [`compress-a-doc-set`](skills/compress-a-doc-set/README.md) | Cut a doc set that has grown: duplicated facts and whole files first, prose last, with the delta measured |
 | [`claude-md-pointer-check`](skills/claude-md-pointer-check/README.md) | Before writing a CLAUDE.md: if a sibling already covers it, write a pointer plus the Claude-only delta, not a copy |
 | [`redundancy-check-before-ship`](skills/redundancy-check-before-ship/README.md) | Before committing prose rules: grep each added rule against what the reader already has loaded, ship only the net-new |
 | [`skill-opportunity-finder`](skills/skill-opportunity-finder/README.md) | Spot the instruction you've repeated three times and propose the skill it should become |
 | [`validate-skill-against-real-project`](skills/validate-skill-against-real-project/README.md) | Run a portable skill's own commands against a real project: reading it is not testing it |
 | [`prompt-coach`](skills/prompt-coach/README.md) | Score your prompts on the 4Ds and propose one denser rewrite (on request only) |
-| [`save-before-compact`](skills/save-before-compact/README.md) | Before compacting a long session: route each learning to its right home, per-item approved, then write a resume brief |
+| [`save-before-compact`](skills/save-before-compact/README.md) | Before compacting a long session: route each learning to its right home, applying memory and docs automatically and asking before any instruction file or skill, then write a resume brief |
 | [`session-retro`](skills/session-retro/README.md) | One end-of-session report from three lenses (prompting, skill opportunities, CLAUDE.md currency), applying nothing |
 | [`sweep-the-siblings`](skills/sweep-the-siblings/README.md) | Turn one review finding into a checked answer about every sibling file: quote the rule, sweep for candidates, read each one, publish both counts |
 

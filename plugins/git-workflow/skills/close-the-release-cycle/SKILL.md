@@ -108,9 +108,52 @@ refuses to call it done on a signal that has not been checked.
    gh api -X PATCH repos/<owner>/<repo>/git/refs/tags/<vX> -f sha="$sha" -F force=true
    ```
 
-6. **Bring the promotion commit back.** It exists only on the release branch,
-   and the branches drift from that moment on. Some repos open this PR
-   automatically on a push to the release branch; check before opening a second.
+6. **Bring the promotion commit back, once you have checked it carries
+   something.** Whether this step matters at all is decided by how the
+   promotion merged, so measure before performing it:
+
+   ```bash
+   # non-merge commits the release branch holds and the integration branch cannot reach
+   git log <main> --not <develop> --no-merges --oneline
+   ```
+
+   Empty is `bookkeeping`; any line is `required`, and the line names the commit
+   that is stranded. **Two more obvious tests both give the wrong answer**, which
+   is why this trap survives:
+
+   - `git diff <develop> <main>` is **empty after a squashed promotion**, because
+     a squash reproduces the tree exactly. The content test reports "nothing
+     stranded" in the one case that most needs the back-merge.
+   - `git merge-base --is-ancestor <develop> <main>` is true only in the moment
+     between the promotion and the integration branch's next commit, so it says
+     `required` for a healthy merge-commit repo as soon as work resumes.
+
+   Both were run against a two-branch fixture carrying one merge-commit
+   promotion and one squashed promotion. Only the `--no-merges` form separates
+   them: it prints **no lines** after the merge-commit promotion and **one
+   line**, the squash commit, after the squashed one. Read the output, not the
+   exit status, which is 0 either way.
+
+   `bookkeeping` is the normal result of a **merge-commit** promotion: the
+   release branch already contains the integration branch, the next promotion
+   therefore cannot conflict, and the back-merge carries no content. Measured
+   across 17 consecutive releases of one repository, every back-merge moved
+   **zero file changes**. Taking it keeps the branches reading `identical`;
+   skipping it leaves the release branch ahead by merge commits and costs
+   nothing else.
+
+   `required` means the release branch holds history the integration branch
+   cannot reach. Anything committed there and not merged back qualifies, a
+   revert or a version bump included; the two that produce it most often are:
+
+   - the promotion was **squashed**, so the release branch holds a commit the
+     integration branch has no ancestor of;
+   - a **hotfix was authored on the release branch**, which gitflow allows and
+     many repos forbid by policy.
+
+   Where either applies, bring it back now rather than letting the next release
+   surface it as a conflict. Some repos open this PR automatically on a push to
+   the release branch; check before opening a second.
 
    ```bash
    gh pr list --base <develop> --head <main> --json number --jq '.[].number'
@@ -122,8 +165,15 @@ refuses to call it done on a signal that has not been checked.
    a real omission:
 
    ```bash
-   # expect identical or ahead; behind or diverged means the back-merge did not land
-   gh api repos/<owner>/<repo>/compare/<main>...<develop> --jq .status
+   # `status` answers a different question depending on step 6. Having taken
+   # it: expect identical or ahead, and `behind` means the back-merge did not
+   # land. Having deliberately skipped it: `behind` holds only until the
+   # integration branch takes its next commit, and after that `diverged` is the
+   # permanent resting state, so the field stops carrying information. Read the
+   # FILE COUNT, which answers the same question under both regimes: zero files
+   # means the branches carry the same content whatever the shape says
+   gh api repos/<owner>/<repo>/compare/<main>...<develop> \
+     --jq '{status, files: (.files | length)}'
    gh release view <vX.Y.Z> --json tagName,targetCommitish
 
    # both of these are the commit, for an annotated tag as well as a lightweight
