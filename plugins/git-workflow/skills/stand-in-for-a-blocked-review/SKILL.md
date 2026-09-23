@@ -6,10 +6,12 @@ description: >
   the pull request over who opened it, or never ran at all, and its status says
   success anyway. Confirms the review is genuinely missing, takes the cheap
   recoveries first, checks whether this exact content was already reviewed
-  somewhere else, and only then commissions an independent agent review and
-  posts it as the record. Do NOT fire when the reviewer posted findings (answer
-  those instead), when the quota resets inside the time you can wait, or to
-  decide whether the pull request should merge.
+  somewhere else, and only then commissions an independent agent review whose
+  findings stay local on a public repository, leaving the pull request a record
+  that the gate was satisfied rather than a map of the weaknesses it found. Do
+  NOT fire when the reviewer posted findings (answer those instead), when the
+  quota resets inside the time you can wait, or to decide whether the pull
+  request should merge.
 ---
 
 # Stand in for a blocked review
@@ -26,8 +28,9 @@ reviewed, when nothing had read them. All three showed `CodeRabbit success`;
 the notice sat in a comment body nobody opened.
 
 This skill decides whether a review is actually missing, which is the step
-usually skipped, and then commissions one that is genuinely independent and
-posts it where a reader will look.
+usually skipped, then commissions one that is genuinely independent, and leaves
+the pull request enough of a record to show the gate was satisfied without
+publishing what the review found.
 
 ## Procedure
 
@@ -142,21 +145,55 @@ posts it where a reader will look.
    verdict was worth something only because every new test in it had been seen
    red first.
 
-6. **Post it as the record, labelled as a stand-in.** One comment, separate
-   from any reply to the reviewer, carrying four parts:
+6. **Settle who can read this pull request, because that decides where the
+   findings go.** A stand-in is briefed to break the change, so what comes back
+   is a list of this change's weakest points, the ones nobody fixed included.
+   On a public repository a pull request comment is permanent, indexed and
+   readable by anyone, and a blocked review is a routine event rather than a
+   rare one, so posting that output hands a map of the soft spots to every
+   reader, on every pull request a spent quota happens to catch.
 
-   - a heading saying why a stand-in exists and which model produced it;
-   - **What it reported**: the findings, numbered, in the agent's words;
-   - **Answer**: one row per finding, in the same verdicts an ordinary review
-     reply uses (✅ Applied, 🚫 Skipped with a reason, ⏳ Deferred with a link,
-     💬 Acknowledged), which `pr-comment-loop` owns in full;
-   - **Not covered by this review**: the part a later reader needs most.
+   One question settles it: *can somebody who is not a collaborator read this
+   pull request?*
 
-   Verify each finding against the source before answering it. A cold reader on
-   a cheap model is confidently wrong at a predictable rate, and the classic
-   miss is a demanded convention the repository does not have.
+   ```bash
+   gh repo view --json visibility,isPrivate --jq '[.visibility, .isPrivate] | @tsv'
+   ```
 
-7. **Say what merged under what.** Where the gate is "reviewed", the record has
+   | Answer | Where the findings go |
+   |---|---|
+   | Yes: public, or private with read access far wider than the people who would fix them | Local only. The pull request gets the record instead, step 7. |
+   | No: the only readers are the people who would fix them | Posting them is defensible, and usually better, because the record then outlives the session. Still label it a stand-in and name the model. |
+
+   Decide it, rather than defaulting into it, and say which way you went. Where
+   the answer is unclear, keep it local: a finding held back can be posted
+   later, and one posted cannot be unpublished.
+
+7. **Answer every finding. Post the record, not the map.** Where step 6 says
+   local, the findings and their detail stay in the session's own working
+   notes: the scratchpad, wherever this session already keeps its intermediate
+   files. Nothing else relaxes.
+
+   - **Disposition every finding**, one row per finding, in the verdicts an
+     ordinary review reply uses (✅ Applied, 🚫 Skipped with a reason,
+     ⏳ Deferred with a link, 💬 Acknowledged), which `pr-comment-loop` owns
+     in full. Verify each against the source first. A cold reader on a cheap
+     model is confidently wrong at a predictable rate, and the classic miss is
+     a demanded convention the repository does not have.
+   - **One comment, carrying the record and not the findings**: that a stand-in
+     ran and why, which model produced it, the head it read, what it covered,
+     what it could not cover, and what changed as a result. Naming the commits
+     that answer it costs nothing, since they are public already. A reader has
+     to be able to tell the gate was satisfied without being handed the
+     weaknesses.
+   - **The local record is not durable, and that is what this choice costs.** A
+     scratchpad dies with the session and takes the detail with it. Anything
+     that must outlive it becomes a fix in the diff or a tracked issue before
+     the merge, never a note you expect to find again.
+   - **The merge gate is untouched.** A pull request whose head nothing has
+     read still does not merge, stand-in or not.
+
+8. **Say what merged under what.** Where the gate is "reviewed", the record has
    to name the reviewer. Report the stand-in, its model and its blind spots in
    the same breath as the green marks, so the next reader can weigh it instead
    of inheriting it as equivalent to the review that never ran.
@@ -171,7 +208,11 @@ posts it where a reader will look.
   so rather than reporting an equivalent review.
 - **Two reviews of one pull request split the record.** If the real reviewer
   wakes up later and posts findings, answer those in their own thread and leave
-  the stand-in standing as history rather than merging the two.
+  the stand-in's record standing as history rather than merging the two.
+- **A record nobody can read is not a record.** "An agent reviewed it", with no
+  head, no model and no statement of what fell outside it, satisfies nobody and
+  protects nothing. Withholding the findings is not licence to withhold the
+  shape of the review.
 
 ## When to STOP
 

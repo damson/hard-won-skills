@@ -4,7 +4,8 @@ Answers a question the merge gate cannot: was this pull request actually
 reviewed? A review bot reports the same green whether it read the diff and
 found nothing or never read it at all, and the second case is written only in
 a comment body. When the review really is missing, this skill commissions one
-that is independent enough to be worth the word, and posts it as the record
+that is independent enough to be worth the word, keeps its findings off a
+public pull request, and leaves behind a record that the gate was satisfied
 instead of letting a green mark stand in silently.
 
 The failure it prevents is not a bad review. It is a pull request that merges
@@ -65,12 +66,24 @@ wc -l review-input.diff        # an empty input reviews clean and says nothing
 ```
 
 It came back with no defects, having sabotaged each new test and confirmed it
-went red. That is a verdict worth posting; the same words from a reviewer that
-only read the tests would not be.
+went red. That is a verdict worth recording; the same words from a reviewer
+that only read the tests would not be.
 
-The comment says who reviewed and what they could not see: a stand-in reads the
-diff, not the repository's history of making the same mistake before. Merging
-stays where it was.
+Where that verdict is written depends on who can read the pull request. This
+repository is public, so the findings and their dispositions stay in the
+session's working notes, and the pull request gets a short comment saying a
+stand-in ran, on which model, against which head, what it covered and what
+changed. An adversarial review published on a public pull request is a map of
+the change's soft spots, permanent and indexed, and every weakness the author
+decided not to fix is on it. On a private repository, where the only readers
+are the people who would fix them, posting the findings is the better call and
+the skill says so. The local copy is the cost of the public case: it dies with
+the session, so anything that must outlive it becomes a fix or a tracked issue
+first.
+
+Either way the comment says what the stand-in could not see, a stand-in reads
+the diff and not the repository's history of making the same mistake before,
+and merging stays where it was.
 
 ## Related
 
