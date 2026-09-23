@@ -246,13 +246,66 @@ diff -q <source> <copy> || echo "MISMATCH"
 Cheap, and it catches an editor that reflowed on save or a copy that silently
 truncated. Byte-identical or start again.
 
-### 5. Re-check the source before you open anything
+### 5. Audit what you are about to land, against the branch itself
+
+Step 1 asked whether each path differs from the branch. Nothing so far has asked
+whether what a path *says* is already on the branch somewhere else, and that is
+the duplicate a rescue produces on its own: a hunk correctly classified `AHEAD`,
+landed at its own path, while the same guidance has sat at a different path for
+weeks.
+
+Ask the fetched remote ref, never a checkout that happens to be nearby. A clone
+49 commits behind answered "nothing is duplicated" about a policy its own branch
+had carried for three releases, and that answer reads exactly like a thorough
+search.
+
+```bash
+# Name the ref. A grep with no ref reads the INDEX, which by now holds the
+# rescue: a tracked hunk matches itself and reads as a duplicate, while an
+# untracked copy is not searched at all and reads as new. Both answers are
+# about your own copy rather than about the branch.
+# -F, because a fragment of prose or code contains characters a regex reads as
+# syntax.
+git -C "$DEST" fetch "$REMOTE" --quiet
+while IFS= read -r phrase; do
+  hits=$(git -C "$DEST" grep -lF -- "$phrase" "$REMOTE/$BASE" 2>/dev/null)
+  if [ -n "$hits" ]
+    then printf 'DUPLICATE? %s\n%s\n' "$phrase" "$hits"
+    else echo "NEW       $phrase"
+  fi
+done < "$PHRASES"   # two or three distinctive sentences per rescued hunk, one per line
+```
+
+A hit at the rescued path itself is that file's own earlier copy. A hit anywhere
+else is the finding, and every one is read before it is acted on: a phrase
+generic enough to match twice was never evidence of anything.
+
+Each rescued hunk then lands in one of three states, and only the first is a
+commit:
+
+| Verdict | What the branch holds | What to do with the hunk |
+|---|---|---|
+| `NEW` | nothing like it | land it, with step 8's honesty note |
+| `DUPLICATE` | the same content, elsewhere | leave it out, and cite where it already lives in the pull request |
+| `STALE` | a premise the draft was written before | file it as an issue quoting the draft, rather than landing prose the branch contradicts |
+
+`STALE` has no grep behind it: it is a judgement about a premise, and the cheap
+version of that judgement is to resolve what the draft names. A path, a flag or
+a command the branch no longer carries dates the draft on its own, and
+`git cat-file -e "$REMOTE/$BASE:<path>"` settles a path in one call.
+
+**Audit, do not edit.** The rescued words are somebody else's claim, and
+rewriting them to fit the branch lands your sentences under their name, which is
+exactly what step 8 exists to prevent. A finding belongs in the pull request
+body, where the writer can answer it.
+
+### 6. Re-check the source before you open anything
 
 Between the copy and the push, the writer may have moved. Re-run step 4: an
 unchanged source means the branch captures everything, and that sentence belongs
 in the pull request rather than being assumed.
 
-### 6. Land the rescue branch from the worktree, never from the shared tree
+### 7. Land the rescue branch from the worktree, never from the shared tree
 
 Chain it, so a failed stage or a rejected push cannot be followed by a pull
 request describing work that never left the machine, and give `commit` its
@@ -265,7 +318,7 @@ git -C "$DEST" add -A &&
   gh pr create --base "$BASE" --head <branch>
 ```
 
-### 7. Attribute honestly, and mark what you cannot verify
+### 8. Attribute honestly, and mark what you cannot verify
 
 The claims in rescued work were made by someone with context you do not have.
 Land them as reported, and put the limit in the pull request as an unticked box,
@@ -278,7 +331,7 @@ where an unticked box is the point rather than an omission:
 
 A rescued claim asserted as your own finding is worse than an unrescued file.
 
-### 8. Only then discard, and re-classify first
+### 9. Only then discard, and re-classify first
 
 After the branch merges, the shared tree's copies are usually **stale**, not
 ahead: review findings will have improved them on the branch. Stale and ahead
@@ -339,5 +392,8 @@ still has is not a superset, and discarding loses them.
   test that does not parse. Landing it commits a draft under your name.
 - **Everything classifies as LANDED.** There is nothing to rescue; fast-forward
   and say so in one line.
+- **Every rescued hunk audits as `DUPLICATE`.** The branch is already carrying
+  the work under another path, so there is nothing to land. Say where it lives
+  and close.
 - **The work belongs to someone else's branch or merge.** Report it; do not
   adopt commits whose history you were not asked to touch.

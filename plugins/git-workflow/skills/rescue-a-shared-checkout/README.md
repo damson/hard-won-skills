@@ -43,11 +43,17 @@ Seven dirty paths in a checkout two sessions share.
    committing from the shared tree: tracked changes as a patch, so a deletion, a
    rename and a mode bit survive where `cp` would drop them, and untracked files
    copied alongside. Then `diff -q` each one.
-4. **Re-check the source before pushing.** Unchanged, so the branch captures
+4. **Audit what will land, against the branch and not a checkout.** Two of the
+   three rescued hunks say nothing the branch says. The third repeats, almost
+   word for word, a paragraph that has sat at a different path since the last
+   release, so it is left out and the pull request cites where it already lives.
+   The search runs against the fetched ref: the worktree holds the copy by now,
+   and searching that finds the file duplicating itself.
+5. **Re-check the source before pushing.** Unchanged, so the branch captures
    everything, and the pull request says so rather than assuming it.
-5. **Say what you did not verify.** The claims came from someone else's session;
+6. **Say what you did not verify.** The claims came from someone else's session;
    the pull request marks them as recorded rather than reproduced.
-6. **Re-classify before discarding.** After the merge the shared tree's copies
+7. **Re-classify before discarding.** After the merge the shared tree's copies
    are *stale*, not ahead: review findings improved them on the branch. The two
    states look identical to `git status`, so the direction of the diff decides
    whether discarding is safe.
@@ -63,6 +69,10 @@ Seven dirty paths in a checkout two sessions share.
 - **A one-line difference is the dangerous one.** It is usually a fix somebody
   landed deliberately, and copying the file over it reverts that fix invisibly:
   the resulting diff shows only additions.
+- **Landing it is not the same as it belonging there.** A hunk can differ from
+  the branch byte for byte and still repeat what the branch says elsewhere, so
+  the classification that decides what is at risk cannot also decide what is
+  worth committing.
 - **It refuses rather than guesses.** A file still being edited, or one that does
   not parse, goes back to its author with what was found.
 
@@ -71,5 +81,5 @@ Seven dirty paths in a checkout two sessions share.
 - `worktree-bootstrap`, for the opposite problem: a *fresh* worktree missing the
   ignored files and dependencies it needs to run.
 - `branch-hygiene`, for the cleanup after the rescued branch merges.
-- `prove-the-change-shipped`-style verification is what step 7 applies to the
-  rescue itself: confirm the branch really supersedes the copy before discarding.
+- `prove-the-change-shipped`-style verification is what the final discard step
+  applies to the rescue itself: confirm the branch really supersedes the copy before discarding.
