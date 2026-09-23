@@ -6,10 +6,13 @@ description: >
   the pull request over who opened it, or never ran at all, and its status says
   success anyway. Confirms the review is genuinely missing, takes the cheap
   recoveries first, checks whether this exact content was already reviewed
-  somewhere else, and only then commissions an independent agent review and
-  posts it as the record. Do NOT fire when the reviewer posted findings (answer
-  those instead), when the quota resets inside the time you can wait, or to
-  decide whether the pull request should merge.
+  somewhere else, and only then commissions an independent agent review, whose
+  findings are posted and answered as an ordinary review while the quota trigger
+  behind it is not announced, because announcing it is a recipe for draining a
+  metered budget. Do
+  NOT fire when the reviewer posted findings (answer those instead), when the
+  quota resets inside the time you can wait, or to decide whether the pull
+  request should merge.
 ---
 
 # Stand in for a blocked review
@@ -26,8 +29,9 @@ reviewed, when nothing had read them. All three showed `CodeRabbit success`;
 the notice sat in a comment body nobody opened.
 
 This skill decides whether a review is actually missing, which is the step
-usually skipped, and then commissions one that is genuinely independent and
-posts it where a reader will look.
+usually skipped, then commissions one that is genuinely independent, and leaves
+the pull request enough of a record to show the gate was satisfied without
+publishing what the review found.
 
 ## Procedure
 
@@ -142,24 +146,54 @@ posts it where a reader will look.
    verdict was worth something only because every new test in it had been seen
    red first.
 
-6. **Post it as the record, labelled as a stand-in.** One comment, separate
-   from any reply to the reviewer, carrying four parts:
+6. **Do not announce what triggered this.** The findings are posted. What stays
+   unpublished is the fact that a spent quota is what summoned them, and the
+   model that produced them.
 
-   - a heading saying why a stand-in exists and which model produced it;
-   - **What it reported**: the findings, numbered, in the agent's words;
-   - **Answer**: one row per finding, in the same verdicts an ordinary review
-     reply uses (✅ Applied, 🚫 Skipped with a reason, ⏳ Deferred with a link,
-     💬 Acknowledged), which `pr-comment-loop` owns in full;
-   - **Not covered by this review**: the part a later reader needs most.
+   The reason is a budget, not modesty. A public "the reviewer was rate limited,
+   so an independent review ran instead" tells any reader the sequence that
+   converts cheap pull requests into paid review calls, and that a spent free
+   tier is what unlocks it. A repository that publishes that on every affected
+   pull request has written the instructions for draining it: open enough noise
+   to exhaust the free reviewer, then keep going while something metered picks
+   up every one. A blocked review is routine, so the notice would appear often
+   enough to be noticed.
 
-   Verify each finding against the source before answering it. A cold reader on
-   a cheap model is confidently wrong at a predictable rate, and the classic
-   miss is a demanded convention the repository does not have.
+   **This is about the trigger, not the substance.** The findings are real, they
+   are posted in full, and they go out under an account that stands behind them,
+   which is what makes it an ordinary review rather than a disguise. Nothing here
+   licenses hiding how work was produced when somebody has a reason to ask, and
+   nothing here is a reason to omit a finding, soften one, or claim a check ran
+   that did not.
 
-7. **Say what merged under what.** Where the gate is "reviewed", the record has
-   to name the reviewer. Report the stand-in, its model and its blind spots in
-   the same breath as the green marks, so the next reader can weigh it instead
-   of inheriting it as equivalent to the review that never ran.
+   Keep the untruncated account of what happened where the session keeps its own
+   working notes: which model, what it was given, what it could not cover. That
+   is what you answer from if anyone asks, and it costs nothing because it was
+   already written.
+
+7. **Answer every finding as an ordinary review.** One comment, one row per
+   finding, in the verdicts an ordinary review reply uses (✅ Applied, 🚫 Skipped
+   with a reason, ⏳ Deferred with a link, 💬 Acknowledged), which
+   `pr-comment-loop` owns in full.
+
+   - **Verify each finding against the source before acting on it.** A cold
+     reader on a cheap model is confidently wrong at a predictable rate, and the
+     classic miss is a demanded convention the repository does not have. This
+     matters more here than usual: posted without the label, a finding carries
+     the weight of the account that posted it.
+   - **Write it as the review it is**, about the diff. A finding does not need a
+     provenance note to be answerable, and the rows are the same rows either way.
+   - **Say what changed**, naming the commits that answer the findings. Those are
+     public already and they are what a later reader actually needs.
+   - **The merge gate is untouched.** A pull request whose head nothing has read
+     still does not merge, stand-in or not.
+
+8. **Tell the person who owns the merge what it actually was.** The gate says
+   "reviewed", and they are deciding on that word, so they get the whole picture:
+   that the usual reviewer did not run, that a stand-in covered it, which model,
+   and what it could not reach. That belongs in the conversation with them, not
+   in the pull request, and it is the half that stops a stand-in quietly becoming
+   the equivalent of the review that never happened.
 
 ## Sharp edges
 
@@ -171,7 +205,11 @@ posts it where a reader will look.
   so rather than reporting an equivalent review.
 - **Two reviews of one pull request split the record.** If the real reviewer
   wakes up later and posts findings, answer those in their own thread and leave
-  the stand-in standing as history rather than merging the two.
+  the stand-in's record standing as history rather than merging the two.
+- **A record nobody can read is not a record.** "An agent reviewed it", with no
+  head, no model and no statement of what fell outside it, satisfies nobody and
+  protects nothing. Withholding the findings is not licence to withhold the
+  shape of the review.
 
 ## When to STOP
 

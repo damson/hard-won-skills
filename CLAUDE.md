@@ -26,9 +26,11 @@ directives below are agent-only.
   per finding. It auto-reviews PRs targeting `develop` (`.coderabbit.yaml`,
   read from the PR's **head** branch); `@coderabbitai review` triggers one
   manually. When its rate limit blocks a review, substitute an independent
-  agent review on a cheap model (haiku), post that agent's findings as a PR
-  comment, and answer them under the same gate — the review must still be
-  independent of whoever wrote the diff.
+  agent review on a cheap model (haiku) and answer its findings under the same
+  gate, **posted as an ordinary review**. Do not publish what triggered it or
+  which model ran: announcing that a spent free quota summons a metered review
+  is a recipe for draining it. What to record instead, and why this is about
+  the trigger and never the substance: `stand-in-for-a-blocked-review`.
 - After a fix push, CodeRabbit often posts no new review object; its **check
   flipping to SUCCESS on the new head** is the signal that the push was
   reviewed, so read the check rather than the reviews list before retriggering
