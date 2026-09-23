@@ -6,9 +6,10 @@ description: >
   the pull request over who opened it, or never ran at all, and its status says
   success anyway. Confirms the review is genuinely missing, takes the cheap
   recoveries first, checks whether this exact content was already reviewed
-  somewhere else, and only then commissions an independent agent review whose
-  findings stay local on a public repository, leaving the pull request a record
-  that the gate was satisfied rather than a map of the weaknesses it found. Do
+  somewhere else, and only then commissions an independent agent review, whose
+  findings are posted and answered as an ordinary review while the quota trigger
+  behind it is not announced, because announcing it is a recipe for draining a
+  metered budget. Do
   NOT fire when the reviewer posted findings (answer those instead), when the
   quota resets inside the time you can wait, or to decide whether the pull
   request should merge.
@@ -145,58 +146,54 @@ publishing what the review found.
    verdict was worth something only because every new test in it had been seen
    red first.
 
-6. **Settle who can read this pull request, because that decides where the
-   findings go.** A stand-in is briefed to break the change, so what comes back
-   is a list of this change's weakest points, the ones nobody fixed included.
-   On a public repository a pull request comment is permanent, indexed and
-   readable by anyone, and a blocked review is a routine event rather than a
-   rare one, so posting that output hands a map of the soft spots to every
-   reader, on every pull request a spent quota happens to catch.
+6. **Do not announce what triggered this.** The findings are posted. What stays
+   unpublished is the fact that a spent quota is what summoned them, and the
+   model that produced them.
 
-   One question settles it: *can somebody who is not a collaborator read this
-   pull request?*
+   The reason is a budget, not modesty. A public "the reviewer was rate limited,
+   so an independent review ran instead" tells any reader the sequence that
+   converts cheap pull requests into paid review calls, and that a spent free
+   tier is what unlocks it. A repository that publishes that on every affected
+   pull request has written the instructions for draining it: open enough noise
+   to exhaust the free reviewer, then keep going while something metered picks
+   up every one. A blocked review is routine, so the notice would appear often
+   enough to be noticed.
 
-   ```bash
-   gh repo view --json visibility,isPrivate --jq '[.visibility, .isPrivate] | @tsv'
-   ```
+   **This is about the trigger, not the substance.** The findings are real, they
+   are posted in full, and they go out under an account that stands behind them,
+   which is what makes it an ordinary review rather than a disguise. Nothing here
+   licenses hiding how work was produced when somebody has a reason to ask, and
+   nothing here is a reason to omit a finding, soften one, or claim a check ran
+   that did not.
 
-   | Answer | Where the findings go |
-   |---|---|
-   | Yes: public, or private with read access far wider than the people who would fix them | Local only. The pull request gets the record instead, step 7. |
-   | No: the only readers are the people who would fix them | Posting them is defensible, and usually better, because the record then outlives the session. Still label it a stand-in and name the model. |
+   Keep the untruncated account of what happened where the session keeps its own
+   working notes: which model, what it was given, what it could not cover. That
+   is what you answer from if anyone asks, and it costs nothing because it was
+   already written.
 
-   Decide it, rather than defaulting into it, and say which way you went. Where
-   the answer is unclear, keep it local: a finding held back can be posted
-   later, and one posted cannot be unpublished.
+7. **Answer every finding as an ordinary review.** One comment, one row per
+   finding, in the verdicts an ordinary review reply uses (✅ Applied, 🚫 Skipped
+   with a reason, ⏳ Deferred with a link, 💬 Acknowledged), which
+   `pr-comment-loop` owns in full.
 
-7. **Answer every finding. Post the record, not the map.** Where step 6 says
-   local, the findings and their detail stay in the session's own working
-   notes: the scratchpad, wherever this session already keeps its intermediate
-   files. Nothing else relaxes.
+   - **Verify each finding against the source before acting on it.** A cold
+     reader on a cheap model is confidently wrong at a predictable rate, and the
+     classic miss is a demanded convention the repository does not have. This
+     matters more here than usual: posted without the label, a finding carries
+     the weight of the account that posted it.
+   - **Write it as the review it is**, about the diff. A finding does not need a
+     provenance note to be answerable, and the rows are the same rows either way.
+   - **Say what changed**, naming the commits that answer the findings. Those are
+     public already and they are what a later reader actually needs.
+   - **The merge gate is untouched.** A pull request whose head nothing has read
+     still does not merge, stand-in or not.
 
-   - **Disposition every finding**, one row per finding, in the verdicts an
-     ordinary review reply uses (✅ Applied, 🚫 Skipped with a reason,
-     ⏳ Deferred with a link, 💬 Acknowledged), which `pr-comment-loop` owns
-     in full. Verify each against the source first. A cold reader on a cheap
-     model is confidently wrong at a predictable rate, and the classic miss is
-     a demanded convention the repository does not have.
-   - **One comment, carrying the record and not the findings**: that a stand-in
-     ran and why, which model produced it, the head it read, what it covered,
-     what it could not cover, and what changed as a result. Naming the commits
-     that answer it costs nothing, since they are public already. A reader has
-     to be able to tell the gate was satisfied without being handed the
-     weaknesses.
-   - **The local record is not durable, and that is what this choice costs.** A
-     scratchpad dies with the session and takes the detail with it. Anything
-     that must outlive it becomes a fix in the diff or a tracked issue before
-     the merge, never a note you expect to find again.
-   - **The merge gate is untouched.** A pull request whose head nothing has
-     read still does not merge, stand-in or not.
-
-8. **Say what merged under what.** Where the gate is "reviewed", the record has
-   to name the reviewer. Report the stand-in, its model and its blind spots in
-   the same breath as the green marks, so the next reader can weigh it instead
-   of inheriting it as equivalent to the review that never ran.
+8. **Tell the person who owns the merge what it actually was.** The gate says
+   "reviewed", and they are deciding on that word, so they get the whole picture:
+   that the usual reviewer did not run, that a stand-in covered it, which model,
+   and what it could not reach. That belongs in the conversation with them, not
+   in the pull request, and it is the half that stops a stand-in quietly becoming
+   the equivalent of the review that never happened.
 
 ## Sharp edges
 

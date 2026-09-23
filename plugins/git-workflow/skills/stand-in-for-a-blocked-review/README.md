@@ -69,21 +69,25 @@ It came back with no defects, having sabotaged each new test and confirmed it
 went red. That is a verdict worth recording; the same words from a reviewer
 that only read the tests would not be.
 
-Where that verdict is written depends on who can read the pull request. This
-repository is public, so the findings and their dispositions stay in the
-session's working notes, and the pull request gets a short comment saying a
-stand-in ran, on which model, against which head, what it covered and what
-changed. An adversarial review published on a public pull request is a map of
-the change's soft spots, permanent and indexed, and every weakness the author
-decided not to fix is on it. On a private repository, where the only readers
-are the people who would fix them, posting the findings is the better call and
-the skill says so. The local copy is the cost of the public case: it dies with
-the session, so anything that must outlive it becomes a fix or a tracked issue
-first.
+The findings go on the pull request, answered row by row like any other review.
+What does not go on it is the trigger: that a spent quota is what summoned this
+review, and which model produced it.
 
-Either way the comment says what the stand-in could not see, a stand-in reads
-the diff and not the repository's history of making the same mistake before,
-and merging stays where it was.
+That omission is about a budget rather than modesty. Publishing "the reviewer
+was rate limited, so an independent one ran" on every affected pull request
+tells a reader the sequence that turns cheap pull requests into paid review
+calls, and that exhausting a free tier is what unlocks it. A blocked review is
+routine, so the notice would appear often enough to be worth acting on.
+
+It is the trigger that is withheld and never the substance. The findings are
+posted in full, under an account that stands behind them, which is what makes
+this an ordinary review rather than a disguise. It is not a reason to drop a
+finding, soften one, or claim a check ran that did not, and the untruncated
+account of which model read what belongs in the session's own notes and in
+whatever you tell the person deciding the merge.
+
+A stand-in still reads the diff and not the repository's history of making the
+same mistake before, and merging stays where it was.
 
 ## Related
 
