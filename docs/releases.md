@@ -24,7 +24,7 @@ it reaches `main`.
 must say yes, or it logs why it is holding and exits:
 
 1. **Does `develop` carry content `main` does not?** Measured as a tree diff,
-   not a commit count: after a squashed release plus its back-merge, `develop`
+   not a commit count: after a release, `develop`
    is "ahead" by every commit the squash absorbed while carrying nothing new,
    and a count gate would propose an empty release. Identical trees, no release.
 2. **Is the newest tag at least three days old?** This is what makes the cadence
@@ -52,7 +52,9 @@ you cannot release nothing.
   release has ever happened, `main` is a baseline and is left alone. Tagging
   it would publish a release containing none of the merged work, and the
   fresh tag would then hold the real first release behind the three-day gate.
-- Fast-forwards `develop` back to `main`, so the branches do not drift.
+- Does **not** back-merge. The promotion commit stays on `main` alone, so after a
+  release the two branches hold identical trees while the graph reads
+  `diverged`. That is the merge commit and nothing else.
 
 Marketplace tags are CalVer and plugin versions are semver on purpose. The tag
 answers *when*; a plugin's version answers *what changed in it*.
@@ -88,7 +90,7 @@ are absent, so the pipeline is unchanged until the App exists. Creating it is th
    same account as the repository. Homepage URL can be the repository. Uncheck
    **Webhook > Active**; nothing here listens to one.
 2. Repository permissions: **Contents** read and write (push the tag and the
-   back-merge), **Pull requests** read and write (open and merge the promotion),
+   the tag), **Pull requests** read and write (open and merge the promotion),
    **Commit statuses** read and write (post `validate`), **Metadata** read, which
    GitHub adds by itself.
 3. **Install** the App on this repository only, then generate a private key.
@@ -122,16 +124,16 @@ a context called `validate`, which is the job id in `ci.yml`. Rename the job and
 protection silently stops gating anything: the release still merges, just
 unchecked. They move together or not at all.
 
-**The release PR must merge with a merge commit, never a squash.** The
-back-merge fast-forwards `develop` to `main`, which only works while `develop`
-is an ancestor of `main`. A squash is not the commits it squashed, so it breaks
-that relationship and the next back-merge falls back to opening a PR.
+**The release PR must merge with a merge commit, never a squash.** The reason
+used to be the back-merge, which needed `develop` to stay an ancestor of `main`.
+With no back-merge the reason is plainer: a squash puts a commit on `main` whose
+tree came from `develop` but whose parentage denies it, so `git log` on the
+branch people install from stops naming the work it shipped.
 
-A squash is no longer fatal (v2026.09.02 went in as one, and it taught the
-tag job to treat identical trees as "promoted" so the release still tags), but
-it costs a manual back-merge review and muddies `develop`'s history. The
-mechanical guard is a repository ruleset restricting merges into `main` to
-merge commits (Settings → Rules, a `pull_request` rule with
+A squash is not fatal (v2026.09.02 went in as one, and it taught the tag job to
+treat identical trees as "promoted" so the release still tags). The mechanical
+guard is a repository ruleset restricting merges into `main` to merge commits
+(Settings, then Rules, a `pull_request` rule with
 `allowed_merge_methods: ["merge"]`); prose warnings do not gate UI buttons.
 
 **The release PR's own CI run is killed by its own merge.** Auto-merge is
@@ -171,6 +173,23 @@ ordinary way. The general rule this violated is worth keeping in view: **a
 required context must be produced by something that runs on every pull request
 into that base**, and a branch filter, a path filter and a release-only job all
 break it the same way.
+
+## Why there is no back-merge
+
+`develop` never receives `main`'s promotion commits, deliberately. Every gate in
+this pipeline compares content: the release is proposed on
+`git diff --quiet origin/main origin/develop`, and the tag job treats identical
+trees as promoted. None of them reads ancestry, so the merge commit living only
+on `main` changes nothing they measure.
+
+The cost is that ancestry tests lie from here on. `git log main..develop`,
+`git merge-base --is-ancestor`, and the compare API's `status` field will all
+say the branches have diverged when their trees are byte-identical. **Compare by
+content or by the compare API's file count, never by commit count**, and expect
+`diverged` to be the normal resting state rather than a symptom.
+
+The last back-merge pull request opened here carried 0 files, 0 additions and 0
+deletions, which is what the whole mechanism was producing.
 
 ## Holding a release
 
