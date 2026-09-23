@@ -89,8 +89,8 @@ are absent, so the pipeline is unchanged until the App exists. Creating it is th
 1. **Settings > Developer settings > GitHub Apps > New GitHub App**, owned by the
    same account as the repository. Homepage URL can be the repository. Uncheck
    **Webhook > Active**; nothing here listens to one.
-2. Repository permissions: **Contents** read and write (push the tag and the
-   the tag), **Pull requests** read and write (open and merge the promotion),
+2. Repository permissions: **Contents** read and write (push the tag),
+   **Pull requests** read and write (open and merge the promotion),
    **Commit statuses** read and write (post `validate`), **Metadata** read, which
    GitHub adds by itself.
 3. **Install** the App on this repository only, then generate a private key.

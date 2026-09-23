@@ -165,10 +165,15 @@ refuses to call it done on a signal that has not been checked.
    a real omission:
 
    ```bash
-   # having taken step 6: expect identical or ahead, and `behind` means the
-   # back-merge did not land. Having deliberately skipped it: `behind` by the
-   # promotion merges is the correct answer, and `diverged` is the alarm
-   gh api repos/<owner>/<repo>/compare/<main>...<develop> --jq .status
+   # `status` answers a different question depending on step 6. Having taken
+   # it: expect identical or ahead, and `behind` means the back-merge did not
+   # land. Having deliberately skipped it: `behind` holds only until the
+   # integration branch takes its next commit, and after that `diverged` is the
+   # permanent resting state, so the field stops carrying information. Read the
+   # FILE COUNT, which answers the same question under both regimes: zero files
+   # means the branches carry the same content whatever the shape says
+   gh api repos/<owner>/<repo>/compare/<main>...<develop> \
+     --jq '{status, files: (.files | length)}'
    gh release view <vX.Y.Z> --json tagName,targetCommitish
 
    # both of these are the commit, for an annotated tag as well as a lightweight
