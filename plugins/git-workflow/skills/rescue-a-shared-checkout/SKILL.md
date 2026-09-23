@@ -153,6 +153,13 @@ Where it says it did not run, it has told you nothing and the timestamp checks
 below carry the whole decision on their own, so treat the writer as possibly live
 rather than as absent.
 
+Read the hit before acting on it, and know what the query does not cover. It
+matches any open pull request carrying that text, so a common line can match
+somebody else's work, which costs you a rescue you could have made. It asks for
+open ones only, so a pull request closed an hour ago, often the sign of a writer
+mid-rework, does not appear at all, and that is the direction that costs you the
+file.
+
 **Do not reach for `gh pr list --search` here**, which is the obvious form and
 the wrong one: its index covers titles, bodies and comments, so a phrase that
 exists only in a diff returns nothing, with exit status `0` and no output. The
