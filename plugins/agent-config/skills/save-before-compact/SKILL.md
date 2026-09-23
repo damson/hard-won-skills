@@ -2,11 +2,11 @@
 name: save-before-compact
 description: >
   Use ONLY when the user explicitly wants to compact a long session without
-  losing its learnings — triggers like "save before compact" / "wrap up and
+  losing its learnings, on triggers like "save before compact" / "wrap up and
   compact" / "session's too long, compact but keep the takeaways" / "capture
   learnings then compact". NEVER fire unsolicited. This skill APPLIES changes
   (CLAUDE.md / preference-file additions, memory, new skills) and writes a resume
-  brief, then stops for the user to run /compact — it never runs /compact itself.
+  brief, then stops for the user to run /compact; it never runs /compact itself.
   Memory entries and ordinary documentation that clear Step 4's bar apply
   automatically, weak candidates are discarded, and CLAUDE.md / AGENTS.md /
   preference files and skills always ask; "prompt-all" (or "ask me about
@@ -22,15 +22,15 @@ description: >
 Run a task per step, in order. Any step can short-circuit per its stated skip
 conditions.
 
-### Step 1 — Pre-flight
+### Step 1: Pre-flight
 
 - Count substantive turns (ignore < 10-word acknowledgements: `thanks`, `ok`,
   `yes`, `nice`). If `< 15`, say so and skip straight to the resume brief (Step 8)
-  — nothing worth persisting, but the pick-up note still gets written.
+  There is nothing worth persisting, but the pick-up note still gets written.
 - Detect context: is there a `CLAUDE.md` / `AGENTS.md` nearby? a skill-structure
   test suite or a config eval command, if the repo ships either (check its
-  README / justfile / package scripts — do not assume names)? Record what's
-  available — later steps branch on it.
+  README / justfile / package scripts, and do not assume names)? Record what's
+  available, because later steps branch on it.
 - Settle the **approval mode**, and carry it into every later step. Default is
   **auto**: memory entries and ordinary documentation that clear Step 4's bar are
   written without asking, while instruction files (`CLAUDE.md`, `AGENTS.md`,
@@ -40,28 +40,28 @@ conditions.
   same invocation: "ask me about everything", "prompt for all", "review each
   one", "don't write anything without asking". No mode runs the other way: there
   is no setting that makes a skill apply itself.
-- Defer (one line, then stop) if a high-stakes op is in flight — scan the last
+- Defer (one line, then stop) if a high-stakes op is in flight: scan the last
   ~5 turns for a deploy / merge / rebase / migration / incident command whose
   completion was never confirmed (confirmed = its success output is in the
-  transcript, or the user said it landed) — or if this is another operator's transcript.
+  transcript, or the user said it landed), or if this is another operator's transcript.
 
-### Step 2 — Reflect & route
+### Step 2: Reflect and route
 
 List candidate facts under these categories: commands discovered, code-style
 patterns followed, testing approaches that worked, environment/config quirks,
-gotchas, decisions made. Then apply the **keep-test** — keep a fact only if (a) it
+gotchas, decisions made. Then apply the **keep-test**: keep a fact only if (a) it
 would prevent a mistake a capable future session would realistically make (not
 restate the default behaviour, or what a neighbouring directive/test already
 implies) and (b) it is not already stated in an existing config/CLAUDE.md file.
 When unsure, drop it: a weak addition bloats the file and lowers eval scores; a
-missed one costs nothing. For each keeper, pick a target — **versioned first**:
+missed one costs nothing. For each keeper, pick a target, **versioned first**:
 
 | Target | For | Class (Step 4) |
 |---|---|---|
 | `CLAUDE.md` / `AGENTS.md` (team-shared) | Repo-wide facts future sessions need | 3, always ask |
-| personal preference files — the ones `readlink ~/.claude/*.md` resolves into the config repo (none resolving → no such layer exists; route to memory) | Personal cross-project preferences | 3, always ask |
+| personal preference files, the ones `readlink ~/.claude/*.md` resolves into the config repo (none resolving → no such layer exists; route to memory) | Personal cross-project preferences | 3, always ask |
 | ordinary documentation: a file under `docs/`, a reference page, a sibling `README.md` | Procedure and rationale too long for an instruction file | 2, auto |
-| memory store (`~/.claude/…/memory/`) — **last** | Durable facts fitting no versioned file (un-versioned, lowest priority) | 1, auto |
+| memory store (`~/.claude/…/memory/`), **last** | Durable facts fitting no versioned file (un-versioned, lowest priority) | 1, auto |
 
 The class decides who applies the line, never where it belongs: route by the
 table's middle column first, then read the class off the row you landed on.
@@ -72,13 +72,13 @@ Respect repo conventions: don't fatten a file the repo keeps as a one-line point
 to a sibling; keep whatever style and secret-lint rules it enforces; match the
 target file's format.
 
-### Step 3 — Draft (brevity gate)
+### Step 3: Draft (brevity gate)
 
 One concept per line, minimal, in the target's format. Anything that failed the
 Step 2 keep-test, or restates an existing line, does not get drafted. Shorter is
 better as long as it stays relevant and performant.
 
-### Step 4 — Assess and apply
+### Step 4: Assess and apply
 
 Say which mode you are in, in one line, **before writing anything**: "Mode:
 auto, memory and documentation additions that clear the bar apply without
@@ -164,7 +164,7 @@ discarded with a one-line reason each. For every class 3 candidate, record
 which of the three audit states it was prompted under: audited, audit
 unavailable, audit skipped for time.
 
-### Step 5 — Verify & score
+### Step 5: Verify and score
 
 After applying:
 - **Structural**: if any skill file was touched and Step 1 found a
@@ -174,9 +174,9 @@ After applying:
   frontmatter still parses (a stray `:` or unclosed quote silently breaks the
   whole file's load).
 - **Score** the changed files with the repo's eval command if Step 1 found one,
-  reading the **newest** result artifact it writes and checking its mtime —
+  reading the **newest** result artifact it writes and checking its mtime,
   a stale artifact from a previous run reads exactly like a fresh score;
-  otherwise an inline rubric, 1–5 per dimension — clarity (unambiguous on
+  otherwise an inline rubric, 1 to 5 per dimension: clarity (unambiguous on
   first read), conciseness (nothing restated), completeness (no undefined
   branch), consistency (no two rules disagree), actionability (every step maps
   to a command or edit). Anchors: 5 = no violation found; 4 = one minor; 3 =
@@ -188,7 +188,7 @@ After applying:
   first and report the revert, because nobody approved it; for an approved one,
   surface it and offer to tighten or revert. Never silently ship a regression.
 
-### Step 6 — Memory (lowest priority)
+### Step 6: Memory (lowest priority)
 
 Only durable facts that fit no versioned file. Write per the memory-file
 convention (frontmatter + one fact) and add the one-line `MEMORY.md` pointer.
@@ -196,12 +196,12 @@ Skip entirely if no memory store exists. This is class 1: in auto mode an entry
 that cleared Step 4's bar is written here without asking, and one that did not
 is discarded, not offered; in prompt-all it is shown and approved like the rest.
 
-### Step 7 — Suggest & create skills
+### Step 7: Suggest and create skills
 
 Invoke `skill-opportunity-finder` (Skill tool) to surface repeated patterns worth
-a new skill; where it is not installed, scan for its patterns inline — repeated
-corrections, repeated manual operations, repeated discovery work — and say the
-scan was inline. Present each candidate — name · one-line rationale · concrete past
+a new skill; where it is not installed, scan for its patterns inline: repeated
+corrections, repeated manual operations, repeated discovery work, and say the
+scan was inline. Present each candidate as name, one-line rationale, concrete past
 trigger. For each the user **approves, create it now, before compaction**, via the
 skill-verification loop: write the new `SKILL.md` → run the repo's skill structure
 tests → score it with the repo's eval command (inline rubric where no harness) →
@@ -220,9 +220,9 @@ session and in every install that has the plugin, including other people's;
 a memory line or a documentation paragraph changes one project's context and is
 undone by deleting one line. Unequal blast radius, unequal gate.
 
-### Step 8 — Resume brief
+### Step 8: Resume brief
 
-Compose a tight *pick-up-here* note — never a transcript: **Goal · Done ·
+Compose a tight *pick-up-here* note, never a transcript: **Goal · Done ·
 Next actions · Open questions · Key files/commands/decisions**. Save it, then mirror it to a stable
 pointer:
 
@@ -236,10 +236,10 @@ f="$dir/${repo}-${branch}-${ts}-${sid}.md"
 ```
 
 Write the brief to `$f` and copy it to `$dir/session-resume-latest.md` so a
-post-compact "read the latest brief" always resolves. Echo the brief inline — the
+post-compact "read the latest brief" always resolves. Echo the brief inline, because the
 file survives compaction where an inline note may be compressed.
 
-### Step 9 — Compact handoff
+### Step 9: Compact handoff
 
 Print the mode, then the ledger in three bands, so the user can audit what
 happened without having been asked:
@@ -255,7 +255,7 @@ happened without having been asked:
 Then the scores, the memory entries written, any declined skill suggestions, and
 the resume-brief path. Then say:
 
-> Learnings saved and verified, resume brief at `<path>` — safe to run `/compact`
+> Learnings saved and verified, resume brief at `<path>`, safe to run `/compact`
 > now. I'll read it to pick up.
 
 Stop. The user presses `/compact`.

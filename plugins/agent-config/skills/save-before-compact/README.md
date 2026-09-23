@@ -61,7 +61,7 @@ After a 40-turn debugging session:
    the ledger is printed in three bands (applied automatically, applied after
    your approval, discarded and why), and the skill stops:
 
-   > Learnings saved and verified, resume brief at `.claude/…` — safe to run
+   > Learnings saved and verified, resume brief at `.claude/…`, safe to run
    > `/compact` now. I'll read it to pick up.
 
 ## Related
