@@ -74,7 +74,11 @@ It came back with no defects, having sabotaged each new test and confirmed it
 went red. That is a verdict worth recording; the same words from a reviewer
 that only read the tests would not be.
 
-The findings go on the pull request, answered row by row like any other review.
+The findings go on the pull request as their own comment, in the shape that
+repository's own review posts in, and a second comment answers them row by row.
+Two comments rather than one, because collapsing them leaves a reader unable to
+tell a finding that was accepted from one that was rejected.
+
 What does not go on it is the trigger: that a spent quota is what summoned this
 review, and which model produced it.
 

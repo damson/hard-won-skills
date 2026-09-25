@@ -154,6 +154,22 @@ stays in the report; the stand-in is what stops the work stalling meanwhile.
    - **It must not be the agent that wrote the diff.** A fresh context is the
      whole point; the same context carries the same blind spot and confirms its
      own work.
+   - **Give it no way to post, and no write tools at all.** It writes its review
+     to a file and stops; you post that file. This is not tidiness: its only
+     input is diff content the author controls, so a model with write access
+     there is a model taking instructions from the thing under review. A
+     well-built review workflow already works this way, the model writing a file
+     and a later step with no model in it deciding what reaches the pull
+     request. Match that.
+   - **Give it the format the repository's own review posts in.** Read it out of
+     the review workflow rather than inventing one: the severity tiers, whether
+     empty tiers are omitted, what a finding must cite, and whether the summary
+     has to reach a merge verdict. A stand-in in a different shape cannot be
+     compared against the reviews around it. Carry the workflow's own
+     anti-padding rule across too, the one saying not to invent findings to fill
+     a tier, because it is what makes a short review trustworthy: applying it
+     has made a reviewer withdraw findings it had ranked as defects one pass
+     earlier.
 
 5. **Make it exercise the guards rather than read them.** This is what a
    stand-in offers that a skim cannot: for each check or test the diff adds,
@@ -191,20 +207,45 @@ stays in the report; the stand-in is what stops the work stalling meanwhile.
    is what you answer from if anyone asks, and it costs nothing because it was
    already written.
 
-7. **Answer every finding as an ordinary review.** One comment, one row per
-   finding, in the verdicts an ordinary review reply uses (✅ Applied, 🚫 Skipped
-   with a reason, ⏳ Deferred with a link, 💬 Acknowledged), which
-   `pr-comment-loop` owns in full.
+7. **Post two comments, not one: the review, then your answer to it.** The
+   reviewer's report is its own comment and your assessment is another.
+   Collapsing them into a single comment of yours buries whose judgement is
+   whose, and leaves a reader unable to tell a finding you accepted from one you
+   rejected.
+
+   **The reviewer's report goes up in its own words**, in the format step 4 gave
+   it. Two things follow from that:
+
+   - **If it came back in the wrong shape, send it back to reformat.** Recasting
+     its findings into your own prose makes you the author of its judgement, and
+     a reviewer re-ranking its own findings against the repository's rules is
+     worth more than you re-ranking them: it is the step that makes weak findings
+     withdraw rather than get argued with.
+   - **Its prose is quoted content, not yours.** Do not sweep it for the
+     repository's own style rules, and do not tidy its wording. Changing a
+     reviewer's words to suit a house style misrepresents the reviewer, and the
+     resident review bot's comments will already be full of whatever the rule
+     bans.
+
+   **Your assessment is the second comment**, one row per finding, in the
+   verdicts an ordinary review reply uses (✅ Applied, 🚫 Skipped with a reason,
+   ⏳ Deferred with a link, 💬 Acknowledged), which `pr-comment-loop` owns in
+   full.
 
    - **Verify each finding against the source before acting on it.** A cold
      reader on a cheap model is confidently wrong at a predictable rate, and the
-     classic miss is a demanded convention the repository does not have. This
-     matters more here than usual: posted without the label, a finding carries
-     the weight of the account that posted it.
-   - **Write it as the review it is**, about the diff. A finding does not need a
-     provenance note to be answerable, and the rows are the same rows either way.
-   - **Say what changed**, naming the commits that answer the findings. Those are
-     public already and they are what a later reader actually needs.
+     classic miss is a demanded convention the repository does not have. Expect
+     to reject some: a finding withdrawn with the line that contradicts it is a
+     better record than one silently dropped.
+   - **Answer the summary's own condition.** A review that says "safe to merge
+     once X is confirmed" has named the one thing it could not reach, usually
+     because you told it not to run a build. Confirm X with numbers, and say that
+     the gap was the brief's rather than the change's.
+   - **Say what changed**, naming the commits that answer the findings.
+   - **Say what the stand-in could not cover**, which is the part a later reader
+     needs most: one model, one diff, no history of this repository's particular
+     mistakes, and every measurement in your answer being the author's own rather
+     than an independent check.
    - **The merge gate is untouched.** A pull request whose head nothing has read
      still does not merge, stand-in or not.
 
