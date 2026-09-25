@@ -152,17 +152,26 @@ stays in the report; the stand-in is what stops the work stalling meanwhile.
    - **It must not be the agent that wrote the diff.** A fresh context is the
      whole point; the same context carries the same blind spot and confirms its
      own work.
-   - **Give it no way to post, and no write tools at all.** It writes its review
-     to a file and stops; you post that file. This is not tidiness: its only
-     input is diff content the author controls, so a model with write access
-     there is a model taking instructions from the thing under review. A
+   - **Give it no way to post, and no write access to anything that matters.**
+     Two writes and no others: one report file you name, outside the repository,
+     and a throwaway copy of the tree to do step 5 in. You post the file. This is
+     not tidiness: its only input is diff content the author controls, so a model
+     that can reach the pull request, the branch or the tree the change is cut
+     from is a model taking instructions from the thing under review. A
      well-built review workflow already works this way, the model writing a file
      and a later step with no model in it deciding what reaches the pull
-     request. Match that.
-   - **Give it the format the repository's own review posts in.** Read it out of
-     the review workflow rather than inventing one: the severity tiers, whether
-     empty tiers are omitted, what a finding must cite, and whether the summary
-     has to reach a merge verdict. A stand-in in a different shape cannot be
+     request. Match that. Where the runner cannot scope writes that finely, keep
+     them with the supervising agent: it makes the edits step 5 calls for and
+     hands back the result, and the reviewer stays read-only.
+   - **Give it the format the repository's own review posts in.** Take it from
+     a source rather than inventing one: the severity tiers, whether empty tiers
+     are omitted, what a finding must cite, and whether the summary has to reach
+     a merge verdict. The review workflow is the first source where one exists.
+     A hosted reviewer that posts through an app has no workflow to read, so
+     take the shape from its own most recent review on this repository instead,
+     and where it has never posted one, from the contributor guide. Say in the
+     report which of the three you used, because a format nobody can trace back
+     is an invented one wearing a citation. A stand-in in a different shape cannot be
      compared against the reviews around it. Carry the workflow's own
      anti-padding rule across too, the one saying not to invent findings to fill
      a tier, because it is what makes a short review trustworthy: applying it
@@ -171,7 +180,10 @@ stays in the report; the stand-in is what stops the work stalling meanwhile.
 
 5. **Make it exercise the guards rather than read them.** This is what a
    stand-in offers that a skim cannot: for each check or test the diff adds,
-   break the thing it guards, watch it go red, restore it. A check that has
+   break the thing it guards, watch it go red, restore it. In the throwaway tree
+   from step 4, never the one the change is cut from: a sabotage step that dies
+   before its restore leaves the damage sitting in somebody's working copy,
+   looking like part of the diff. A check that has
    never failed is not known to check anything, and a reviewer that only reads
    a new test cannot tell a real one from a decorative one. (The verification
    plugin's `prove-the-check-can-fail` is the same discipline in full.)
