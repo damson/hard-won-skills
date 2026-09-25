@@ -3,10 +3,13 @@
 Answers a question the merge gate cannot: was this pull request actually
 reviewed? A review bot reports the same green whether it read the diff and
 found nothing or never read it at all, and the second case is written only in
-a comment body. When the review really is missing, this skill commissions one
-that is independent enough to be worth the word, keeps its findings off a
-public pull request, and leaves behind a record that the gate was satisfied
-instead of letting a green mark stand in silently.
+a comment body. A red check can say as little: an action that failed before it
+reached the model has reviewed nothing either, and reads as an infrastructure
+chore rather than an unreviewed pull request. When the review really is missing,
+this skill commissions one that is independent enough to be worth the word,
+without waiting to be asked, keeps its findings off a public pull request, and
+leaves behind a record that the gate was satisfied instead of letting the mark
+stand in silently.
 
 The failure it prevents is not a bad review. It is a pull request that merges
 looking reviewed. On the session this came from, a free tier allowing one
@@ -26,6 +29,8 @@ It fires when a review is expected and its evidence is missing:
 - "the review bot says limit reached, can we still merge?"
 - "no review on this PR and the checks are green"
 - an automated pull request the reviewer silently skipped
+- a review check that went red reporting one turn and zero cost, which is a
+  request rejected before any inference rather than a verdict
 
 It deliberately does **not** fire on:
 

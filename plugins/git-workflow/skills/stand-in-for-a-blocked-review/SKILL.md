@@ -1,18 +1,17 @@
 ---
 name: stand-in-for-a-blocked-review
 description: >
-  Use when a pull request's automated review did not happen while its merge
-  gate still reads green: the reviewer posted a quota or limit notice, skipped
-  the pull request over who opened it, or never ran at all, and its status says
-  success anyway. Confirms the review is genuinely missing, takes the cheap
-  recoveries first, checks whether this exact content was already reviewed
-  somewhere else, and only then commissions an independent agent review, whose
-  findings are posted and answered as an ordinary review while the quota trigger
-  behind it is not announced, because announcing it is a recipe for draining a
-  metered budget. Do
-  NOT fire when the reviewer posted findings (answer those instead), when the
-  quota resets inside the time you can wait, or to decide whether the pull
-  request should merge.
+  Use when a pull request's automated review did not actually review it: the
+  reviewer posted a quota or limit notice, skipped the pull request over who
+  opened it, never ran at all and its status still says success, or its check
+  went red having failed before it reached the model. Confirms the review is
+  genuinely missing, takes the cheap recoveries first, checks whether this exact
+  content was already reviewed somewhere else, then commissions an independent
+  agent review without being asked, whose findings are posted and answered as an
+  ordinary review while the quota trigger behind it is not announced, because
+  announcing it is a recipe for draining a metered budget. Do NOT fire when the
+  reviewer posted findings (answer those instead), when the quota resets inside
+  the time you can wait, or to decide whether the pull request should merge.
 ---
 
 # Stand in for a blocked review
@@ -28,10 +27,21 @@ review per hour let three pull requests merge into a public repository believed
 reviewed, when nothing had read them. All three showed `CodeRabbit success`;
 the notice sat in a comment body nobody opened.
 
+A red check is the same problem wearing the opposite colour. An action that
+fails before it reaches the model has reviewed exactly as much as a spent quota
+did, and "the review job is failing" reads like an infrastructure chore rather
+than an unreviewed pull request.
+
 This skill decides whether a review is actually missing, which is the step
 usually skipped, then commissions one that is genuinely independent, and leaves
 the pull request enough of a record to show the gate was satisfied without
 publishing what the review found.
+
+**Commission it rather than offering it.** Reporting the pull request blocked and
+listing a stand-in as one option costs a round trip on a decision that goes the
+same way every time, and the pull request sits unreviewed while the round trip
+happens. Fixing the underlying cause is usually somebody else's, and saying so
+stays in the report; the stand-in is what stops the work stalling meanwhile.
 
 ## Procedure
 
@@ -63,6 +73,7 @@ publishing what the review found.
    | Findings, or an explicit "no issues", covering this head | It reviewed. Not this skill's job. |
    | A limit, quota or "try again in N minutes" notice | Blocked. Continue. |
    | No comment from it at all | It never ran. Usually step 2's second case. |
+   | Its check is red, and the action's own result reports one turn and zero cost | It never reached the model. Continue, and read the zero differently from a failure: nothing was spent, so nothing was reviewed. |
 
    **Its `created_at` cannot tell you whether it read your latest push.** The
    comment is edited in place, so creation time freezes at the first round
@@ -89,6 +100,15 @@ publishing what the review found.
      That is a configuration fix (open automated pull requests with a token
      that authors as a person), not a review problem. Standing in on every one
      of them hides the cause and pays for it forever.
+   - **The action failed rather than reported.** Re-run it once: a transient
+     error clears and costs nothing. A second attempt that fails identically,
+     with the same one turn and the same zero cost, is not transient and not
+     about your diff either. Zero cost means the request was rejected before any
+     inference, which points at the credential or the balance behind it, so
+     further re-runs are free and futile. Check whether the same workflow
+     reviewed other pull requests earlier the same day: if it did, the change is
+     at the account and not in the repository, and naming the window it broke in
+     is the most useful thing you can hand over.
    - **A fix push landed and no new review appeared.** Ambiguous on purpose:
      after a push, a reviewer that re-reads often posts no new object at all,
      and its mark going green on the new head is the only sign it read
