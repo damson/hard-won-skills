@@ -7,11 +7,10 @@ description: >
   went red having failed before it reached the model. Confirms the review is
   genuinely missing, takes the cheap recoveries first, checks whether this exact
   content was already reviewed somewhere else, then commissions an independent
-  agent review without being asked, whose findings are posted and answered as an
-  ordinary review while the quota trigger behind it is not announced, because
-  announcing it is a recipe for draining a metered budget. Do NOT fire when the
-  reviewer posted findings (answer those instead), when the quota resets inside
-  the time you can wait, or to decide whether the pull request should merge.
+  agent review without being asked, in the format that repository's own review
+  posts in, and answers it as an ordinary review. Do NOT fire when the reviewer
+  posted findings (answer those instead), when the quota resets inside the time
+  you can wait, or to decide whether the pull request should merge.
 ---
 
 # Stand in for a blocked review
@@ -34,8 +33,7 @@ than an unreviewed pull request.
 
 This skill decides whether a review is actually missing, which is the step
 usually skipped, then commissions one that is genuinely independent, and leaves
-the pull request enough of a record to show the gate was satisfied without
-publishing what the review found.
+the pull request enough of a record to show the gate was satisfied.
 
 **Commission it rather than offering it.** Reporting the pull request blocked and
 listing a stand-in as one option costs a round trip on a decision that goes the
@@ -206,6 +204,18 @@ stays in the report; the stand-in is what stops the work stalling meanwhile.
    working notes: which model, what it was given, what it could not cover. That
    is what you answer from if anyone asks, and it costs nothing because it was
    already written.
+
+   **Where the trigger carries no budget lesson, this rule is protecting
+   nothing.** The harm above needs two things: a reviewer somebody pays per call,
+   and a free tier an outsider can deliberately exhaust. A private repository
+   whose reviewer runs on the author's own credential, failing on an expired
+   secret or a spent balance, has neither, and the stand-in there is paid for by
+   whoever is already sitting in the session. Nor is there anything to conceal
+   when the gate has gone red and says on its face that the review failed: an
+   unlabelled review posted next to it reads as a cover-up rather than a
+   courtesy. In that case label the stand-in, name the model, and say the gate
+   did not run, because the record is the only thing at stake. Decide which case
+   you are in before publishing, and when it is genuinely unclear, withhold.
 
 7. **Post two comments, not one: the review, then your answer to it.** The
    reviewer's report is its own comment and your assessment is another.

@@ -7,9 +7,8 @@ a comment body. A red check can say as little: an action that failed before it
 reached the model has reviewed nothing either, and reads as an infrastructure
 chore rather than an unreviewed pull request. When the review really is missing,
 this skill commissions one that is independent enough to be worth the word,
-without waiting to be asked, keeps its findings off a public pull request, and
-leaves behind a record that the gate was satisfied instead of letting the mark
-stand in silently.
+without waiting to be asked, and leaves behind a record that the gate was
+satisfied instead of letting the mark stand in silently.
 
 The failure it prevents is not a bad review. It is a pull request that merges
 looking reviewed. On the session this came from, a free tier allowing one
@@ -79,14 +78,20 @@ repository's own review posts in, and a second comment answers them row by row.
 Two comments rather than one, because collapsing them leaves a reader unable to
 tell a finding that was accepted from one that was rejected.
 
-What does not go on it is the trigger: that a spent quota is what summoned this
-review, and which model produced it.
+What does not go on a public pull request is the trigger: that a spent quota is
+what summoned this review, and which model produced it.
 
 That omission is about a budget rather than modesty. Publishing "the reviewer
 was rate limited, so an independent one ran" on every affected pull request
 tells a reader the sequence that turns cheap pull requests into paid review
 calls, and that exhausting a free tier is what unlocks it. A blocked review is
 routine, so the notice would appear often enough to be worth acting on.
+
+That reasoning needs a reviewer somebody pays per call and a free tier an
+outsider can exhaust. Where neither exists, and most private repositories
+running a reviewer on their own credential have neither, there is nothing to
+protect and the label goes on: naming the stand-in and its model beside a gate
+that has visibly gone red is a record, while omitting it reads as a cover-up.
 
 It is the trigger that is withheld and never the substance. The findings are
 posted in full, under an account that stands behind them, which is what makes
