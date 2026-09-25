@@ -205,17 +205,15 @@ stays in the report; the stand-in is what stops the work stalling meanwhile.
    is what you answer from if anyone asks, and it costs nothing because it was
    already written.
 
-   **Where the trigger carries no budget lesson, this rule is protecting
-   nothing.** The harm above needs two things: a reviewer somebody pays per call,
-   and a free tier an outsider can deliberately exhaust. A private repository
-   whose reviewer runs on the author's own credential, failing on an expired
-   secret or a spent balance, has neither, and the stand-in there is paid for by
-   whoever is already sitting in the session. Nor is there anything to conceal
-   when the gate has gone red and says on its face that the review failed: an
-   unlabelled review posted next to it reads as a cover-up rather than a
-   courtesy. In that case label the stand-in, name the model, and say the gate
-   did not run, because the record is the only thing at stake. Decide which case
-   you are in before publishing, and when it is genuinely unclear, withhold.
+   **The exception that looks free is the one to refuse.** A private repository
+   whose reviewer runs on the author's own credential has no free tier for an
+   outsider to exhaust, so naming the trigger there appears to cost nothing, and
+   a red gate saying the review failed makes an unlabelled review beside it look
+   evasive. It still stays unpublished. A repository's visibility changes and its
+   history goes with it, so a comment written where nobody could read it becomes
+   one anybody can; and the judgement would have to be made at the moment of
+   publishing, where it is one way and nobody checks it. The working notes below
+   carry the same record at none of the risk.
 
 7. **Post two comments, not one: the review, then your answer to it.** The
    reviewer's report is its own comment and your assessment is another.

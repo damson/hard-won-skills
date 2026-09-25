@@ -78,7 +78,7 @@ repository's own review posts in, and a second comment answers them row by row.
 Two comments rather than one, because collapsing them leaves a reader unable to
 tell a finding that was accepted from one that was rejected.
 
-What does not go on a public pull request is the trigger: that a spent quota is
+What does not go on the pull request is the trigger: that a spent quota is
 what summoned this review, and which model produced it.
 
 That omission is about a budget rather than modesty. Publishing "the reviewer
@@ -87,11 +87,11 @@ tells a reader the sequence that turns cheap pull requests into paid review
 calls, and that exhausting a free tier is what unlocks it. A blocked review is
 routine, so the notice would appear often enough to be worth acting on.
 
-That reasoning needs a reviewer somebody pays per call and a free tier an
-outsider can exhaust. Where neither exists, and most private repositories
-running a reviewer on their own credential have neither, there is nothing to
-protect and the label goes on: naming the stand-in and its model beside a gate
-that has visibly gone red is a record, while omitting it reads as a cover-up.
+The exception that looks free is refused on purpose. A private repository
+running its reviewer on its own credential has no free tier for an outsider to
+exhaust, so naming the trigger there appears to cost nothing. A repository's
+visibility changes and its history goes with it, and the call would have to be
+made at the moment of publishing, where it is one way and nobody checks it.
 
 It is the trigger that is withheld and never the substance. The findings are
 posted in full, under an account that stands behind them, which is what makes
