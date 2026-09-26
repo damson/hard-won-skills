@@ -11,7 +11,7 @@ you don't have to win them the hard way too.*
 [![Coverage](https://codecov.io/gh/damson/hard-won-skills/branch/develop/graph/badge.svg)](https://codecov.io/gh/damson/hard-won-skills/branch/develop)
 [![Made for Claude Code](https://img.shields.io/badge/made%20for-Claude%20Code-d97757.svg)](https://claude.com/claude-code)
 
-👋 **Welcome!** This is a marketplace of **46 skills in 6 themed plugins**:
+👋 **Welcome!** This is a marketplace of **47 skills in 6 themed plugins**:
 small, careful procedures your agent picks up automatically when a task calls
 for them: rebasing a stack of PRs without losing one, proving a screenshot test
 actually compared pixels, probing a migration without leaving a trace.
@@ -62,7 +62,7 @@ example; start with any link below.
 | **[agent-config](plugins/agent-config/README.md)** | 10 | Writing and auditing agent instruction files |
 | **[verification](plugins/verification/README.md)** | 6 | Proving a check can fail before trusting it |
 | **[data-safety](plugins/data-safety/README.md)** | 6 | Writes that are hard to undo |
-| **[mobile-ui](plugins/mobile-ui/README.md)** | 5 | Android / Compose screenshots, Figma components, on-device checks |
+| **[mobile-ui](plugins/mobile-ui/README.md)** | 6 | Android / Compose screenshots, Figma components, on-device checks |
 | **[design-ethics](plugins/design-ethics/README.md)** | 1 | Whether a money or consent flow persuades or deceives |
 
 Not sure where to begin? **[verification](#verification)** takes a minute to
@@ -148,7 +148,8 @@ that was actually rendered.
 [`android-screenshot-baseline-verify`](plugins/mobile-ui/skills/android-screenshot-baseline-verify/README.md) ·
 [`figma-to-compose-component`](plugins/mobile-ui/skills/figma-to-compose-component/README.md) ·
 [`android-verify-on-device`](plugins/mobile-ui/skills/android-verify-on-device/README.md) ·
-[`ship-a-fix-round`](plugins/mobile-ui/skills/ship-a-fix-round/README.md)
+[`ship-a-fix-round`](plugins/mobile-ui/skills/ship-a-fix-round/README.md) ·
+[`verify-a-release-build`](plugins/mobile-ui/skills/verify-a-release-build/README.md)
 
 ### design-ethics
 
