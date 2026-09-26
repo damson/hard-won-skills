@@ -65,12 +65,15 @@ rediscovery.
      --jq '[.[] | select(.type=="required_status_checks")
             | .parameters.required_status_checks[].context]'
    gh api "repos/$repo/branches/$base/protection" \
-     --jq '.required_status_checks.contexts'
+     --jq '.required_status_checks.contexts' 2>&1 | head -1
    ```
 
-   A base with no classic protection answers the second call `404 Branch not
-   protected`. That is an answer, nothing is required there, not a call to
-   retry.
+   **Read the second call's 404, do not just count it.** A base with no classic
+   protection answers `Branch not protected`, which is an answer: nothing is
+   required there, and it is not a call to retry. Any other 404 from that path is
+   a different thing wearing the same status code, most often a base name you got
+   wrong, and treating it as "nothing is required" is how this procedure would
+   conclude that a fully protected branch gates nothing.
 
    Empty in both, and the pull request is blocked by something else: stop here
    and read the merge box's own reason rather than pushing commits at it.
@@ -129,10 +132,16 @@ rediscovery.
      then echo "this checkout is at $(git rev-parse --short HEAD), not the pull"
           echo "request's head: check its branch out before committing"
    else
-     git commit --allow-empty -m "Let the required checks run on this pull request"
-     git push origin "HEAD:refs/heads/$branch"
+     git commit --allow-empty -m "Let the required checks run on this pull request" \
+       && git push origin "HEAD:refs/heads/$branch"
    fi
    ```
+
+   **The push is chained to the commit, not sequenced after it.** A commit that
+   fails leaves `HEAD` where it was, and an unconditional push then sends the same
+   commit the branch already has. That succeeds, raises no event, and produces
+   exactly the silence this procedure exists to break, one step further from the
+   cause.
 
    **Both checks come before the commit, not after.** `headRefName` alone does not
    say which repository the branch is on, and `origin` is the base repository in
