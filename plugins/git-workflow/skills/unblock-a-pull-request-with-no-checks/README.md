@@ -10,32 +10,19 @@ Read [SKILL.md](SKILL.md) for the procedure. This file is why it exists.
 
 A merge box reading BLOCKED with an empty checks list looks like patience is the
 answer. It is not: where the required checks were never raised, nothing is
-queued and nothing arrives, however long anyone waits.
+queued and nothing arrives. One repository hit this three times in two weeks,
+losing a worktree and a commit to the same rediscovery each time, because the
+state reads as pending rather than as broken.
 
-The common cause is an automated pull request. A pull request GitHub attributes
-to Actions raises no `pull_request` events, so the workflows that would report
-never start, and a repository that requires two checks has just produced a pull
-request that can never satisfy it. One repository hit this three times across
-two weeks, each time losing a worktree and a commit to the same rediscovery,
-because the state reads as pending rather than as broken.
+Four causes produce that empty list and only one is safe to force, so the skill
+names the cause before it acts:
 
-## What it refuses to do
-
-Three other causes produce the same empty list, and forcing checks onto them
-destroys the evidence:
-
-- a run that started and died before any job, which has a real actor and a real
-  run record with zero jobs;
-- a diff that misses every workflow's `paths:` filter, where the fix is the
-  requirement rather than the pull request, because a required check that is
-  path-filtered will be pending forever on every unrelated change;
-- a run held for a maintainer's approval, which a fork or a first-time
-  contributor produces. That one is the opposite of the automation case: it is
-  waiting on a person, and a commit only puts a second run in the same queue.
-
-So the skill identifies the cause first and only then takes the one action that
-is safe: a single empty commit from a human identity, which raises the
-`synchronize` event the pull request never had.
+| Cause | What it needs |
+|---|---|
+| Actions opened the pull request, so no `pull_request` event was raised | one empty commit from a person, which is the only case a commit repairs |
+| A run started and died before its jobs | its own diagnosis; forcing a fresh run buries the evidence |
+| Every workflow is path-filtered past this diff | fixing the requirement, because a required check must never be path-filtered |
+| A run is held for a maintainer's approval | that maintainer. A commit only queues a second run behind it |
 
 ## Using it
 
@@ -58,56 +45,37 @@ It deliberately does **not** fire on:
 
 ## Example
 
-A release workflow opened a pull request and its two required checks were
-missing. Step 1, with the head taken from the pull request rather than a local
-ref, and both registers counted, because a gate posted as a commit status is
+A release workflow opened a pull request whose two required checks were missing.
+The whole diagnosis, with the head read from the pull request rather than a local
+ref and both registers counted, because a gate posted as a commit status is
 invisible to the check-runs endpoint:
 
 ```console
 $ repo=acme/widgets
 $ pr=482
 $ sha=$(gh pr view "$pr" --repo "$repo" --json headRefOid --jq .headRefOid)
-$ echo "$sha"
-4f1c9ab1d0e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6
 $ gh api "repos/$repo/commits/$sha/check-runs" --jq '.check_runs | length'
 0
 $ gh api "repos/$repo/commits/$sha/statuses" --jq 'length'
 0
-```
-
-The two values on the first lines are the only things a reader changes; every
-command after them is pasted as it stands, here and in the procedure.
-
-Step 2, because zero checks blocks nothing unless something is required:
-
-```console
 $ base=$(gh pr view "$pr" --repo "$repo" --json baseRefName --jq .baseRefName)
 $ gh api "repos/$repo/branches/$base/protection" --jq '.required_status_checks.contexts'
 ["validate","codecov/project"]
-```
-
-Step 3, the cause, which decides whether forcing a run is safe or destructive:
-
-```console
-$ gh pr view "$pr" --repo "$repo" --json author,headRefOid \
-    --jq '{author: .author.login, head: .headRefOid}'
-{"author":"github-actions","head":"4f1c9ab1d0e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6"}
+$ gh pr view "$pr" --repo "$repo" --json author --jq .author.login
+github-actions
 $ gh run list --repo "$repo" --commit "$sha" --json status \
     --jq '[.[] | select(.status == "action_required" or .status == "waiting")] | length'
 0
 ```
 
-An app author, no run at all, and nothing awaiting approval is the first row of
-the table, the only one an empty commit repairs. Step 4 checked that the head was
-not on a fork and that the checkout was at the pull request's head, then wrote the
-commit and pushed it, which raised the `synchronize` event the pull request never
-had. Both checks ran. The durable fix went to the workflow that opens these: open
-them under a token that authors as a person, and use the same token for the
-push.
+An app author, nothing required missing, no run at all and none awaiting
+approval: the first row of the table, and the only one a commit repairs. One
+empty commit raised the `synchronize` event the pull request never had, and both
+checks ran.
 
 Had that last count come back above zero, the answer would have been the
-opposite: a run was already waiting on a maintainer, and a commit would have
-added a second one behind it.
+opposite. A run was already waiting on a maintainer, and a commit would only have
+queued a second one behind it.
 
 ## The fix that stops it recurring
 
