@@ -30,6 +30,29 @@ KSP version, a proguard file or keep rule, a dependency that ships consumer rule
 It stays quiet for a diff that cannot, and says so rather than driving an emulator
 for form's sake.
 
+## Example
+
+An AGP bump, green on every check the project had. The comparison is against the
+integration branch's own release build, not against the change alone:
+
+```console
+$ module=:app; out=${module#:}
+$ for d in . ../baseline; do ( cd "$d" && ./gradlew "$module:assembleRelease" ); done
+BUILD SUCCESSFUL in 1m 48s
+BUILD SUCCESSFUL in 1m 52s
+$ for d in . ../baseline; do
+>   m="$d/$out/build/outputs/mapping/release/mapping.txt"
+>   [ -f "$m" ] && echo "$d: $(grep -cE '^[a-zA-Z].* -> ' "$m") mapped classes"
+> done
+.: 18492 mapped classes
+../baseline: 19104 mapped classes
+```
+
+Six hundred classes gone that the release notes did not mention. Reading the
+mapping for what survives only by name found a generated database implementation
+with no keep rule behind it, and the release APK died before its first frame while
+the debug build and every test stayed green.
+
 ## What it does
 
 1. Builds the release APK on both the branch and the integration branch, and

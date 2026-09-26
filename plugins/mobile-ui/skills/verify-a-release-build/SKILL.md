@@ -39,12 +39,35 @@ emulator for form's sake.
 ### 2. Build both APKs and compare them, not just yours
 
 ```bash
-git worktree add ../baseline <integration-branch>     # its own checkout, not a stash
-./gradlew :app:assembleRelease                       # in each, with the project's own
-                                                     # exclusions for upload steps
-ls -l */app/build/outputs/apk/release/*.apk           # sizes
-grep -cE '^[a-zA-Z].* -> ' */app/build/outputs/mapping/release/mapping.txt
+module=:app            # the application module; `./gradlew -q projects` lists them
+out=${module#:}; out=${out//://}                    # :app -> app, :a:b -> a/b
+
+git worktree add ../baseline <integration-branch>   # its own checkout, not a stash
+
+for d in . ../baseline; do
+  ( cd "$d" && ./gradlew "$module:assembleRelease" )   # with the project's own
+done                                                   # exclusions for upload steps
+
+for d in . ../baseline; do
+  ls -l "$d/$out/build/outputs/apk/release/"*.apk
+  m="$d/$out/build/outputs/mapping/release/mapping.txt"
+  if [ -f "$m" ]
+    then echo "$d: $(grep -cE '^[a-zA-Z].* -> ' "$m") mapped classes"
+    else echo "$d: no mapping.txt, so this build does not shrink and the counts"
+         echo "$d: do not compare. Size is the only measure you have here"
+  fi
+done
 ```
+
+**Name the module rather than assuming `app`**, and derive the output path from it:
+a project whose application module is called something else, or is nested, has no
+`app/` directory for a glob to find, and `ls` then reports nothing in the same tone
+it reports a clean build.
+
+**A baseline without a `mapping.txt` is a real outcome, not an error.** This skill
+fires on turning optimization on, and the branch you are comparing against may not
+shrink at all. Its mapping file then does not exist, a glob quietly drops that side,
+and a count of one build reads exactly like a comparison of two.
 
 The size tells you something happened; the **mapped class count** tells you how
 much. A plugin upgrade that shakes out 600 more library classes is doing more than
@@ -115,8 +138,20 @@ away from silently losing every user's saved choice on upgrade. `run-as` cannot 
 a release build's files, but on an emulator `adb root` can:
 
 ```bash
-adb root && adb shell cat /data/data/<pkg>/shared_prefs/<name>.xml
+pkg=com.example.app; name=settings          # fill these two in
+
+adb root >/dev/null 2>&1
+if adb shell id 2>/dev/null | grep -q 'uid=0'
+  then adb shell cat "/data/data/$pkg/shared_prefs/$name.xml"
+  else echo "this image does not allow adb root, so the file cannot be read and"
+       echo "this check did NOT run. Use an AOSP emulator image, or report the"
+       echo "round-trip as unverified rather than as passing"
+fi
 ```
+
+A Google Play emulator image refuses `adb root`, and `adb root` says so on stderr
+while still exiting zero often enough that chaining it with `&&` is not the test.
+Asking the shell who it is, is.
 
 Set the value through the UI, read the file, force-stop, relaunch, and confirm the
 app comes back in the state you left it. The second half is what makes the first
