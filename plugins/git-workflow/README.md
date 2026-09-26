@@ -1,6 +1,6 @@
 # git-workflow
 
-Branch, worktree and pull-request hygiene: 17 skills for the moments where
+Branch, worktree and pull-request hygiene: 18 skills for the moments where
 git and GitHub quietly do something other than what everyone at the keyboard
 believed.
 
