@@ -37,6 +37,59 @@ So the skill identifies the cause first and only then takes the one action that
 is safe: a single empty commit from a human identity, which raises the
 `synchronize` event the pull request never had.
 
+## Using it
+
+It fires when a merge is blocked and the thing blocking it never reported:
+
+- "the checks never started on this PR"
+- "it has been pending for hours and nothing is queued"
+- "the merge box says blocked but there are no checks"
+- "CI did not pick up the bot's pull request"
+- a pull request opened by Actions, Dependabot or a release workflow, with an
+  empty checks list
+
+It deliberately does **not** fire on:
+
+- a check that reported red, which is its log's job
+- a check that is still running, which is `await-pr-checks`
+- a base that requires nothing, where zero checks blocks nothing and the merge
+  box is refusing for another reason
+- a blocking review, because commits do not satisfy reviewers
+
+## Example
+
+A release workflow opened a pull request and its two required checks were
+missing. The head came from the pull request rather than a local ref, and both
+registers were counted, because a gate posted as a commit status is invisible to
+the check-runs endpoint:
+
+```
+head 4f1c9ab: 0 check run(s), 0 commit status(es)
+```
+
+The base did require them, so the empty list was the block:
+
+```
+["validate","codecov/project"]
+```
+
+Then the cause, which decides whether forcing a run is safe or destructive:
+
+```
+{"author":"github-actions","head":"4f1c9ab"}
+0 run(s) awaiting approval
+```
+
+An app author with no run at all is the first row of the table, the only one an
+empty commit repairs. One commit from a person raised the `synchronize` event the
+pull request never had, both checks ran, and the durable fix went to the workflow
+that opens these: open them under a token that authors as a person, and use the
+same token for the push.
+
+Had that last count come back above zero, the answer would have been the
+opposite: a run was already waiting on a maintainer, and a commit would have
+added a second one behind it.
+
 ## The fix that stops it recurring
 
 Automation that opens pull requests should open them as a person, with a
