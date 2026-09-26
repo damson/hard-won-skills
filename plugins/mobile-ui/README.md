@@ -28,6 +28,8 @@ its own build wiring wins.
 | [`figma-to-compose-component`](skills/figma-to-compose-component/README.md) | Build a Compose component from a Figma node (after checking the design system doesn't already have it), bound to theme tokens, covered by a screenshot test |
 | [`android-verify-on-device`](skills/android-verify-on-device/README.md) | When no test can hold the claim: drive a real device without trusting a stale frame, a missed tap, or a capture of the wrong screen |
 | [`ship-a-fix-round`](skills/ship-a-fix-round/README.md) | When a device-testing report comes back as a list: root-cause every finding, defeat each new test before trusting it, run the repo's own gate, and hand over a build that answers all of them |
+| [`android-shrink-apk-to-a-budget`](skills/android-shrink-apk-to-a-budget/README.md) | Cut an APK to a ceiling that is not negotiable, in yield order, against a measurement that counts the padding rather than the uncompressed sizes `unzip -l` reports |
+| [`verify-a-release-build`](skills/verify-a-release-build/README.md) | Start the release APK before the change that altered it merges: a build task packages one and never launches it, so an R8 regression passes every check a project has |
 
 Each skill's README carries its triggers and a worked example; the `SKILL.md`
 beside it is the procedure the agent follows.
