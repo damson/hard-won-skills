@@ -75,7 +75,7 @@ rediscovery.
    Empty in both, and the pull request is blocked by something else: stop here
    and read the merge box's own reason rather than pushing commits at it.
 
-3. **Name the cause before touching anything.** Three produce an empty checks
+3. **Name the cause before touching anything.** Four produce an empty checks
    list, and only one of them is safe to fix by force:
 
    | Cause | Tell | Fix |
@@ -83,6 +83,7 @@ rediscovery.
    | The pull request was opened by automation | `author` is an app or bot, and no `pull_request` run exists for the head at all | Step 4, then step 6 |
    | A run started and died before its jobs | a run exists with `total_count: 0` jobs, actor is a real login | Its own diagnosis; forcing checks hides it |
    | Every workflow is path-filtered past this diff | runs exist for other commits, none for this one, and the workflow files carry `paths:` | Fix the requirement, not the pull request: a required check must not be path-filtered |
+   | A run exists and is waiting for a maintainer to approve it | a run for this head with status `action_required` or `waiting`, usually a fork or a first-time contributor | Approve it. A commit raises another run that waits the same way |
 
    ```bash
    gh pr view "$pr" --repo "$repo" --json author,headRefOid \
@@ -94,6 +95,21 @@ rediscovery.
    A pull request GitHub attributes to Actions raises no `pull_request` events,
    by design, so the workflows that would report never start. Nothing is
    waiting, nothing is queued, and nothing will change on its own.
+
+   **The fourth cause is the one that looks like the first and is its opposite.**
+   An approval-gated run does exist, and it is waiting on a person rather than on
+   an event, so the empty checks list resolves the moment somebody approves it and
+   an empty commit only adds a second run in the same queue. The two are told
+   apart by the run list, not by the checks list, which is why step 1's count is
+   a screen rather than a diagnosis:
+
+   ```bash
+   gh run list --repo "$repo" --commit "$sha" \
+     --json status,conclusion,event \
+     --jq '[.[] | select(.status == "action_required" or .status == "waiting")] | length'
+   ```
+
+   Above zero, stop and ask for an approval.
 
 4. **Unblock it with one commit from a person.** A push attributed to a human
    identity raises the `synchronize` event the pull request never had:
@@ -132,5 +148,8 @@ rediscovery.
   refusing for another reason, and pushing commits will not reveal it.
 - **A run exists with zero jobs and a human actor.** That is a startup failure
   wearing this disguise, and forcing a fresh run buries the evidence.
+- **A run exists and is waiting for approval.** Nothing here is broken and a
+  commit does not help: it needs a maintainer, and that is a message rather than
+  a push.
 - **The pull request is blocked by a review requirement**, not a check.
   Commits do not satisfy reviewers.
