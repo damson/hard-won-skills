@@ -1,6 +1,6 @@
 # verification
 
-Six skills for the same failure: believing something that has never been
+For the same failure every time: believing something that has never been
 observed doing what it claims, or a summary of it that nobody checked.
 
 ```bash

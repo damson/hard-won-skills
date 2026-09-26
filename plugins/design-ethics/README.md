@@ -1,8 +1,7 @@
 # design-ethics
 
-One skill for the check a design pass cannot make: whether a flow that handles
-money, consent or cancellation is persuading the user or taking the decision
-from them.
+The check a design pass cannot make: whether a flow that handles money, consent
+or cancellation is persuading the user or taking the decision from them.
 
 ```bash
 claude plugin install design-ethics@hard-won-skills --yes

@@ -1,8 +1,7 @@
 # git-workflow
 
-Branch, worktree and pull-request hygiene: 18 skills for the moments where
-git and GitHub quietly do something other than what everyone at the keyboard
-believed.
+Branch, worktree and pull-request hygiene, for the moments where git and GitHub
+quietly do something other than what everyone at the keyboard believed.
 
 ```bash
 claude plugin install git-workflow@hard-won-skills --yes
