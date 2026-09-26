@@ -19,7 +19,7 @@ names the cause before it acts:
 
 | Cause | What it needs |
 |---|---|
-| Actions opened the pull request, so no `pull_request` event was raised | one empty commit from a person, which is the only case a commit repairs |
+| Actions opened the pull request **and no run exists for the head at all** | one empty commit from a person, which is the only case a commit repairs. Authorship alone does not establish it: a run that exists belongs to one of the rows below |
 | A run started and died before its jobs | its own diagnosis; forcing a fresh run buries the evidence |
 | Every workflow is path-filtered past this diff | fixing the requirement, because a required check must never be path-filtered |
 | A run is held for a maintainer's approval | that maintainer. A commit only queues a second run behind it |
@@ -59,23 +59,28 @@ $ gh api "repos/$repo/commits/$sha/check-runs" --jq '.check_runs | length'
 $ gh api "repos/$repo/commits/$sha/statuses" --jq 'length'
 0
 $ base=$(gh pr view "$pr" --repo "$repo" --json baseRefName --jq .baseRefName)
+$ gh api "repos/$repo/rules/branches/$base" \
+    --jq '[.[] | select(.type=="required_status_checks")
+           | .parameters.required_status_checks[].context]'
+[]
 $ gh api "repos/$repo/branches/$base/protection" --jq '.required_status_checks.contexts'
 ["validate","codecov/project"]
 $ gh pr view "$pr" --repo "$repo" --json author --jq .author.login
 github-actions
-$ gh run list --repo "$repo" --commit "$sha" --json status \
-    --jq '[.[] | select(.status == "action_required" or .status == "waiting")] | length'
+$ gh run list --repo "$repo" --commit "$sha" --json status --jq 'length'
 0
 ```
 
-An app author, nothing required missing, no run at all and none awaiting
-approval: the first row of the table, and the only one a commit repairs. One
-empty commit raised the `synchronize` event the pull request never had, and both
-checks ran.
+Both requirement sources, because a ruleset and classic protection can each be
+empty while the other gates. Then an app author with no run of any kind for the
+head: the first row of the table, and the only one a commit repairs. One empty
+commit raised the `synchronize` event the pull request never had, and both checks
+ran.
 
-Had that last count come back above zero, the answer would have been the
-opposite. A run was already waiting on a maintainer, and a commit would only have
-queued a second one behind it.
+Had that run count come back above zero, the answer would have been one of the
+other three rows, and a commit would have been the wrong move in every one of
+them: a dead run needs diagnosing, a path filter needs the requirement fixed, and
+an approval-gated run needs the maintainer.
 
 ## The fix that stops it recurring
 
