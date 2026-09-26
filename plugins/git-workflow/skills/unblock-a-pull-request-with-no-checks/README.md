@@ -59,32 +59,44 @@ It deliberately does **not** fire on:
 ## Example
 
 A release workflow opened a pull request and its two required checks were
-missing. The head came from the pull request rather than a local ref, and both
-registers were counted, because a gate posted as a commit status is invisible to
-the check-runs endpoint:
+missing. Step 1, with the head taken from the pull request rather than a local
+ref, and both registers counted, because a gate posted as a commit status is
+invisible to the check-runs endpoint:
 
-```
-head 4f1c9ab: 0 check run(s), 0 commit status(es)
+```console
+$ sha=$(gh pr view "$pr" --repo "$repo" --json headRefOid --jq .headRefOid)
+$ gh api "repos/$repo/commits/$sha/check-runs" --jq '.check_runs | length'
+0
+$ gh api "repos/$repo/commits/$sha/statuses" --jq 'length'
+0
 ```
 
-The base did require them, so the empty list was the block:
+Step 2, because zero checks blocks nothing unless something is required:
 
-```
+```console
+$ base=$(gh pr view "$pr" --repo "$repo" --json baseRefName --jq .baseRefName)
+$ gh api "repos/$repo/branches/$base/protection" --jq '.required_status_checks.contexts'
 ["validate","codecov/project"]
 ```
 
-Then the cause, which decides whether forcing a run is safe or destructive:
+Step 3, the cause, which decides whether forcing a run is safe or destructive:
 
-```
+```console
+$ gh pr view "$pr" --repo "$repo" --json author,headRefOid \
+    --jq '{author: .author.login, head: .headRefOid}'
 {"author":"github-actions","head":"4f1c9ab"}
-0 run(s) awaiting approval
+$ gh run list --repo "$repo" --commit "$sha" --json status \
+    --jq '[.[] | select(.status == "action_required" or .status == "waiting")] | length'
+0
 ```
 
-An app author with no run at all is the first row of the table, the only one an
-empty commit repairs. One commit from a person raised the `synchronize` event the
-pull request never had, both checks ran, and the durable fix went to the workflow
-that opens these: open them under a token that authors as a person, and use the
-same token for the push.
+An app author, no run at all, and nothing awaiting approval is the first row of
+the table, the only one an empty commit repairs. Step 4 checked that the head was
+not on a fork and that the checkout was at the pull request's head, then wrote the
+commit and pushed it, which raised the `synchronize` event the pull request never
+had. Both checks ran. The durable fix went to the workflow that opens these: open
+them under a token that authors as a person, and use the same token for the
+push.
 
 Had that last count come back above zero, the answer would have been the
 opposite: a run was already waiting on a maintainer, and a commit would have
