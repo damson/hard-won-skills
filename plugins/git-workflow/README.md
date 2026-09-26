@@ -38,7 +38,7 @@ those happen.
 | [`merge-on-go-ahead`](skills/merge-on-go-ahead/README.md) | Merge only what the user authorised, at the head they authorised, in the method the repo prefers, waiting out the recomputation between dependent merges |
 | [`watch-what-the-merge-triggered`](skills/watch-what-the-merge-triggered/README.md) | Watch the `on: push` run a merge starts, pinned to the merge commit: the first and only exercise of merge-time credentials |
 | [`rescue-a-shared-checkout`](skills/rescue-a-shared-checkout/README.md) | Sort the uncommitted changes in a tree with more than one writer into already-safe, at-risk and still-being-written, then land the middle group minus whatever the branch already says elsewhere |
-| [`stand-in-for-a-blocked-review`](skills/stand-in-for-a-blocked-review/README.md) | Tell a review that found nothing from one that never ran, and commission an independent one when a green mark is covering for a spent quota |
+| [`stand-in-for-a-blocked-review`](skills/stand-in-for-a-blocked-review/README.md) | Tell a review that found nothing from one that never ran, and commission an independent one in its place, whether a green mark is covering for a spent quota or a red one failed before reaching the model |
 
 Each skill's README carries its triggers and a worked example; the `SKILL.md`
 beside it is the procedure the agent follows.
