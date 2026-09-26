@@ -3,10 +3,12 @@
 Answers a question the merge gate cannot: was this pull request actually
 reviewed? A review bot reports the same green whether it read the diff and
 found nothing or never read it at all, and the second case is written only in
-a comment body. When the review really is missing, this skill commissions one
-that is independent enough to be worth the word, keeps its findings off a
-public pull request, and leaves behind a record that the gate was satisfied
-instead of letting a green mark stand in silently.
+a comment body. A red check can say as little: an action that failed before it
+reached the model has reviewed nothing either, and reads as an infrastructure
+chore rather than an unreviewed pull request. When the review really is missing,
+this skill commissions one that is independent enough to be worth the word,
+without waiting to be asked, and leaves behind a record that the gate was
+satisfied instead of letting the mark stand in silently.
 
 The failure it prevents is not a bad review. It is a pull request that merges
 looking reviewed. On the session this came from, a free tier allowing one
@@ -26,6 +28,8 @@ It fires when a review is expected and its evidence is missing:
 - "the review bot says limit reached, can we still merge?"
 - "no review on this PR and the checks are green"
 - an automated pull request the reviewer silently skipped
+- a review check that went red reporting one turn and zero cost, which is a
+  request rejected before any inference rather than a verdict
 
 It deliberately does **not** fire on:
 
@@ -69,15 +73,25 @@ It came back with no defects, having sabotaged each new test and confirmed it
 went red. That is a verdict worth recording; the same words from a reviewer
 that only read the tests would not be.
 
-The findings go on the pull request, answered row by row like any other review.
-What does not go on it is the trigger: that a spent quota is what summoned this
-review, and which model produced it.
+The findings go on the pull request as their own comment, in the shape that
+repository's own review posts in, and a second comment answers them row by row.
+Two comments rather than one, because collapsing them leaves a reader unable to
+tell a finding that was accepted from one that was rejected.
+
+What does not go on the pull request is the trigger: that a spent quota is
+what summoned this review, and which model produced it.
 
 That omission is about a budget rather than modesty. Publishing "the reviewer
 was rate limited, so an independent one ran" on every affected pull request
 tells a reader the sequence that turns cheap pull requests into paid review
 calls, and that exhausting a free tier is what unlocks it. A blocked review is
 routine, so the notice would appear often enough to be worth acting on.
+
+The exception that looks free is refused on purpose. A private repository
+running its reviewer on its own credential has no free tier for an outsider to
+exhaust, so naming the trigger there appears to cost nothing. A repository's
+visibility changes and its history goes with it, and the call would have to be
+made at the moment of publishing, where it is one way and nobody checks it.
 
 It is the trigger that is withheld and never the substance. The findings are
 posted in full, under an account that stands behind them, which is what makes
