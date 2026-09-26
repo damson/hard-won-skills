@@ -21,14 +21,17 @@ because the state reads as pending rather than as broken.
 
 ## What it refuses to do
 
-Two other causes produce the same empty list, and forcing checks onto them
+Three other causes produce the same empty list, and forcing checks onto them
 destroys the evidence:
 
 - a run that started and died before any job, which has a real actor and a real
   run record with zero jobs;
 - a diff that misses every workflow's `paths:` filter, where the fix is the
   requirement rather than the pull request, because a required check that is
-  path-filtered will be pending forever on every unrelated change.
+  path-filtered will be pending forever on every unrelated change;
+- a run held for a maintainer's approval, which a fork or a first-time
+  contributor produces. That one is the opposite of the automation case: it is
+  waiting on a person, and a commit only puts a second run in the same queue.
 
 So the skill identifies the cause first and only then takes the one action that
 is safe: a single empty commit from a human identity, which raises the
