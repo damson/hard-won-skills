@@ -11,7 +11,7 @@ you don't have to win them the hard way too.*
 [![Coverage](https://codecov.io/gh/damson/hard-won-skills/branch/develop/graph/badge.svg)](https://codecov.io/gh/damson/hard-won-skills/branch/develop)
 [![Made for Claude Code](https://img.shields.io/badge/made%20for-Claude%20Code-d97757.svg)](https://claude.com/claude-code)
 
-👋 **Welcome!** This is a marketplace of **45 skills in 6 themed plugins**:
+👋 **Welcome!** This is a marketplace of **46 skills in 6 themed plugins**:
 small, careful procedures your agent picks up automatically when a task calls
 for them: rebasing a stack of PRs without losing one, proving a screenshot test
 actually compared pixels, probing a migration without leaving a trace.
@@ -58,7 +58,7 @@ example; start with any link below.
 
 | Plugin | Skills | What it is for |
 |---|---|---|
-| **[git-workflow](plugins/git-workflow/README.md)** | 17 | Branch, worktree and pull-request hygiene |
+| **[git-workflow](plugins/git-workflow/README.md)** | 18 | Branch, worktree and pull-request hygiene |
 | **[agent-config](plugins/agent-config/README.md)** | 10 | Writing and auditing agent instruction files |
 | **[verification](plugins/verification/README.md)** | 6 | Proving a check can fail before trusting it |
 | **[data-safety](plugins/data-safety/README.md)** | 6 | Writes that are hard to undo |
@@ -95,8 +95,12 @@ one writer touches, where discarding destroys work nobody can recover and
 committing everything lands somebody's half-written draft under your name. And
 one about the review rather than the code: a review bot that has spent its quota
 reports the same green as one that read every line, so three pull requests can
-merge looking reviewed when nothing read them.
+merge looking reviewed when nothing read them. And the twin of that one, a
+pull request whose required checks never ran at all rather than having failed:
+where automation opened it, nothing is queued and waiting cannot help, and two
+other causes wear the same empty checks list.
 
+[`unblock-a-pull-request-with-no-checks`](plugins/git-workflow/skills/unblock-a-pull-request-with-no-checks/README.md) ·
 [`branch-hygiene`](plugins/git-workflow/skills/branch-hygiene/README.md) ·
 [`pr-comment-loop`](plugins/git-workflow/skills/pr-comment-loop/README.md) ·
 [`rewrite-pr-history`](plugins/git-workflow/skills/rewrite-pr-history/README.md) ·
