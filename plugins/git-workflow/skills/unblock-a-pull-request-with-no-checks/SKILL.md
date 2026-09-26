@@ -59,7 +59,7 @@ rediscovery.
    empty while the other gates:
 
    ```bash
-   base=develop                                  # the branch this pull request targets
+   base=$(gh pr view "$pr" --repo "$repo" --json baseRefName --jq .baseRefName)
 
    gh api "repos/$repo/rules/branches/$base" \
      --jq '[.[] | select(.type=="required_status_checks")
@@ -115,11 +115,31 @@ rediscovery.
    identity raises the `synchronize` event the pull request never had:
 
    ```bash
-   branch=$(gh pr view "$pr" --repo "$repo" --json headRefName --jq .headRefName)
+   info=$(gh pr view "$pr" --repo "$repo" \
+            --json headRefName,headRefOid,headRepositoryOwner \
+            --jq '[.headRefName, .headRefOid, .headRepositoryOwner.login] | @tsv')
+   branch=$(printf '%s' "$info" | cut -f1)
+   head=$(printf '%s' "$info" | cut -f2)
+   headowner=$(printf '%s' "$info" | cut -f3)
 
-   git commit --allow-empty -m "Let the required checks run on this pull request"
-   git push origin "HEAD:refs/heads/$branch"
+   if [ "$headowner" != "${repo%%/*}" ]
+     then echo "the head is on $headowner's fork, which origin does not point at:"
+          echo "ask the author to push the commit, or add their remote"
+   elif [ "$(git rev-parse HEAD)" != "$head" ]
+     then echo "this checkout is at $(git rev-parse --short HEAD), not the pull"
+          echo "request's head: check its branch out before committing"
+   else
+     git commit --allow-empty -m "Let the required checks run on this pull request"
+     git push origin "HEAD:refs/heads/$branch"
+   fi
    ```
+
+   **Both checks come before the commit, not after.** `headRefName` alone does not
+   say which repository the branch is on, and `origin` is the base repository in
+   any checkout you made of it, so a fork's pull request pushes to a branch of the
+   same name in the wrong place or fails outright. A push that fails after the
+   commit is written leaves an empty commit sitting on whatever branch you were
+   on, which the next reader finds and cannot explain.
 
    Say in the message why an empty commit exists, or the next reader deletes it
    as noise. Then wait out the checks properly, by name and at the new SHA.
@@ -153,3 +173,5 @@ rediscovery.
   a push.
 - **The pull request is blocked by a review requirement**, not a check.
   Commits do not satisfy reviewers.
+- **The head is on a fork you cannot push to.** The commit has to come from the
+  author, so the action here is a message rather than a push.
