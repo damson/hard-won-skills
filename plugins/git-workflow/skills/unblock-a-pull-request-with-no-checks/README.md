@@ -64,12 +64,19 @@ ref, and both registers counted, because a gate posted as a commit status is
 invisible to the check-runs endpoint:
 
 ```console
+$ repo=acme/widgets
+$ pr=482
 $ sha=$(gh pr view "$pr" --repo "$repo" --json headRefOid --jq .headRefOid)
+$ echo "$sha"
+4f1c9ab1d0e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6
 $ gh api "repos/$repo/commits/$sha/check-runs" --jq '.check_runs | length'
 0
 $ gh api "repos/$repo/commits/$sha/statuses" --jq 'length'
 0
 ```
+
+The two values on the first lines are the only things a reader changes; every
+command after them is pasted as it stands, here and in the procedure.
 
 Step 2, because zero checks blocks nothing unless something is required:
 
@@ -84,7 +91,7 @@ Step 3, the cause, which decides whether forcing a run is safe or destructive:
 ```console
 $ gh pr view "$pr" --repo "$repo" --json author,headRefOid \
     --jq '{author: .author.login, head: .headRefOid}'
-{"author":"github-actions","head":"4f1c9ab"}
+{"author":"github-actions","head":"4f1c9ab1d0e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6"}
 $ gh run list --repo "$repo" --commit "$sha" --json status \
     --jq '[.[] | select(.status == "action_required" or .status == "waiting")] | length'
 0
