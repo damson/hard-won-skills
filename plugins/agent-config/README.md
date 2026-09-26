@@ -1,8 +1,8 @@
 # agent-config
 
-Writing and auditing agent instruction files: ten skills for keeping a
-`CLAUDE.md` stack honest, and for noticing when a session has taught you
-something worth writing down.
+Writing and auditing agent instruction files: keeping a `CLAUDE.md` stack
+honest, and noticing when a session has taught you something worth writing
+down.
 
 ```bash
 claude plugin install agent-config@hard-won-skills --yes

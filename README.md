@@ -65,40 +65,16 @@ example; start with any link below.
 | **[mobile-ui](plugins/mobile-ui/README.md)** | 5 | Android / Compose screenshots, Figma components, on-device checks |
 | **[design-ethics](plugins/design-ethics/README.md)** | 1 | Whether a money or consent flow persuades or deceives |
 
-Not sure where to begin? **[verification](#verification)** is six skills,
-takes a minute to read, and changes how you look at every green checkmark
-you'll ever see again. (And if you only ever install one plugin, that's the
-one we'd hand you.)
+Not sure where to begin? **[verification](#verification)** takes a minute to
+read and changes how you look at every green checkmark you'll ever see again.
+If you only ever install one plugin, that's the one we'd hand you.
 
 ### git-workflow
 
-Rebase open PRs onto a base that has just merged, reply to review findings one
-row per finding, prune dead branches and worktrees, embed a screenshot that
-renders for reviewers on a private repo, report coverage as one sticky comment
-with a threshold band rather than a fresh number every push, check a diagram
-still matches the system before ticking "architecture updated", move a
-vendored pin only with the evidence that earned the new commit, and wire a
-scheduled workflow so its cron actually fires (GitHub registers schedule
-triggers only from the default branch). Two more from one long launch session:
-wait out a PR's checks at a pinned SHA where an empty conclusion counts as
-pending, and land a batch of independent fixes as file-disjoint PRs built by
-parallel agents whose scope fences hold. And one more: run a release to
-completion rather than to the merge, since the tag, the floating tag and the
-back-merge all fail without turning anything red. And the step every one of
-those stops short of: press the merge button itself, once the go-ahead is
-confirmed to still cover this pull request at this commit. And the one that
-picks up where all of them end: the `on: push` run the merge starts, which is
-the first and only exercise of merge-time credentials, and where "nothing ran"
-and "nothing was supposed to run" look identical afterwards. And one for the
-tree itself rather than its history: uncommitted changes in a checkout more than
-one writer touches, where discarding destroys work nobody can recover and
-committing everything lands somebody's half-written draft under your name. And
-one about the review rather than the code: a review bot that has spent its quota
-reports the same green as one that read every line, so three pull requests can
-merge looking reviewed when nothing read them. And the twin of that one, a
-pull request whose required checks never ran at all rather than having failed:
-where automation opened it, nothing is queued and waiting cannot help, and two
-other causes wear the same empty checks list.
+Branches, worktrees, pull requests and releases, where the forge's own summary
+is the thing that misleads: a green check with nothing behind it, a release that
+merged and never tagged, a branch that reads as merged because it never had a
+pull request.
 
 [`unblock-a-pull-request-with-no-checks`](plugins/git-workflow/skills/unblock-a-pull-request-with-no-checks/README.md) ·
 [`branch-hygiene`](plugins/git-workflow/skills/branch-hygiene/README.md) ·
@@ -121,12 +97,9 @@ other causes wear the same empty checks list.
 
 ### agent-config
 
-Audit a `CLAUDE.md` stack for contradictions and duplication, keep a config file
-a pointer rather than a copy of its sibling, cut a doc set that has grown by
-finding the facts written in three places, notice when a repeated instruction
-should become a skill, validate a skill against a real project before trusting
-it, capture a long session's learnings before compacting, and turn a finding
-about one page into a checked answer about every page like it.
+Instruction files decay quietly. Two of them disagree, a pointer turns into a
+copy, and a rule nobody reads gets longer every session. These keep the stack
+honest, and prove a skill works on a real project before you trust it.
 
 [`agent-config-audit`](plugins/agent-config/skills/agent-config-audit/README.md) ·
 [`compress-a-doc-set`](plugins/agent-config/skills/compress-a-doc-set/README.md) ·
@@ -141,18 +114,9 @@ about one page into a checked answer about every page like it.
 
 ### verification
 
-Six skills for one failure: trusting a signal nobody has checked. One makes
-you break the thing on purpose and watch the check go red; one runs that loop
-over a batch of guards, where a filter selecting nothing and a mutation changing
-nothing both read as a pass; one makes you run a dependency and observe its
-behaviour instead of asserting what its naming implies; one turns a documented
-procedure loose on a fixture holding every case it claims to handle, and makes
-you run the rule it replaced beside it, because a fix that passes on the first
-attempt has usually failed to contain the case; one is for the moment a signal
-and reality disagree, and sends you to the authoritative record before you debug
-work that was never broken; and the last points the same discipline at a
-sentence, when a layout requirement has round-tripped twice and another
-paragraph will only be misread the same way.
+One failure wearing every disguise: believing a signal nobody has checked. The
+discipline is to break the thing on purpose and watch the check go red, while
+that is still cheap.
 
 [`prove-the-check-can-fail`](plugins/verification/skills/prove-the-check-can-fail/README.md) ·
 [`verify-dependency-behaviour`](plugins/verification/skills/verify-dependency-behaviour/README.md) ·
@@ -163,12 +127,9 @@ paragraph will only be misread the same way.
 
 ### data-safety
 
-Probe a migration inside a transaction and roll it back, interrogating it as
-each role that will meet it. Answer data questions with a throwaway read-only
-probe instead of a remembered number. Make a bulk write reversible before
-running it.
-Catch the Supabase-managed-schema traps that pass review and fail in production.
-Sweep a repository's full history and its remote before anything goes public.
+Operations with no undo: a migration, a bulk write, a repository about to go
+public. Each one gets rehearsed inside a transaction, made reversible, or swept
+before it runs.
 
 [`probe-migration-in-transaction`](plugins/data-safety/skills/probe-migration-in-transaction/README.md) ·
 [`read-only-db-probe`](plugins/data-safety/skills/read-only-db-probe/README.md) ·
@@ -179,13 +140,9 @@ Sweep a repository's full history and its remote before anything goes public.
 
 ### mobile-ui
 
-Record and verify Compose screenshot baselines, including the silent no-op where
-the task reports `PASSED` while comparing no pixels at all. Build a Compose
-component from a Figma node, bound to design tokens rather than raw values. And
-where no test can hold the claim, drive the change on a real device without
-trusting a stale frame or a tap that missed. And when the device report comes
-back as a list, run the whole fix round as one batch, so the build handed over
-answers every finding rather than most of them.
+Android and Compose, where a screenshot test reports `PASSED` having compared no
+pixels and a device frame can be a second stale. Ground the claim in something
+that was actually rendered.
 
 [`android-screenshot-baseline-record`](plugins/mobile-ui/skills/android-screenshot-baseline-record/README.md) ·
 [`android-screenshot-baseline-verify`](plugins/mobile-ui/skills/android-screenshot-baseline-verify/README.md) ·
@@ -197,10 +154,7 @@ answers every finding rather than most of them.
 
 Persuasion and deception use the same contrast, defaults and sequence, so the
 technique never settles which one a flow is doing. What settles it is whether
-the user's understanding of what they agreed to matches what happens. Name what
-they can lose, test each decision point, and rate by loss rather than on a
-scale that drifts upward under pressure. Runs again after the visual pass,
-because polish gives a default force it did not have in structure.
+what the user thinks they agreed to matches what happens.
 
 [`separate-persuasion-from-deception`](plugins/design-ethics/skills/separate-persuasion-from-deception/README.md)
 

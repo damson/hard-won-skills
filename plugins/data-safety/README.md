@@ -1,7 +1,7 @@
 # data-safety
 
-Writes that are hard to undo: six skills for the operations where "oops"
-is a rollback plan written too late, or not at all.
+Writes that are hard to undo, for the operations where "oops" is a rollback
+plan written too late, or not at all.
 
 ```bash
 claude plugin install data-safety@hard-won-skills --yes
