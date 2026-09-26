@@ -1,7 +1,7 @@
 # mobile-ui
 
-Android / Compose screenshots, Figma components and on-device checks: six
-skills against the UI test that reports success while testing nothing.
+Android / Compose screenshots, Figma components and on-device checks, against
+the UI test that reports success while testing nothing.
 
 ```bash
 claude plugin install mobile-ui@hard-won-skills --yes
