@@ -23,12 +23,33 @@ resolutions inside it are guesses nobody reviewed.
 ## Procedure
 
 1. **Make the combination somewhere that cannot be pushed by accident.** A
-   worktree of its own, reset to the integration branch, reused every time:
+   worktree of its own, on a branch nothing has ever opened a pull request for,
+   reset to the integration branch and reused every time:
 
    ```bash
+   base=develop                                  # the integration branch
+   br=throwaway/combined-build                   # fill these three in
+   wt=$HOME/throwaway-combined-build             # OUTSIDE the repository
+
    git fetch origin --prune
-   git -C <throwaway-worktree> reset --hard origin/<integration-branch>
+
+   # the forge is the check here, not the branch name: a name that once had a
+   # pull request can be pushed to again, and the push looks reviewed
+   if [ -n "$(gh pr list --head "$br" --state all --json number --jq '.[].number')" ]
+     then echo "$br has carried a pull request before: choose another name"
+   elif git -C "$wt" rev-parse --git-dir >/dev/null 2>&1
+     then git -C "$wt" checkout -q -B "$br" "origin/$base"    # reuse, from round two on
+          git -C "$wt" reset --hard "origin/$base"
+     else git worktree add -B "$br" "$wt" "origin/$base"      # first round
+   fi
    ```
+
+   **The first branch of that `if` is the one worth reading.** `reset --hard`
+   against a worktree that does not exist yet fails, and on a later round a bare
+   reset does not say which branch it is resetting, so the same command either
+   errors or lands the combination on whatever that worktree was last left on.
+   `worktree add -B` creates the branch and the checkout together; `checkout -B`
+   re-points it on every round after.
 
    Never the primary checkout, and never a branch that has a pull request. The
    commits this makes are resolutions nobody reviewed, and a push would put
@@ -38,9 +59,26 @@ resolutions inside it are guesses nobody reviewed.
    independent branches in any order after them. A child that already contains
    its parent is merged once, as the child.
 
+   **One at a time, and in the worktree.** A merge that stops at a conflict
+   leaves the tree mid-merge, and the next iteration of a loop refuses or
+   compounds it; a `git merge` without `-C "$wt"` merges into whatever the
+   primary checkout has checked out, which is the one thing step 1 exists to
+   prevent.
+
    ```bash
-   for b in <branches-in-order>; do git merge --no-edit "origin/$b"; done
+   branches="feat/one feat/two feat/three"       # parents before children
+
+   for b in $branches; do
+     if git -C "$wt" merge --no-edit "origin/$b"
+       then echo "merged $b"
+       else echo "$b conflicts: resolve it with step 3, then continue from here"
+            break
+     fi
+   done
    ```
+
+   The `break` is deliberate. Stopping on the first conflict is what makes step 3
+   a resolution of one merge rather than an archaeology of three.
 
 3. **Expect the conflicts in the same places every time, and resolve them as a
    union.** Branches built in parallel off one base conflict where each
@@ -59,8 +97,22 @@ resolutions inside it are guesses nobody reviewed.
    invisible afterwards because the merge succeeded.
 
    ```bash
-   git diff --name-only --diff-filter=U        # what is actually conflicted
+   git -C "$wt" diff --name-only --diff-filter=U     # what is actually conflicted
+
+   # edit each one to carry both sides, then finish THIS merge before the next
+   git -C "$wt" add -u                               # every path you resolved
+   git -C "$wt" commit --no-edit
+
+   # the only answer to "is this merge finished"
+   git -C "$wt" rev-parse -q --verify MERGE_HEAD >/dev/null \
+     && echo "STILL mid-merge" || echo "merge completed"
    ```
+
+   **Completing the merge is a step, not an implication.** A resolved working
+   tree with nothing committed is still a merge in progress: the next `git merge`
+   refuses, and `MERGE_HEAD` survives long enough that a later reader cannot tell
+   which round they are in. Then go back to step 2 and continue from the branch
+   after the one that conflicted.
 
 4. **Compile before believing the resolution.** A union merge of two `when`
    arms compiles only if the hierarchy got both cases, and that is exactly the
