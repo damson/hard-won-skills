@@ -28,6 +28,7 @@ changes how you read every green checkmark that follows.
 | [`mutation-proof-harness`](skills/mutation-proof-harness/README.md) | Run the break-it-and-watch-it-go-red loop over several guards at once, refusing to count a filter that selected nothing or a mutation that changed nothing |
 | [`prove-a-procedure-on-a-fixture`](skills/prove-a-procedure-on-a-fixture/README.md) | Build a throwaway fixture holding every case a documented procedure claims to handle, run its published commands verbatim, and record what the rule it replaced answered |
 | [`render-the-candidates`](skills/render-the-candidates/README.md) | When a layout requirement has round-tripped twice: state the numbers, build each reading through the real code path, and ask with the cost of each attached |
+| [`audit-a-dependency-from-its-artifact`](skills/audit-a-dependency-from-its-artifact/README.md) | Answer a dependency question from the published artifact, and refuse any row whose query cannot find the version currently in use |
 
 Each skill's README carries its triggers and a worked example; the `SKILL.md`
 beside it is the procedure the agent follows.
