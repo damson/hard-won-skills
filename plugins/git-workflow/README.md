@@ -38,6 +38,7 @@ those happen.
 | [`watch-what-the-merge-triggered`](skills/watch-what-the-merge-triggered/README.md) | Watch the `on: push` run a merge starts, pinned to the merge commit: the first and only exercise of merge-time credentials |
 | [`rescue-a-shared-checkout`](skills/rescue-a-shared-checkout/README.md) | Sort the uncommitted changes in a tree with more than one writer into already-safe, at-risk and still-being-written, then land the middle group minus whatever the branch already says elsewhere |
 | [`stand-in-for-a-blocked-review`](skills/stand-in-for-a-blocked-review/README.md) | Tell a review that found nothing from one that never ran, and commission an independent one in its place, whether a green mark is covering for a spent quota or a red one failed before reaching the model |
+| [`build-every-open-branch-at-once`](skills/build-every-open-branch-at-once/README.md) | Combine every open pull request into one throwaway build so a feature split into slices can be tried before the first slice merges, resolving the conflicts between parallel branches as unions rather than by picking a side |
 
 Each skill's README carries its triggers and a worked example; the `SKILL.md`
 beside it is the procedure the agent follows.
