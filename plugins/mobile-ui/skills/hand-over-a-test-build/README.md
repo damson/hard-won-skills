@@ -39,9 +39,10 @@ the build only has to compile, and it does not drive the app itself.
 
 ## What it will not do
 
-It does not push the integration, and it does not resolve a conflict between two
-branches quietly. Two fixes that cannot sit together is a finding the author
-needs before either merges.
+It does not push the integration, and it does not choose a winner quietly where
+two branches genuinely changed the same logic. Two fixes that cannot sit together
+is a finding the author needs before either merges. Two additions meeting in one
+list are a different thing and keep both sides.
 
 It does not claim a fix is present when nothing in the output distinguishes it. A
 comment or documentation change has no signature, and saying so is the honest

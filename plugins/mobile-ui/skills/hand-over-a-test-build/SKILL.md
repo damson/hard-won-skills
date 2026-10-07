@@ -7,7 +7,9 @@ description: >
   that get skipped, which are integrating the branches the fixes actually live on
   and proving each one is inside the artifact before it is sent. Do NOT fire for a
   release or store upload, for driving the app yourself (android-verify-on-device
-  owns that), or for a build that only has to compile in CI.
+  owns that), for a build that only has to compile in CI, or for combining open
+  branches to see what the whole of a feature looks like, which stops at the build
+  and is build-every-open-branch-at-once rather than a handover.
 ---
 
 # Hand over a test build
@@ -32,15 +34,32 @@ carry onto the integration branch in a worktree that exists for this and nothing
 else:
 
 ```bash
-git worktree add --detach ../build-handover origin/<integration-branch>
-git -c user.name=t -c user.email=t@t merge --no-edit origin/<branch-a> origin/<branch-b>
+base=develop                          # the integration branch
+wt=$HOME/build-handover               # outside the repository
+
+git fetch origin --prune
+git worktree add --detach "$wt" "origin/$base" 2>/dev/null \
+  || git -C "$wt" reset --hard "origin/$base"
+
+for b in feat/one feat/two; do        # the branches the fixes live on
+  git -C "$wt" -c user.name=t -c user.email=t@t merge --no-edit "origin/$b" \
+    || { echo "$b conflicts: resolve it before merging the next"; break; }
+done
 ```
 
 Detached and never pushed. This is a throwaway integration, not a proposal about
 how those branches should land, and pushing it would turn one into the other.
 
-A conflict here is a finding, not an obstacle: two fixes that cannot sit together
-is something the author needs to know before either merges.
+**Where several branches have to go in, the combination is its own procedure.**
+`build-every-open-branch-at-once` owns the merge order, the conflicts parallel
+branches produce and how they resolve, and it is worth reading before doing this
+by hand with more than two. Where that plugin is not installed, the loop above is
+the whole of it.
+
+A conflict is not an obstacle on its own. Two branches that each appended to the
+same list resolve by keeping both sides, and that is the common case. A conflict
+inside logic both sides genuinely changed is the finding: two fixes that cannot
+sit together is something the author needs before either merges.
 
 ### 2. Run the suite on the combination
 
@@ -98,8 +117,10 @@ branches merge.
 
 - **The fixes are already merged.** Build the integration branch and say so; the
   merging is a separate decision and inventing an integration hides it.
-- **Two branches conflict.** Report the conflict and which files, and ask which
-  should win rather than resolving it inside a throwaway nobody will review.
+- **Two branches conflict inside logic both of them changed.** Report it and
+  which files, rather than choosing a winner inside a throwaway nobody will
+  review. Two additions meeting in one list are not this case and resolve by
+  keeping both.
 - **Nothing in the compiled output distinguishes the fix.** A pure comment or
   documentation change has no signature, so say that it cannot be shown to be
   present rather than implying it was checked.
