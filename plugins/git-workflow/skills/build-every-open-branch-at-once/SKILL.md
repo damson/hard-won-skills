@@ -37,19 +37,34 @@ resolutions inside it are guesses nobody reviewed.
 
    # the forge is the check here, not the branch name: a name that once had a
    # pull request can be pushed to again, and the push looks reviewed
+   # is $wt a worktree of THIS repository? "is it a git repo" is not that
+   # question, and answering the wrong one points reset --hard at a stranger
+   here=$(cd "$(git rev-parse --git-common-dir)" && pwd -P)
+   there=$(cd "$wt" 2>/dev/null && cd "$(git rev-parse --git-common-dir)" 2>/dev/null \
+             && pwd -P) || there=""
+
    if [ -n "$(gh pr list --head "$br" --state all --json number --jq '.[].number')" ]
      then echo "$br has carried a pull request before: choose another name"
-   elif git -C "$wt" rev-parse --git-dir >/dev/null 2>&1
+   elif [ ! -e "$wt" ]
+     then git worktree add -B "$br" "$wt" "origin/$base"      # first round
+   elif [ "$there" = "$here" ]
      then git -C "$wt" checkout -q -B "$br" "origin/$base"    # reuse, from round two on
           git -C "$wt" reset --hard "origin/$base"
-     else git worktree add -B "$br" "$wt" "origin/$base"      # first round
+     else echo "$wt exists and is not a worktree of this repository: stop"
    fi
    ```
 
-   **The first branch of that `if` is the one worth reading.** `reset --hard`
-   against a worktree that does not exist yet fails, and on a later round a bare
-   reset does not say which branch it is resetting, so the same command either
-   errors or lands the combination on whatever that worktree was last left on.
+   **The middle two branches are the ones worth reading.** `reset --hard` against
+   a worktree that does not exist yet fails, and on a later round a bare reset
+   does not say which branch it is resetting, so the same command either errors or
+   lands the combination on whatever that worktree was last left on.
+
+   **And "is there a git repository at `$wt`" is the wrong question**, which is
+   the dangerous kind of wrong: `rev-parse --git-dir` answers yes for *any*
+   repository sitting at that path, and the `checkout -B` and `reset --hard` below
+   would then move a stranger's branch and throw away its tracked changes.
+   Comparing the common directory is what makes the reuse safe, and anything else
+   at that path stops the procedure rather than being reset.
    `worktree add -B` creates the branch and the checkout together; `checkout -B`
    re-points it on every round after.
 
@@ -67,13 +82,20 @@ resolutions inside it are guesses nobody reviewed.
    primary checkout has checked out, which is the one thing step 1 exists to
    prevent.
 
-   ```bash
-   branches="feat/one feat/two feat/three"       # parents before children
+   **Merge each pull request's own head, not a branch name on `origin`.** A pull
+   request from a fork has no `origin/<branch>` to merge, and a branch of the same
+   name on `origin` is a different commit that will merge without complaint.
+   `refs/pull/<n>/head` is the head the forge is showing the reviewer, fork or
+   not:
 
-   for b in $branches; do
-     if git -C "$wt" merge --no-edit "origin/$b"
-       then echo "merged $b"
-       else echo "$b conflicts: resolve it with step 3, then continue from here"
+   ```bash
+   prs="101 102 103"                             # parents before children
+
+   for n in $prs; do
+     git -C "$wt" fetch -q origin "refs/pull/$n/head:refs/pr/$n"
+     if git -C "$wt" merge --no-edit "refs/pr/$n"
+       then echo "merged #$n"
+       else echo "#$n conflicts: resolve it with step 3, then continue from here"
             break
      fi
    done
