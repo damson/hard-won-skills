@@ -29,6 +29,8 @@ its own build wiring wins.
 | [`android-verify-on-device`](skills/android-verify-on-device/README.md) | When no test can hold the claim: drive a real device without trusting a stale frame, a missed tap, or a capture of the wrong screen |
 | [`ship-a-fix-round`](skills/ship-a-fix-round/README.md) | When a device-testing report comes back as a list: root-cause every finding, defeat each new test before trusting it, run the repo's own gate, and hand over a build that answers all of them |
 | [`verify-a-release-build`](skills/verify-a-release-build/README.md) | Start the release APK before the change that altered it merges: a build task packages one and never launches it, so an R8 regression passes every check a project has |
+| [`hand-over-a-test-build`](skills/hand-over-a-test-build/README.md) | Integrate the open branches somewhere disposable, run the suite on the combination, prove each change is in the artifact by reading the compiled classes, and say what is not in it |
+| [`render-android-ui-candidates`](skills/render-android-ui-candidates/README.md) | When a look has been argued about twice: render each candidate through the project's own harness, then measure the ink in dp against the controls beside it |
 
 Each skill's README carries its triggers and a worked example; the `SKILL.md`
 beside it is the procedure the agent follows.
