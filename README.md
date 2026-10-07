@@ -11,7 +11,7 @@ you don't have to win them the hard way too.*
 [![Coverage](https://codecov.io/gh/damson/hard-won-skills/branch/develop/graph/badge.svg)](https://codecov.io/gh/damson/hard-won-skills/branch/develop)
 [![Made for Claude Code](https://img.shields.io/badge/made%20for-Claude%20Code-d97757.svg)](https://claude.com/claude-code)
 
-👋 **Welcome!** This is a marketplace of **51 skills in 6 themed plugins**:
+👋 **Welcome!** This is a marketplace of **52 skills in 6 themed plugins**:
 small, careful procedures your agent picks up automatically when a task calls
 for them: rebasing a stack of PRs without losing one, proving a screenshot test
 actually compared pixels, probing a migration without leaving a trace.
@@ -60,7 +60,7 @@ example; start with any link below.
 |---|---|---|
 | **[git-workflow](plugins/git-workflow/README.md)** | 19 | Branch, worktree and pull-request hygiene |
 | **[agent-config](plugins/agent-config/README.md)** | 10 | Writing and auditing agent instruction files |
-| **[verification](plugins/verification/README.md)** | 7 | Proving a check can fail before trusting it |
+| **[verification](plugins/verification/README.md)** | 8 | Proving a check can fail before trusting it |
 | **[data-safety](plugins/data-safety/README.md)** | 6 | Writes that are hard to undo |
 | **[mobile-ui](plugins/mobile-ui/README.md)** | 8 | Android / Compose screenshots, Figma components, on-device checks |
 | **[design-ethics](plugins/design-ethics/README.md)** | 1 | Whether a money or consent flow persuades or deceives |
@@ -125,7 +125,8 @@ that is still cheap.
 [`mutation-proof-harness`](plugins/verification/skills/mutation-proof-harness/README.md) ·
 [`prove-a-procedure-on-a-fixture`](plugins/verification/skills/prove-a-procedure-on-a-fixture/README.md) ·
 [`render-the-candidates`](plugins/verification/skills/render-the-candidates/README.md) ·
-[`audit-a-dependency-from-its-artifact`](plugins/verification/skills/audit-a-dependency-from-its-artifact/README.md)
+[`audit-a-dependency-from-its-artifact`](plugins/verification/skills/audit-a-dependency-from-its-artifact/README.md) ·
+[`reproduce-a-reported-defect`](plugins/verification/skills/reproduce-a-reported-defect/README.md)
 
 ### data-safety
 
