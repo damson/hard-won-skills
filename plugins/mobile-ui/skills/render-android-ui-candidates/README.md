@@ -18,6 +18,20 @@ how much emphasis, which parts take the accent colour, and how large, each
 round a picture rather than a paragraph. The last round is the one that
 mattered:
 
+```console
+$ ./gradlew :app:tasks --all | grep -iE 'record|screenshot|snapshot'
+recordRoborazziDebug - Record screenshots for the debug variant
+$ find app/build/outputs/roborazzi -name '*.png' | wc -l
+      0
+$ ./gradlew :app:recordRoborazziDebug
+BUILD SUCCESSFUL in 41s
+$ find app/build/outputs/roborazzi -name '*.png' | wc -l
+      6
+```
+
+Six files for three candidates in two themes, which is the count the parameters
+predicted. Measured off those renders, in the units the code uses:
+
 ```
 36dp ring -> 36.2dp on screen   palette 27.8dp
 30dp ring -> 30.1dp             palette 27.8dp
@@ -39,7 +53,11 @@ Ask to see the options, or say a design question has gone round twice:
 
 ## Two traps it exists to avoid
 
-- **The plain unit-test task writes nothing.** A screenshot library is inert
-  under it: no captures, no error, a green build and an empty directory.
+- **The task that records is not always the one you would reach for.** Some
+  harnesses gate capture behind a record task of their own, so the ordinary
+  unit-test task passes having written nothing: no captures, no error, a green
+  build and an empty directory. Others write from the test task itself. The skill
+  asks the project which tasks it has, then counts the files before and after,
+  because a count that did not move is the only reliable tell.
 - **Theme qualifiers merge at method level only.** Concatenated by hand they
   fail to parse, and the segment order is fixed.

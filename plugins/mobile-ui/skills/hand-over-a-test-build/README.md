@@ -37,6 +37,42 @@ the build only has to compile, and it does not drive the app itself.
    what is deliberately absent, and one line per fix on how to see it.
 5. Keeps the worktree until the verdict comes back.
 
+## Example
+
+Two fixes reported by one tester, each on its own open branch, and a request for
+something to try. The combination goes in a detached worktree, the suite runs on
+it, and the variant gets assembled because a test task produces nothing
+installable:
+
+```console
+$ git worktree add --detach "$wt" origin/develop
+$ for n in 318 322; do
+>   git -C "$wt" fetch -q origin "refs/pull/$n/head:refs/pr/$n"
+>   git -C "$wt" merge --no-edit "refs/pr/$n" || break
+> done
+$ ( cd "$wt" && ./gradlew :app:testDebugUnitTest :app:assembleDebug )
+BUILD SUCCESSFUL in 2m 14s
+412 tests completed
+$ find "$wt" -path '*/outputs/apk/*' -name '*.apk' -newermt '-10 minutes' | head -1
+/Users/me/build-handover/app/build/outputs/apk/debug/app-debug.apk
+```
+
+Then the step the skill exists for, once per fix, against the class files rather
+than the packaged archive:
+
+```console
+$ hit=$(find "$wt" -path '*/intermediates/*' -path '*/com/example/sync/RetryBanner.class' | head -1)
+$ R=${hit%/com/example/sync/RetryBanner.class}
+$ javap -p -cp "$R" com.example.sync.RetryBanner | grep retryAfterSeconds
+  private final int retryAfterSeconds;
+```
+
+The member exists only because of #322, so that fix is demonstrably in the
+artifact. #318 changed a constant and has no new member, so its value gets read
+out of the disassembled method instead. The handover then says the commit, the
+variant, how to see each fix, and that the offline queue work on a third open
+branch is deliberately not in it.
+
 ## What it will not do
 
 It does not push the integration, and it does not choose a winner quietly where

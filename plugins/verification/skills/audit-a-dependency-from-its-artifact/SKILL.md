@@ -43,8 +43,16 @@ currently in use must appear in the list that came back**. If it does not, the
 coordinates are wrong, the repository is wrong, or the artifact moved, and every
 other number from that query is worthless.
 
+**Membership is necessary and not sufficient.** Two different artifacts can
+publish the same version string, so a query aimed at the wrong coordinates can
+still find the version in use and hand back that other artifact's `latest` as
+though it were an answer. Check the coordinates themselves against what the build
+resolved, then check membership.
+
 ```
 for each artifact:
+    if queried_coordinates != coordinates the build resolved:
+        report "unusable: queried <g:a>, the build resolves <g:a>"     # never a result
     published = versions(coordinates)
     if current_version not in published:
         report "unusable: current <v> is not in the published list"   # never a result
@@ -75,10 +83,21 @@ states the compile level it demands, and that is what the build will read.
 ### 4. Judge "does this carry code" by counting, with the caveat
 
 ```bash
-# an AAR holds its code in an inner classes.jar; a jar holds it directly
-unzip -p <artifact>.aar classes.jar > /tmp/inner.jar
-unzip -l /tmp/inner.jar | grep -c '\.class$'
+art=$HOME/.gradle/caches/.../thing-1.2.3.aar    # the file you are auditing
+
+case "$art" in
+  *.aar) # an AAR holds its code in an inner classes.jar
+         unzip -p "$art" classes.jar > /tmp/inner.jar
+         unzip -l /tmp/inner.jar | grep -c '\.class$' ;;
+  *.jar) # a jar holds it directly, and the AAR command finds nothing here
+         unzip -l "$art" | grep -c '\.class$' ;;
+  *)     echo "not an archive this step can read: $art" ;;
+esac
 ```
+
+The two cases are not interchangeable. `unzip -p <jar> classes.jar` on a plain
+jar extracts nothing and the count comes back 0, which is the same answer this
+step uses to mean "carries no code".
 
 **A count of 0 has not answered the question until the comparison is non-zero.**
 Where the artifact under test and the one you are comparing it against both

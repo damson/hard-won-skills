@@ -41,12 +41,33 @@ enum class Trial(val ring: Dp, val glyph: Dp) { A(36.dp, 26.dp), B(30.dp, 21.dp)
 Thread it through with a default so every existing call site still compiles,
 and delete it before the change ships. It is scaffolding, not API.
 
-### 3. Run the record task, never the plain test task
+### 3. Find the harness's own record task, and list what it wrote
 
-This is the trap that produces no files and no error. Under
-`testDebugUnitTest` a screenshot library is inert: the capture calls are no-ops,
-the tests pass, and nothing is written. Use the project's record task, and
-**list the output directory** rather than trusting the build's exit code.
+**Ask the project which task records**, rather than recalling a name. The
+harnesses differ in exactly the way that matters here: some gate capture behind
+a task of their own, so the ordinary unit-test task passes having written
+nothing, and others hook the unit-test task and do write from it.
+
+```bash
+( cd "$wt" 2>/dev/null || cd . ) && ./gradlew :app:tasks --all \
+  | grep -iE 'record|screenshot|paparazzi|roborazzi|snapshot'
+```
+
+Where that lists a record task, use it; where the only screenshot tasks are the
+ordinary test ones, the harness writes from those and there is nothing to switch
+to. Either way the check is the same and it is not the exit code:
+
+```bash
+out=app/build/outputs/roborazzi                # whatever the task reports
+before=$(find "$out" -name '*.png' 2>/dev/null | wc -l | tr -d ' ')
+./gradlew :app:recordRoborazziDebug            # the task the list named
+after=$(find "$out" -name '*.png' 2>/dev/null | wc -l | tr -d ' ')
+echo "png files: $before -> $after"
+```
+
+**A count that did not move is the failure this step exists to catch**, and it
+comes with a green build. Reading the directory is what separates a harness that
+was inert from one that recorded.
 
 ### 4. Get both themes by merging qualifiers, not by concatenating them
 

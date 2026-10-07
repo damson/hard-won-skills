@@ -51,16 +51,24 @@ kotlin               2.4.20         2.4.20         .
 AGP is behind, and its cap comment says the reason is a Gradle floor. Rather
 than trusting the comment, read the floor out of the plugin:
 
-```bash
-unzip -o gradle-9.4.1.jar -d /tmp/agp && \
-  javap -c -p -cp /tmp/agp com.android.build.gradle.internal.VersionCheckPlugin \
-  | grep -oE '9\.[0-9]+(\.[0-9]+)?'
-# 9.6.0
+```console
+$ unzip -oq gradle-9.4.1.jar -d /tmp/agp
+$ javap -c -p -cp /tmp/agp com.android.build.gradle.internal.VersionCheckPlugin \
+    | grep -nE 'MINIMUM|ldc .*String 9\.'
+  14:   ldc           #7    // String 9.6.0
+  22:   getstatic     #9    // Field MINIMUM_GRADLE_VERSION
 ```
 
-One constant, in the class that enforces it. The comment was right, the wrapper
-moved first, and the doc now says how to read the floor rather than listing the
-one that happened to bind.
+**Read the constant the check uses, not every version-shaped string in the
+class.** A class that enforces a floor usually mentions other versions too, in a
+deprecation message or a second branch, and a bare match on `9.x` prints all of
+them in whatever order the constant pool holds. Grepping for the field the
+comparison reads, and the `ldc` that loads it, is what ties the number to the
+check. Where the two disagree, disassemble the comparing method on its own and
+follow the operand.
+
+The comment was right, the wrapper moved first, and the doc now says how to read
+the floor rather than listing the one that happened to bind.
 
 ## Related
 

@@ -61,11 +61,30 @@ same list resolve by keeping both sides, and that is the common case. A conflict
 inside logic both sides genuinely changed is the finding: two fixes that cannot
 sit together is something the author needs before either merges.
 
-### 2. Run the suite on the combination
+### 2. Run the suite on the combination, then build the thing you will send
 
 Each branch was green alone. The combination is a tree nothing has tested, and it
 is what you are about to send. Run the project's own test task over it and read
 the count, not the exit code: a suite that silently ran nothing also exits 0.
+
+**A test task does not produce an installable artifact.** Assemble the variant
+the handover is for, and find the file rather than predicting its path:
+
+```bash
+module=:app                                   # fill these two in
+variant=Debug
+
+( cd "$wt" && ./gradlew "$module:assemble$variant" )
+
+apk=$(find "$wt" -path '*/outputs/apk/*' -name '*.apk' -newermt '-10 minutes' \
+        | head -1)
+[ -n "$apk" ] || { echo "assembled nothing: do not hand anything over"; }
+echo "$apk"
+```
+
+The `-newermt` is the check that matters. A stale artifact from an earlier round
+sits at exactly the path a fresh one would, and sending it is the failure this
+step exists to prevent.
 
 ### 3. Prove each change is inside the artifact
 
@@ -77,17 +96,27 @@ symbol is the obvious move and it fails quietly: the strings are encoded, a
 release build has renamed them, and a search that finds nothing looks exactly
 like a search of the wrong file. The intermediates still hold real class files:
 
+The path differs between plugin versions and between modules, so derive the
+classpath root from a class file you know changed rather than pasting a path:
+
 ```bash
-R=app/build/intermediates/classes/debug/transformDebugClassesWithAsm/dirs
-javap -p -cp "$R" <the.class.you.changed> | grep <the member you added>
+cls=MyChangedThing.class                      # the compiled name, not the source
+pkg=com/example/ui                            # its package, as directories
+
+hit=$(find "$wt" -path '*/intermediates/*' -path "*/$pkg/$cls" | head -1)
+[ -n "$hit" ] || { echo "no class file for $cls: nothing to read"; }
+R=${hit%/$pkg/$cls}                           # strip the package back off
+
+javap -p -cp "$R" "$(echo "$pkg" | tr / .).${cls%.class}" | grep theMemberYouAdded
 ```
 
-The path differs between plugin versions, so locate it rather than pasting it:
-`find app/build/intermediates -name '<Something>.class' | head -1`.
+`R` is computed from where the class actually landed, so a module that is not
+`app` and a variant that is not debug both work. Pasting a fixed intermediates
+path is how this step reads a different module's output and reports on it.
 
 For a change with no new member, a constant for instance, disassemble the method
-and read the value: `javap -c -p -cp "$R" <class>` shows `iconst_0` where the
-source used to push a different one. For a change to a resource or an asset, list
+and read the value: `javap -c -p -cp "$R"` on the same class shows `iconst_0`
+where the source used to push a different one. For a change to a resource or an asset, list
 the archive and compare the entry.
 
 An artifact whose timestamp predates your last edit is a cached one. Check that
