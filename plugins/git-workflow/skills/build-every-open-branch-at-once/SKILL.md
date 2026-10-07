@@ -2,12 +2,14 @@
 name: build-every-open-branch-at-once
 description: >
   Use when a feature is split across several open pull requests and somebody
-  wants to try the whole of it before any of them land — "get me a build",
-  "can I test it end to end", "what does it look like with all of that in".
-  Produces one throwaway build carrying every open branch, resolved in a
-  worktree that is never pushed. NOT for merging those branches (that is
-  merge-on-go-ahead), NOT for a stack where each child already contains its
-  parent, and NOT for building one branch, which needs no procedure.
+  wants to try the whole of it before any of them land: "get me a build", "can I
+  test it end to end", "what does it look like with all of that in". Produces one
+  throwaway build carrying every open branch, resolved in a worktree that is never
+  pushed. NOT for merging those branches (that is merge-on-go-ahead), NOT for a
+  stack where each child already contains its parent, NOT for building one branch,
+  which needs no procedure, and NOT for packaging a build somebody will judge a
+  fix by, where the combination is one step of a longer handover that
+  hand-over-a-test-build owns.
 ---
 
 # Build every open branch at once
@@ -129,6 +131,12 @@ resolutions inside it are guesses nobody reviewed.
 ## When to STOP
 
 - **One pull request.** Build that branch; there is nothing to combine.
+- **The build is a handover rather than an answer to "what does all of it look
+  like".** Somebody judging a fix by it needs the suite run on the combination
+  and each change shown to be inside the artifact, which is a longer procedure
+  that this one is the first step of. `hand-over-a-test-build` owns it where that
+  plugin is installed; where it is not, this still builds the combination and the
+  rest is yours.
 - **A pure stack**, where the last child already contains every ancestor. Build
   the child.
 - **A conflict inside logic both sides genuinely changed**, rather than two
