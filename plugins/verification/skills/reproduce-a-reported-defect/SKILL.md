@@ -52,6 +52,24 @@ claimed failure happen, and let it answer.
    written for. A test added beside a fix, never seen failing, is the same
    unverified claim one layer down.
 
+   **Where there is no suite to promote it into**, the probe does not get thrown
+   away and it does not get left lying in the tree either. Both of those end the
+   same way, with the next reader unable to tell whether anything was checked.
+   Find out which it is before deciding:
+
+   ```bash
+   ls test* tests spec 2>/dev/null; ls **/src/test 2>/dev/null
+   grep -rilE '"(test|spec)"\s*:' package.json 2>/dev/null
+   grep -rl 'testImplementation\|pytest\|go test' . --include='*.gradle*' \
+     --include='*.toml' --include='Makefile' 2>/dev/null | head
+   ```
+
+   Nothing found, and the probe ships beside the fix as the project's first test,
+   with whatever runner the language gives for free, plus one line in the change
+   saying there was nowhere to put it. Where even that is refused, say in the
+   change that the fix is unguarded and why, so the gap is a decision somebody
+   made rather than an omission nobody noticed.
+
 5. **Not reproduced: reject it with the evidence, never silently.** Quote the line
    that contradicts it. A finding withdrawn against the source is a better record
    than one that quietly disappears, and the reviewer's next reader deserves to
@@ -77,3 +95,7 @@ claimed failure happen, and let it answer.
   and hand the question over.
 - **The fix is smaller than the probe and provably inert** (a duplicate import, an
   unused symbol). Apply it, and say that is why you did not build one.
+- **The repository has no suite and adding one is not yours to decide.** Ship the
+  fix with the probe's result quoted in the change and say it is unguarded;
+  inventing a test framework on the way past a one-line fix is a larger change
+  than the one you were asked for.

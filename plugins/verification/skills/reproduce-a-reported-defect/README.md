@@ -38,6 +38,38 @@ do when the source cannot settle the claim, which is every finding about an
 order, a race, a bound or a moment, and those are the ones worth the most and
 cost the most to get wrong.
 
+## Example
+
+A finding ranked critical: the gallery saves the wrong picture after a swipe.
+Step 1 cannot settle that, because it is a claim about order rather than about a
+line, so the probe drives exactly the sequence the finding describes and nothing
+else:
+
+```console
+$ cat app/src/androidTest/java/.../ProbeSwipeThenSave.kt
+@Test fun probe_swipeThenSave_savesTheVisiblePage() {
+    composeRule.onNodeWithTag("pager").performTouchInput { swipeLeft() }
+    composeRule.onNodeWithTag("save").performClick()
+    assertEquals(1, savedIndex)          // the page now on screen
+}
+$ ./gradlew :app:connectedDebugAndroidTest --tests '*ProbeSwipeThenSave*'
+> expected:<1> but was:<0>
+```
+
+**Read why, not that.** `expected:<1> but was:<0>` is the claim: the save used
+the index from before the swipe. A probe that had died on
+`Expected exactly '1' node but found '2'` would have been just as red and would
+have proved nothing, which happened in the same batch when a modal sheet composed
+into a second window.
+
+Reproduced, so the fix lands, the probe is renamed into the suite for the
+behaviour rather than the bug, and it is run once against the unfixed code so the
+record shows it catching what it was written for.
+
+Two other findings in that batch were rejected without a test, and a rejection
+carries the same burden as a reproduction: the line that contradicts the claim
+gets quoted. "Checked, not an issue" is not a rejection anybody can audit.
+
 ## What it cost to learn
 
 Two findings in one night, both ranked critical, both about behaviour over time.
