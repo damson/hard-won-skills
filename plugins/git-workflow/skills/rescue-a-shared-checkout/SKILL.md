@@ -310,9 +310,17 @@ The cheap test is to compute each one from the branch instead of reading it from
 the rescue, and compare:
 
 ```bash
-# the rescued file's claim against what the branch's own tree says
-grep -oE '[0-9]+ (skills|items|entries)' "$DEST/README.md" | head -1
-ls -d "$DEST"/plugins/*/skills/*/ | wc -l                 # whatever the count counts
+# Name the file carrying the claim and a pattern matching one line per thing it
+# counts. Both are the shape of YOUR repository: fill them in before running.
+MANIFEST=README.md
+COUNTED='^plugins/[^/]*/skills/[^/]*/SKILL\.md$'
+
+# The claim, then the same number recomputed from the branch. `ls-tree` is what
+# makes this check able to fail: step 3 has already copied the rescue into
+# $DEST, so a count taken from that working tree includes the rescued paths and
+# agrees with the rescued claim however stale the claim is.
+grep -oE '[0-9]+ (skills|items|entries)' "$DEST/$MANIFEST" | head -1
+git -C "$DEST" ls-tree -r --name-only "$REMOTE/$BASE" | grep -cE "$COUNTED"
 
 # every version the rescue would move, in the direction it would move it
 for f in $(git -C "$DEST" diff --name-only "$REMOTE/$BASE" -- '*.json' '*.toml'); do
