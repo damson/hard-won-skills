@@ -81,5 +81,6 @@ Seven dirty paths in a checkout two sessions share.
 - `worktree-bootstrap`, for the opposite problem: a *fresh* worktree missing the
   ignored files and dependencies it needs to run.
 - `branch-hygiene`, for the cleanup after the rescued branch merges.
-- `prove-the-change-shipped`-style verification is what the final discard step
-  applies to the rescue itself: confirm the branch really supersedes the copy before discarding.
+- Before the final discard, confirm the branch really supersedes the copy, and
+  read that back from the ref rather than from the working tree: a `git diff`
+  against a tree that still holds the rescue reports it as landed either way.
