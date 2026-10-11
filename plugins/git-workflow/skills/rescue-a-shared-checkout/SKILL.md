@@ -299,6 +299,46 @@ rewriting them to fit the branch lands your sentences under their name, which is
 exactly what step 8 exists to prevent. A finding belongs in the pull request
 body, where the writer can answer it.
 
+**Wiring is the exception, and it is the one that reverts merged work.** A count,
+a version, an index or a generated list in the rescued files was computed against
+the branch as it stood when somebody wrote it, and the branch has moved since. The
+hunk classifies `AHEAD` because it genuinely differs, and applying it rolls those
+numbers back. Nothing conflicts, nothing fails, and a diff of additions does not
+show a deletion, so it is found later by a reader rather than now by a check.
+
+The cheap test is to compute each one from the branch instead of reading it from
+the rescue, and compare:
+
+```bash
+# Name the file carrying the claim and a pattern matching one line per thing it
+# counts. Both are the shape of YOUR repository: fill them in before running.
+MANIFEST=README.md
+COUNTED='^plugins/[^/]*/skills/[^/]*/SKILL\.md$'
+
+# The claim, then the same number recomputed from the branch. `ls-tree` is what
+# makes this check able to fail: step 3 has already copied the rescue into
+# $DEST, so a count taken from that working tree includes the rescued paths and
+# agrees with the rescued claim however stale the claim is.
+grep -oE '[0-9]+ (skills|items|entries)' "$DEST/$MANIFEST" | head -1
+git -C "$DEST" ls-tree -r --name-only "$REMOTE/$BASE" | grep -cE "$COUNTED"
+
+# every version the rescue would move, in the direction it would move it
+for f in $(git -C "$DEST" diff --name-only "$REMOTE/$BASE" -- '*.json' '*.toml'); do
+  printf '%s
+  branch: %s
+  rescue: %s
+' "$f" \
+    "$(git -C "$DEST" show "$REMOTE/$BASE:$f" | grep -o '"version": "[^"]*"')" \
+    "$(grep -o '"version": "[^"]*"' "$DEST/$f")"
+done
+```
+
+A rescued number lower than the branch's, or a version going backwards, means the
+draft predates work that has landed. **Take the paths the rescue adds and
+recompute the wiring from the branch**, rather than taking the file whole. That
+is not editing the author's claim: a count is not a claim, it is arithmetic about
+a tree, and the tree is the one on the branch.
+
 ### 6. Re-check the source before you open anything
 
 Between the copy and the push, the writer may have moved. Re-run step 4: an
@@ -395,5 +435,8 @@ still has is not a superset, and discarding loses them.
 - **Every rescued hunk audits as `DUPLICATE`.** The branch is already carrying
   the work under another path, so there is nothing to land. Say where it lives
   and close.
+- **The only thing left is wiring, and it is all behind the branch.** There is
+  nothing to rescue: the files the rescue would add are already there and its
+  numbers are older. Fast-forward the shared tree and say so.
 - **The work belongs to someone else's branch or merge.** Report it; do not
   adopt commits whose history you were not asked to touch.
