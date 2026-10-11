@@ -11,11 +11,11 @@ description: >
 
 # Validate a skill against a real project
 
-A skill reads as correct long after it stopped being correct. Task names invert,
-a tool's flag turns out to be a GNU extension, a `grep` returns nothing on a
-layout the author never had. None of it is visible by reading — the sentences stay
-plausible. Running the skill's own commands is the only check that separates a
-procedure that works from one that merely sounds like it does.
+A skill reads as correct long after it stopped being correct. Task names
+invert, a tool's flag turns out to be a GNU extension, a `grep` returns nothing
+on a layout the author never had. None of it is visible by reading: the
+sentences stay plausible. Running the skill's own commands is the only check
+that separates a procedure that works from one that merely sounds like it does.
 
 ## Procedure
 
@@ -30,10 +30,10 @@ ls -d */ | head; git -C . rev-parse --show-toplevel     # candidates and root
 uname -sr; echo "$SHELL"                                # OS and shell
 ```
 
-Where several projects qualify, **pick the smallest** — fewest modules, plainest
-layout. A skill claiming "any project of kind X" claims the whole range, and the
-small end is where generic skills break, because the author's own project was not
-there. Say which end you tested; one target cannot prove the range.
+Where several projects qualify, **pick the smallest**: fewest modules, plainest
+layout. A skill claiming "any project of kind X" claims the whole range, and
+the small end is where generic skills break, because the author's own project
+was not there. Say which end you tested; one target cannot prove the range.
 
 ### 2. Extract every executable claim
 
@@ -48,7 +48,7 @@ Prose about judgement is out of scope here. Anything with a shell in it is in.
 
 ### 3. Run each one verbatim
 
-Do not adapt the command to make it work — an adapted command validates your
+Do not adapt the command to make it work: an adapted command validates your
 adaptation, not the skill.
 
 ```bash
@@ -68,16 +68,17 @@ have:
 command -v <tool>; <tool> --version 2>&1 | head -1
 ```
 
-A friendlier drop-in on `$PATH` — installed years ago and forgotten — accepts
+A friendlier drop-in on `$PATH`, installed years ago and forgotten, accepts
 syntax the stock tool refuses, and makes a broken command look fine. If
-`command -v` returns anything other than the system path, re-run the claim against
-that path directly and compare **exit codes first**, then stderr: a non-zero exit,
-or a parse/usage error on one and not the other, is a disagreement. Differing
-output for the same exit code is usually the projects differing, not the tools.
+`command -v` returns anything other than the system path, re-run the claim
+against that path directly and compare **exit codes first**, then stderr: a
+non-zero exit, or a parse/usage error on one and not the other, is a
+disagreement. Differing output for the same exit code is usually the projects
+differing, not the tools.
 
-Where the system has no such binary at all (common for tools installed only via a
-package manager), there is no stock behaviour to appeal to — record the version you
-tested and mark the claim as verified for that build only.
+Where the system has no such binary at all (common for tools installed only via
+a package manager), there is no stock behaviour to appeal to: record the
+version you tested and mark the claim as verified for that build only.
 
 ### 5. Exercise the degenerate cases
 
@@ -86,9 +87,9 @@ simple one. Run the skill's discovery steps against:
 
 - the smallest layout the scope allows (single module, one package)
 - a tree that has never been built, so the output directories do not exist
-- an empty result set — no baselines, no matches, nothing configured
+- an empty result set: no baselines, no matches, nothing configured
 
-You rarely have such a project to hand, so make one — these are cheap:
+You rarely have such a project to hand, so make one. These are cheap:
 
 ```bash
 d=$(mktemp -d); (cd "$d" && git init -q)        # empty tree, nothing built
@@ -107,36 +108,36 @@ Two different things get called "does the skill work":
 
 | Question | Judgeable here |
 |---|---|
-| Do its commands run and its claims hold? | Yes — that is steps 3–5 |
+| Do its commands run and its claims hold? | Yes, that is steps 3–5 |
 | Does it fire unprompted, and follow its own steps? | **No, not by you** |
 
-Once you have read a skill's procedure and its test plan, you cannot score whether
-it would have fired on its own, or whether an agent following it would take the
-right step — you already know the answers. Say so and leave that half to a session
-without this context. Reporting it anyway is the most common way this work goes
-wrong.
+Once you have read a skill's procedure and its test plan, you cannot score
+whether it would have fired on its own, or whether an agent following it would
+take the right step. You already know the answers. Say so and leave that half
+to a session without this context. Reporting it anyway is the most common way
+this work goes wrong.
 
 ### 7. Report per skill, with evidence
 
 One issue per skill, in the repo that owns it:
 
 ```bash
-gh issue create --repo <owner>/<repo> --title "skill: <name> — <what breaks>" \
+gh issue create --repo <owner>/<repo> --title "skill: <name> (<what breaks>)" \
   --body-file <file>
 ```
 
-`gh` assumes GitHub — check `git remote get-url origin` first and use the
-forge's CLI (`gh` for GitHub, `glab issue create` for GitLab), confirmed
-before use: `command -v gh && gh auth status` (or the `glab` pair). No remote,
-an unrecognised host, a missing CLI or a failed auth check all take the same
-exit: write the report to `skill-validation-<name>.md` beside the skill and
-tell the user where it is — the report, not the issue, is the deliverable.
+`gh` assumes GitHub: check `git remote get-url origin` first and use the
+forge's CLI (`gh` for GitHub, `glab issue create` for GitLab), confirmed before
+use: `command -v gh && gh auth status` (or the `glab` pair). No remote, an
+unrecognised host, a missing CLI or a failed auth check all take the same exit:
+write the report to `skill-validation-<name>.md` beside the skill and tell the
+user where it is: the report, not the issue, is the deliverable.
 
-Title it `skill: <name> — <what breaks>` so several reports stay sortable. For each
-defect give, in order: the quoted line from the skill, the command you ran, its exit
-code and output, then what it costs someone following it.
-Close with what was **not** covered — steps needing credentials or integrations
-you lacked, and the behavioural half from step 6.
+Title it `skill: <name> (<what breaks>)` so several reports stay sortable. For
+each defect give, in order: the quoted line from the skill, the command you
+ran, its exit code and output, then what it costs someone following it. Close
+with what was **not** covered: steps needing credentials or integrations you
+lacked, and the behavioural half from step 6.
 
 Quote a suggested fix where you have one, and mark any claim you inferred rather
 than observed as unverified. A confident wrong fix in an issue outlives the issue.
@@ -144,10 +145,10 @@ than observed as unverified. A confident wrong fix in an issue outlives the issu
 ## When to STOP
 
 - **No available project matches the claimed scope.** Say so rather than
-  validating against a mismatched stack — a defect found outside the scope is not
-  a defect.
+  validating against a mismatched stack: a defect found outside the scope is
+  not a defect.
 - **A step needs an integration the environment lacks** (a credential, a design
   tool, a paid API). Validate the offline steps, report the rest as not covered.
   Never let "could not run it" become "it passed".
-- **A fix is obvious and small.** Filing and fixing are separate acts — the report
-  is the deliverable here. Fix in its own change, against the report.
+- **A fix is obvious and small.** Filing and fixing are separate acts: the
+  report is the deliverable here. Fix in its own change, against the report.

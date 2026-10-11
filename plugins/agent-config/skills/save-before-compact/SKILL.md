@@ -102,12 +102,12 @@ line) and the user applies or skips each. That is the whole step.
 In **auto**, sort every drafted addition by the **class of its target**, using
 the same classes as Step 2's routing table, and sort it before touching a file:
 
-| Class | Target | Outcome |
-|---|---|---|
-| 1. Memory | the memory store | Apply automatically when it clears the bar below, else discard |
-| 2. Ordinary documentation | a file under `docs/`, a doc it links to, a sibling `README.md` | Apply automatically when it clears the bar below, else discard |
-| 3. Agent instruction files | `CLAUDE.md`, `AGENTS.md`, a personal preference file | **Always ask**, with the audit in hand (below). A candidate that fails the keep-test is discarded rather than asked about |
-| 4. Skills | a new or materially changed `SKILL.md` | **Always ask** (Step 7 owns the procedure) |
+| Class | Outcome |
+|---|---|
+| 1. Memory | Apply automatically when it clears the bar below, else discard |
+| 2. Ordinary documentation | Apply automatically when it clears the bar below, else discard |
+| 3. Agent instruction files | **Always ask**, with the audit in hand (below). A candidate that fails the keep-test is discarded rather than asked about |
+| 4. Skills, a new or materially changed `SKILL.md`, which Step 2's table does not route | **Always ask** (Step 7 owns the procedure) |
 
 Classes 3 and 4 are never automatic, at any quality: an instruction file loads
 into every future session, and a bad line there is paid for over and over, where

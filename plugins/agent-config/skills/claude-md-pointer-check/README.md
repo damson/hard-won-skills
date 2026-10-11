@@ -34,15 +34,15 @@ command a sibling does not already state?), finds more than half fail it,
 and rewrites the whole file as:
 
 ```markdown
-# CLAUDE.md — acme-api
+# CLAUDE.md: acme-api
 
-Read [README.md](README.md) first — it covers commands, architecture, and
+Read [README.md](README.md) first: it covers commands, architecture, and
 git flow. The directives below are Claude-only and don't belong in README.
 
 ## Claude-only directives
 
 - `.claude/settings.json` cannot be auto-written from this repo
-- When adding an entry, edit the registry file only — never touch the
+- When adding an entry, edit the registry file only. Never touch the
   scripts that read it
 ```
 

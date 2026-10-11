@@ -2,12 +2,12 @@
 name: capture-pr-screenshots
 description: >
   Use when opening or updating a PR that changes a UI route file (`page.tsx`,
-  `+page.svelte`, a `routes/` entry) without adding a matching screenshot. Also fire
-  when the user says "missing screenshot" / "no screenshot for the UI" / "capture the
+  `+page.svelte`, a `routes/` entry) without adding a matching screenshot. Also fire when
+  the user says "missing screenshot" / "no screenshot for the UI" / "capture the
   screenshot" / "screenshot for this PR" / "you forgot the screenshot". Skip on a
-  backend-only PR, or one that already includes screenshots for the surfaces it
-  changes. Where the repo documents its own capture command, run that instead — this
-  skill is the fallback for repos that document nothing.
+  backend-only PR, or one that already includes screenshots for the surfaces it changes.
+  Where the repo documents its own capture command, run that instead: this skill is the
+  fallback for repos that document nothing.
 ---
 
 # Capture PR screenshots end-to-end
@@ -37,13 +37,15 @@ SHOTS=$(find . -type d -iname 'screenshot*' -not -path './node_modules/*' | head
 echo "base=$BASE shots=${SHOTS:-<none>}"
 ```
 
-Zero route matches, or no screenshot directory, means this repo is not shaped the way
-this skill assumes — **stop and ask** rather than proceeding on empty results. Map each
-route to a filename in `$SHOTS`, following the naming already used by the files there.
+Zero route matches, or no screenshot directory, means this repo is not shaped
+the way this skill assumes. **Stop and ask** rather than proceeding on empty
+results. Map each route to a filename in `$SHOTS`, following the naming already
+used by the files there.
 
 ### 2. Pre-flight
 
-- Ensure env files exist. In a secondary worktree they are gitignored and absent — link the primary's:
+- Ensure env files exist. In a secondary worktree they are gitignored and
+  absent: link the primary's:
   ```bash
   MAIN=$(git worktree list --porcelain | awk '/^worktree /{print $2; exit}')
   ln -sfn "$MAIN/.env" .env.local        # adjust to the name the app reads
@@ -54,8 +56,9 @@ route to a filename in `$SHOTS`, following the naming already used by the files 
   grep -rhoE 'process\.env\.[A-Z_]*(BYPASS|DEV_AUTH|SKIP_AUTH)[A-Z_]*' \
     --include='*.ts' --include='*.tsx' --include='*.js' . | sort -u
   ```
-  Take the variable from the `process.env.X` hit. **More than one candidate: stop and
-  ask** — guessing which gate the page honours is how you end up capturing the login form.
+  Take the variable from the `process.env.X` hit. **More than one candidate:
+  stop and ask**: guessing which gate the page honours is how you end up
+  capturing the login form.
 
 ### 3. Start the dev server
 
@@ -80,8 +83,8 @@ done
 [ -n "$PORT" ] || { tail -20 /tmp/dev.log; echo "dev server never came up"; }
 ```
 
-An empty `$PORT` after the loop means the server never came up — take the log tail to
-the STOP list rather than capturing against nothing.
+An empty `$PORT` after the loop means the server never came up: take the log
+tail to the STOP list rather than capturing against nothing.
 
 ### 4. Capture each surface
 
@@ -96,10 +99,10 @@ Match the viewport any existing screenshot uses; `1280×900` is only a default.
 
 ### 5. Verify the capture
 
-Display each PNG with the Read tool. Reject and retry if it shows the login form (the
-bypass never reached the server), a blank shell or error overlay, or an unstyled page
-(CSS chunks had not compiled). **A screenshot of the login page is worse than none** —
-it looks like evidence.
+Display each PNG with the Read tool. Reject and retry if it shows the login
+form (the bypass never reached the server), a blank shell or error overlay, or
+an unstyled page (CSS chunks had not compiled). **A screenshot of the login
+page is worse than none**. It looks like evidence.
 
 ### 6. Stop the server
 
@@ -119,10 +122,11 @@ PR=$(gh pr view --json number -q .number)
 SHA=$(git rev-parse --short HEAD)          # after the commit that contains the image
 ```
 
-The URL shape — `github.com/<owner>/<repo>/raw/<sha>/<path>`, SHA-pinned, never
-`raw.githubusercontent.com`, never a branch name — is `github-pr-screenshot-embed`'s
-whole subject; follow that skill for the host rule and its private-repo rationale.
-Edit the PR body in place rather than replacing it:
+The URL shape (`github.com/<owner>/<repo>/raw/<sha>/<path>`, SHA-pinned, never
+`raw.githubusercontent.com`, never a branch name), is
+`github-pr-screenshot-embed`'s whole subject; follow that skill for the host
+rule and its private-repo rationale. Edit the PR body in place rather than
+replacing it:
 
 ```bash
 gh pr view "$PR" --json body -q .body > /tmp/pr-body.md
@@ -134,15 +138,19 @@ gh pr edit "$PR" --body-file /tmp/pr-body.md
 ```
 
 The plain append lands the row in the table only while the section is the last
-thing in the body — where the template puts content after it, insert the row
+thing in the body: where the template puts content after it, insert the row
 under the header instead of appending.
 
-## When to STOP and ask
+## When to STOP
 
-- **Step 1 matched nothing** — no route files, or no screenshot directory. The repo is shaped differently; ask rather than guessing a layout.
-- **The dev server will not start** — step 3's loop ends with an empty `$PORT`. Surface the log tail; do not push a half-baked image.
+- **Step 1 matched nothing**: no route files, or no screenshot directory. The
+  repo is shaped differently; ask rather than guessing a layout.
+- **The dev server will not start**: step 3's loop ends with an empty `$PORT`.
+  Surface the log tail; do not push a half-baked image.
 - **Step 2's grep returns more than one bypass variable.** Ask which gate the page honours.
-- **The capture still shows the login page** after exporting the bypass variable. The block may be in middleware — confirm before weakening auth further.
+- **The capture still shows the login page** after exporting the bypass
+  variable. The block may be in middleware: confirm before weakening auth
+  further.
 - **The surface needs real data to mean anything** (an empty list view). Capture the empty state and say in the PR body that a populated variant follows.
 - **No Chrome binary is found** by step 4's lookup. Ask how the browser is installed rather than guessing a path.
 

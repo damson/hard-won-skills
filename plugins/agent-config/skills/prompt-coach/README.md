@@ -37,10 +37,10 @@ Mode A on the prompt *"Manage the open PRs"*:
 |---|---|---|
 | Delegation | 4/5 | trusts the assistant to pick the mechanics |
 | Description | 2/5 | no scope, no expected output, no stop-condition |
-| Discernment | N/A — not applicable in this turn |
+| Discernment | N/A. Not applicable in this turn |
 | Diligence | N/A |
 
-**Weakest dimension**: Description — the assistant cannot tell which PRs,
+**Weakest dimension**: Description. The assistant cannot tell which PRs,
 what "managed" means, or when to stop.
 
 **Rewrite**:

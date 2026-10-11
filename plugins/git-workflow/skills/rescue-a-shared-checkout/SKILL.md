@@ -1,13 +1,12 @@
 ---
 name: rescue-a-shared-checkout
 description: >
-  Use when a working tree you do not exclusively own carries uncommitted changes
-  somebody else wrote — a second agent session, a colleague's machine, a
-  long-lived VM, a tool that wrote into the tree behind you. Fires on "whose
-  changes are these", "the tree is dirty and it isn't mine", "sort out the
-  pending changes", and before cutting a branch from a tree whose dirt you did
-  not create. Do NOT fire for your own uncommitted work, or for a tree you are
-  certain nothing else writes to.
+  Use when a working tree you do not exclusively own carries uncommitted changes somebody
+  else wrote: a second agent session, a colleague's machine, a long-lived VM, a tool that
+  wrote into the tree behind you. Fires on "whose changes are these", "the tree is dirty
+  and it isn't mine", "sort out the pending changes", and before cutting a branch from a
+  tree whose dirt you did not create. Do NOT fire for your own uncommitted work, or for a
+  tree you are certain nothing else writes to.
 ---
 
 # Rescue a shared checkout
@@ -77,7 +76,7 @@ while IFS= read -r -d "" rec; do
     "??")
       # An untracked path is not in the index, so `git diff` cannot answer for it.
       if ! comparable "$path"
-        then echo "SPECIAL $path — neither a regular file nor a symlink; stop and look"
+        then echo "SPECIAL $path: neither a regular file nor a symlink; stop and look"
       elif same_as_branch "$path"
         then echo "LANDED $path"
         else printf '%s\0' "$path" >> "$UNTRACKED"; echo "AHEAD  $path"; fi ;;
@@ -92,7 +91,7 @@ done
 ```
 
 The two NUL-delimited lists are what step 3 consumes; the printed lines are for
-you. Read them before going on — this is the review the whole procedure exists
+you. Read them before going on. This is the review the whole procedure exists
 to make possible.
 
 Run it in `bash`: in some shells the piped loop body loses its environment and
@@ -176,7 +175,7 @@ date
 
 Minutes-old timestamps mean someone is still working: say so and stop. The
 converse does not hold. **An old timestamp is evidence of nothing having been
-written, not of nobody writing** — a paused editor, a session waiting on a
+written, not of nobody writing**: a paused editor, a session waiting on a
 review, a job between runs all look identical to a finished one, and none of
 these checks can see a writer that resumes a second later. Treat them as
 advisory, say in the pull request which of them you ran, and where a writer can
@@ -186,7 +185,7 @@ be asked, ask instead. For a second opinion, ask who holds the files open:
 lsof +D <dir> 2>/dev/null | awk 'NR>1 {print $1, $NF}' | sort -u
 ```
 
-Cluster the timestamps too — a group of files sharing one timestamp to the
+Cluster the timestamps too: a group of files sharing one timestamp to the
 second was written by a tool in one sweep, not typed by a person.
 
 ### 3. Copy into a worktree cut from the remote branch
@@ -220,19 +219,19 @@ aimed outside the repository puts that file's contents in the branch, and the
 push publishes them.
 
 `cp -P` guards the source. The destination needs its own guard: a directory
-component that is a symlink **on the branch** — `fixtures -> /var/tmp/shared`,
-committed long ago — is recreated in the rescue worktree, and writing through
+component that is a symlink **on the branch** (`fixtures -> /var/tmp/shared`,
+committed long ago), is recreated in the rescue worktree, and writing through
 it puts the file outside `$DEST` entirely.
 
 ```bash
 root=$(cd "$DEST" && pwd -P)
 while IFS= read -r -d "" path; do
-  [ -L "$path" ] && echo "SYMLINK $path — copied as a link; check where it points"
+  [ -L "$path" ] && echo "SYMLINK $path: copied as a link; check where it points"
   dir=$DEST/$(dirname -- "$path")
   mkdir -p -- "$dir" || continue
   case "$(cd "$dir" && pwd -P)" in
     "$root"|"$root"/*) cp -P -- "$path" "$dir/$(basename -- "$path")" ;;
-    *) echo "REFUSED $path — its destination resolves outside the rescue worktree" ;;
+    *) echo "REFUSED $path: its destination resolves outside the rescue worktree";;
   esac
 done < "$UNTRACKED"
 ```
@@ -299,6 +298,46 @@ rewriting them to fit the branch lands your sentences under their name, which is
 exactly what step 8 exists to prevent. A finding belongs in the pull request
 body, where the writer can answer it.
 
+**Wiring is the exception, and it is the one that reverts merged work.** A count,
+a version, an index or a generated list in the rescued files was computed against
+the branch as it stood when somebody wrote it, and the branch has moved since. The
+hunk classifies `AHEAD` because it genuinely differs, and applying it rolls those
+numbers back. Nothing conflicts, nothing fails, and a diff of additions does not
+show a deletion, so it is found later by a reader rather than now by a check.
+
+The cheap test is to compute each one from the branch instead of reading it from
+the rescue, and compare:
+
+```bash
+# Name the file carrying the claim and a pattern matching one line per thing it
+# counts. Both are the shape of YOUR repository: fill them in before running.
+MANIFEST=README.md
+COUNTED='^plugins/[^/]*/skills/[^/]*/SKILL\.md$'
+
+# The claim, then the same number recomputed from the branch. `ls-tree` is what
+# makes this check able to fail: step 3 has already copied the rescue into
+# $DEST, so a count taken from that working tree includes the rescued paths and
+# agrees with the rescued claim however stale the claim is.
+grep -oE '[0-9]+ (skills|items|entries)' "$DEST/$MANIFEST" | head -1
+git -C "$DEST" ls-tree -r --name-only "$REMOTE/$BASE" | grep -cE "$COUNTED"
+
+# every version the rescue would move, in the direction it would move it
+for f in $(git -C "$DEST" diff --name-only "$REMOTE/$BASE" -- '*.json' '*.toml'); do
+  printf '%s
+  branch: %s
+  rescue: %s
+' "$f" \
+    "$(git -C "$DEST" show "$REMOTE/$BASE:$f" | grep -o '"version": "[^"]*"')" \
+    "$(grep -o '"version": "[^"]*"' "$DEST/$f")"
+done
+```
+
+A rescued number lower than the branch's, or a version going backwards, means the
+draft predates work that has landed. **Take the paths the rescue adds and
+recompute the wiring from the branch**, rather than taking the file whole. That
+is not editing the author's claim: a count is not a claim, it is arithmetic about
+a tree, and the tree is the one on the branch.
+
 ### 6. Re-check the source before you open anything
 
 Between the copy and the push, the writer may have moved. Re-run step 4: an
@@ -340,28 +379,28 @@ before discarding anything, and check the direction:
 
 Ask what kind of file it is first. `diff` answers a binary difference with one
 line about the files, so counting `<` and `>` returns zero for both and reads
-exactly like "identical" — the answer that authorises the discard:
+exactly like "identical": the answer that authorises the discard:
 
 `git diff --numstat` cannot answer for a path that is still untracked here, so
-compare the bytes instead — that works whatever the file is, and whether or not
+compare the bytes instead: that works whatever the file is, and whether or not
 git has ever seen it:
 
 ```bash
 if ! comparable "$path"; then
-  echo "SPECIAL $path — neither a regular file nor a symlink; stop and look"
+  echo "SPECIAL $path: neither a regular file nor a symlink; stop and look"
 elif ! git cat-file -e "$REMOTE/$BASE:$path" 2>/dev/null; then
-  echo "NOT ON BRANCH $path — nothing supersedes it; keep it"
+  echo "NOT ON BRANCH $path: nothing supersedes it; keep it"
 elif [ "$(git ls-tree "$REMOTE/$BASE" -- "$path" | cut -d" " -f1)" != "$(mode_of "$path")" ]; then
-  echo "MODE DIFFERS $path — the bytes may match; the change is the mode. Keep it"
+  echo "MODE DIFFERS $path: the bytes may match; the change is the mode. Keep it"
 elif same_as_branch "$path"; then
-  echo "IDENTICAL $path — discarding loses nothing"
+  echo "IDENTICAL $path: discarding loses nothing"
 elif [ -L "$path" ]; then
-  echo "SYMLINK $path — retargeted; compare where each points, not what it reads"
+  echo "SYMLINK $path: retargeted; compare where each points, not what it reads"
 elif git show "$REMOTE/$BASE:$path" | grep -qI . && grep -qI . -- "$path"; then
   diff <(cat -- "$path") <(git show "$REMOTE/$BASE:$path") | grep -c '^>'   # branch adds
   diff <(cat -- "$path") <(git show "$REMOTE/$BASE:$path") | grep -c '^<'   # branch drops
 else
-  echo "BINARY $path — stop; a line count cannot compare these"
+  echo "BINARY $path: stop; a line count cannot compare these"
 fi
 ```
 
@@ -388,12 +427,15 @@ still has is not a superset, and discarding loses them.
 - **The writer is still writing.** Timestamps within minutes of now: report what
   you found and hand it back. Their session holds the context that makes the work
   reviewable.
-- **A dirty file is half-written** — a truncated sentence, an unclosed block, a
+- **A dirty file is half-written**: a truncated sentence, an unclosed block, a
   test that does not parse. Landing it commits a draft under your name.
 - **Everything classifies as LANDED.** There is nothing to rescue; fast-forward
   and say so in one line.
 - **Every rescued hunk audits as `DUPLICATE`.** The branch is already carrying
   the work under another path, so there is nothing to land. Say where it lives
   and close.
+- **The only thing left is wiring, and it is all behind the branch.** There is
+  nothing to rescue: the files the rescue would add are already there and its
+  numbers are older. Fast-forward the shared tree and say so.
 - **The work belongs to someone else's branch or merge.** Report it; do not
   adopt commits whose history you were not asked to touch.

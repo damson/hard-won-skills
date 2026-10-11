@@ -31,19 +31,19 @@ The stitched report, abbreviated:
 
 _Sampled 8 prompts across 31 substantive turns since 10:04._
 
-## 1. Prompting — 4Ds (via `prompt-coach`)
+## 1. Prompting: 4Ds (via `prompt-coach`)
 <4Ds table, weakest dimension, one case study with rewrite>
 
 ## 2. Skill opportunities (via `skill-opportunity-finder`)
 <candidates in priority order, each with a past trigger>
 
 ## 3. CLAUDE.md currency (via `claude-md-improver`)
-(skipped — `claude-md-improver` not installed)
+(skipped: `claude-md-improver` not installed)
 
 ## 🎯 Suggested next actions
 - **Prompting**: state a stop-condition in multi-PR asks
-- **New skill**: `refresh-stale-baselines` — plugins/…/skills/
-- **CLAUDE.md**: (none — axis skipped)
+- **New skill**: `refresh-stale-baselines`: plugins/…/skills/
+- **CLAUDE.md**: (none: axis skipped)
 
 Want me to drill into any of these? Apply the CLAUDE.md additions?
 ```
