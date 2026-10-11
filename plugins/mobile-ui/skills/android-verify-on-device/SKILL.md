@@ -147,7 +147,7 @@ stop reading captures. One run on a device settles it.
 Name the build, the device and its API level, and what you drove. Where a step could
 not be driven, say so — an unstated gap reads as coverage.
 
-## When to STOP and ask
+## When to STOP
 
 - **The behaviour can be held by a test.** Stop and write the test; it runs in CI and
   this does not. Hand-driving is for arrangements the project genuinely cannot

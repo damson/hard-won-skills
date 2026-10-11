@@ -137,7 +137,7 @@ The plain append lands the row in the table only while the section is the last
 thing in the body — where the template puts content after it, insert the row
 under the header instead of appending.
 
-## When to STOP and ask
+## When to STOP
 
 - **Step 1 matched nothing** — no route files, or no screenshot directory. The repo is shaped differently; ask rather than guessing a layout.
 - **The dev server will not start** — step 3's loop ends with an empty `$PORT`. Surface the log tail; do not push a half-baked image.

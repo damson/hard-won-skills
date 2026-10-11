@@ -209,7 +209,7 @@ mean by "we should have a threshold".
 - Coverage that cannot move (a docs-only change) should reuse the previous
   comment rather than recompute — but never delete it, or the PR looks unmeasured.
 
-## When to STOP and ask
+## When to STOP
 
 - **The pull request comes from a fork.** Its `pull_request` token is read-only,
   so the post step fails. Switching to `pull_request_target` is not a fix to

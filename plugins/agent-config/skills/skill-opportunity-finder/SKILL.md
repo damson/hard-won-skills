@@ -67,7 +67,7 @@ If the directive applies broadly → propose a skill that auto-applies it.
 
 ## Output shape
 
-```markdown
+````markdown
 ## Skill opportunities found in this session
 
 ### 1. <name> — <one-line rationale>
@@ -95,7 +95,7 @@ description: <auto-trigger conditions>
 
 ### 2. <name> — <one-line rationale>
 ...
-```
+````
 
 ## When to STOP
 

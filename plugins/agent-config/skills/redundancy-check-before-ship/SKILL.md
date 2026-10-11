@@ -76,7 +76,7 @@ docs a reader already has loaded and reports what is genuinely net-new.
 | Rule appears in 3+ files | Collapse to one home; the others get a pointer |
 | Addition restates the paragraph directly above it | Delete it |
 
-## When to STOP and ask
+## When to STOP
 
 - **More than ~15 added rules** — report the overlap and hand back rather than
   auto-pruning; a large doc restructure needs the author's judgement about which

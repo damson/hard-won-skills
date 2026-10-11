@@ -233,8 +233,9 @@ helping.
   Then `-D`, not `-d` — and only on `MERGED`, never on `CLOSED`, which means
   the work was abandoned rather than landed.
 
-## When to STOP and ask
+## When to STOP
 
+- The branch under the rebase is `main` or `develop`. These are never rebased or force-pushed: only feature branches are.
 - The rebase empties the branch — every commit was a duplicate, so step 3c's log
   prints nothing. Do not force-push a zero-diff PR and call it CLEAN: the work is
   already on the base, so close the PR instead.
@@ -245,7 +246,3 @@ helping.
   not change that: your branch still lacks the new upstream commits, so a bare
   retry fails identically. Fetch, rebase onto the moved base, retry once. Still
   rejected means someone else is pushing that branch — stop and ask.
-
-## Safety rules
-
-- Never operate on `main` or `develop` directly — only on feature branches.

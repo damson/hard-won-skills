@@ -109,7 +109,7 @@ Run the cheapest command that exercises real config + deps, not just a lockfile 
 
 A green install is not proof — the app booting and reading its env is. If it fails on a missing variable, step 3 missed a file; re-list the donor's ignored files.
 
-## When to STOP and ask
+## When to STOP
 
 - **No donor worktree and no known primary checkout.** The bootstrap needs a source for machine-local config; don't fabricate `.env` values or invent secrets.
 - **The donor's `.env` contains real secrets and the worktree is destined for a shared/remote location.** Copying secrets into a shell others can read is a leak — confirm the destination first.

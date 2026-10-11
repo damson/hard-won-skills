@@ -68,7 +68,7 @@ gh pr view "$n" --json body -q .body | grep -c raw.githubusercontent.com   # mus
 If a reviewer still reports a broken image after both pass, ask them for the
 failing URL — a host or SHA typo survives every local check.
 
-## When to STOP and ask
+## When to STOP
 
 - The screenshot shows real customer data, real balances, KYC documents, or auth
   tokens. Committing an image into a repo is a durable publication — surface the

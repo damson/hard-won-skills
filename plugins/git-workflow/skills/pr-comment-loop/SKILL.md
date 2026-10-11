@@ -205,7 +205,7 @@ For each open PR you have touched in this session — OR all open PRs in the cur
    PR #N: <m> findings addressed, <k> skip-justified, reply posted, <state>
    ```
 
-## When to STOP and ask
+## When to STOP
 
 - `gh` is unauthenticated, or posting/patching the comment is refused — stop
   and hand the user the prepared reply body rather than retrying blind.

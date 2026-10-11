@@ -102,9 +102,8 @@ Ask what each box *asserts*, and what the map does not mention at all.
 - **A valid-looking mutation is not a test, and "break the arrow" is one.**
   Inside a quoted label, `[[[` is legal text and parses fine. So does `A -- B`:
   mermaid accepts a bare `--` as an open link, so corrupting `-->` to `--`
-  leaves a valid diagram and a green check. This page recommended exactly that
-  until 2026-09-02, which made the one step whose job is proving the check can
-  fail the step least able to do it.
+  leaves a valid diagram and a green check, which makes the one step whose job
+  is proving the check can fail the step least able to do it.
 
   Mutations measured against mermaid's own `parse()`:
 

@@ -110,7 +110,7 @@ The skill ends with the report and a single question. No edits, no commits, no P
 - Preserve sub-skill output verbatim — don't paraphrase the 4Ds scores or the candidate names. The sub-skills are the source of truth on their own axis.
 - The "Suggested next actions" section is YOUR synthesis. Pick exactly one item per axis. If a sub-skill returned nothing meaningful for its axis, write "(none — <axis> looks healthy)".
 
-## When to STOP and ask
+## When to STOP
 
 - **Someone else's transcript**: defer per `prompt-coach`'s rule — 4Ds is for the current operator's habits.
 - **"Apply everything" before reviewing**: confirm explicitly before any sub-skill enters an apply phase. The user approves the slate; never opt them in by default.

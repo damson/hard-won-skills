@@ -173,7 +173,7 @@ Future maintainers reading the migration cold should see why the column is uncon
 -- on Supabase envs only.
 ```
 
-## When to STOP and ask
+## When to STOP
 
 - The migration **depends on Supabase-seeded data** (e.g. an `auth.users` row with a specific UUID already exists). The guard pattern doesn't help — you need a pre-seed step or to restructure the migration.
 - The `CREATE OR REPLACE FUNCTION` case is genuinely ambiguous because external API consumers may already depend on the old return shape. Pause, ask the user — dropping the function could break clients.
