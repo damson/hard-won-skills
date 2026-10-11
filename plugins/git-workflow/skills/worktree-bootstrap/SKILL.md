@@ -51,7 +51,22 @@ ls package.json pnpm-lock.yaml yarn.lock package-lock.json \
 | `go.mod` | Go | `go mod download` | `.env`, local config |
 | `settings.gradle{,.kts}` / `gradlew` | Gradle / Android | none separate: Gradle resolves on first build | `local.properties`, `keystore.properties`, `*.jks` |
 
-If nothing matches, treat it as **general**: copy whatever `.gitignored` config the donor has (step 3) and skip the dep install.
+If nothing matches it is **general**, and the dep install is the part that
+cannot be guessed. Look for a manifest the repo's own tooling would recognise
+before giving up on it:
+
+```bash
+ls Gemfile Gemfile.lock Cargo.toml composer.json mix.exs pubspec.yaml \
+   Package.swift Makefile justfile 2>/dev/null
+```
+
+Where one turns up, take the install command from the repo's README or its CI
+workflow rather than from memory, because it is often wrapped: `bin/setup`,
+`make deps`, a `just` target. Where none turns up, copy the config in step 3,
+skip the install, and **say in the report that dependencies were not
+installed**. Step 6 otherwise fails on a missing dependency and reads as a
+broken worktree rather than an uninstalled one, which is the harder bug to find
+because nothing in the output mentions the install that never ran.
 
 ### 2. Find a donor worktree
 
@@ -130,7 +145,19 @@ Run the cheapest command that exercises real config + deps, not just a lockfile 
   ```
 - Python: `pytest -q` or `python -m <package> --help`.
 - Android/Gradle: `./gradlew help -q`, the cheapest full configure; it proves
-  `local.properties` resolves, then the module's build/test task.
+  `local.properties` resolves. Then one task that actually compiles, read rather
+  than guessed, because `:app` is a convention and a multi-module project may
+  name no module that:
+
+  ```bash
+  ./gradlew -q projects                         # the module paths that exist
+  ./gradlew -q :<module>:tasks --all | grep -E '^assembleDebug( |$)'
+  ```
+
+  Take the module the change touches, or the smallest one that compiles where it
+  touches none in particular. Listing is not by itself a choice: on one module a
+  broader `^(assemble|compile).*Debug` returned 15 tasks, most of them test and
+  source-set variants that prove nothing about the app building.
 - General: the repo's documented smoke command.
 
 A green install is not proof: the app booting and reading its env is. If it
