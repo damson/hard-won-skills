@@ -70,10 +70,28 @@ claimed failure happen, and let it answer.
    change that the fix is unguarded and why, so the gap is a decision somebody
    made rather than an omission nobody noticed.
 
-5. **Not reproduced: reject it with the evidence, never silently.** Quote the line
-   that contradicts it. A finding withdrawn against the source is a better record
-   than one that quietly disappears, and the reviewer's next reader deserves to
-   know which of its findings held.
+5. **Not reproduced is two different answers, and only one of them is a
+   rejection.** A probe that does not fail has shown that this run did not fail.
+   For an order or a bound that is enough; for a race it is one sample, and a
+   green probe disproves nothing.
+
+   | What the probe did | What the source says | The answer |
+   |---|---|---|
+   | did not reproduce | a line contradicts the claim | **Reject**, quoting that line |
+   | did not reproduce | nothing contradicts it | **Inconclusive**, never a rejection |
+   | reproduced | either | Step 4 |
+
+   **Reject only on the source, never on the probe's silence.** Quote the line
+   that contradicts the claim: a finding withdrawn against the source is a better
+   record than one that quietly disappears, and the reviewer's next reader
+   deserves to know which of its findings held.
+
+   **Where there is no such line, say inconclusive and say what you ran**: the
+   sequence the probe drove, how many times, and what would settle it. That is a
+   worse outcome to write and the only honest one, because "my probe passed" and
+   "the claim is false" are the same sentence only for a defect that happens every
+   time. Repeating a probe raises confidence and never reaches proof, so say how
+   many runs rather than implying a verdict with them.
 
 6. **Say what the probe could not reach.** A probe often proves the mechanism
    while leaving the reachability open: one proved that state was read at the
@@ -85,6 +103,10 @@ claimed failure happen, and let it answer.
 
 - **The finding is about taste, naming or structure.** There is nothing to
   reproduce; answer it as an opinion, with yours.
+- **The claim is intermittent and the probe came back green.** Nothing has been
+  established. Report it inconclusive with the run count, and resist the pull to
+  close it: a race rejected on one passing run returns as a production incident
+  with a review comment pointing at the rejection.
 - **One line of source settles it.** Reading beats building, and step 1 is the
   whole procedure for most findings.
 - **The probe needs hardware the environment does not have.** Say the finding is

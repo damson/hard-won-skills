@@ -70,6 +70,13 @@ Two other findings in that batch were rejected without a test, and a rejection
 carries the same burden as a reproduction: the line that contradicts the claim
 gets quoted. "Checked, not an issue" is not a rejection anybody can audit.
 
+**A probe that comes back green is not that line.** For an order or a bound it
+settles the question; for a race it is one sample, and the honest answer is
+inconclusive with the run count and what would settle it. The skill keeps those
+two apart because the pull is always towards closing the finding, and a race
+rejected on one passing run comes back as an incident with a link to the
+rejection.
+
 ## What it cost to learn
 
 Two findings in one night, both ranked critical, both about behaviour over time.
