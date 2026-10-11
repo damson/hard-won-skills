@@ -111,7 +111,7 @@ description: <auto-trigger conditions>
 - **The user declines a proposal.** Don't re-propose the same candidate later in the same session.
 - **A matching skill already exists.** Check the skills available in this session before proposing one; point at it instead of creating a duplicate.
 
-## What to NEVER propose
+## Anti-patterns to avoid
 
 - Skills that fire on EVERY turn (no useful trigger): they're really CLAUDE.md
   content.

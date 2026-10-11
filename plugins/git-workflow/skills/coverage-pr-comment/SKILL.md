@@ -196,7 +196,7 @@ including the ones that improve things: the ratchet (floor = the base branch's
 figure, so coverage may not fall) is usually the honest version of what people
 mean by "we should have a threshold".
 
-## Thresholds that bite
+## Sharp edges
 
 - **One pair of numbers for every metric paints branch coverage permanently
   red.** Branch coverage runs well below line coverage in every codebase. Give

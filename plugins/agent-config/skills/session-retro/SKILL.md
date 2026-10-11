@@ -138,7 +138,7 @@ The skill ends with the report and a single question. No edits, no commits, no P
 
 (Pre-flight handles session-too-short, recency, and mid-incident in Step 1; sub-skill declines are handled inline in Steps 2–4.)
 
-## What to NEVER do
+## Anti-patterns to avoid
 
 - ❌ Lecture or moralize on prompting. The 4Ds are diagnostic, not judgmental.
 - ❌ Bury "Skipped" sub-skills. If one of the three didn't run, say so up front in the report.

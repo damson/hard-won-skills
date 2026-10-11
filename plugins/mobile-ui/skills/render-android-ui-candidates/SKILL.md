@@ -9,6 +9,8 @@ description: >
   the result, because "it looks too big" is settled by numbers and not by more
   adjectives. Do NOT fire for a behavioural question, for a component that does
   not exist yet, or to record goldens, which the baseline-record skill owns.
+  Off Android, or where what keeps being misread is a requirement rather than an
+  appearance choice, `render-the-candidates` is the general form.
 ---
 
 # Render Android UI candidates, then measure them

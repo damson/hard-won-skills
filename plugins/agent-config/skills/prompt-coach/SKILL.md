@@ -136,7 +136,7 @@ If a D can't logically apply (e.g. first-turn prompt can't show Discernment) →
 - The user asks for the same evaluation a second time within the same hour:
   they're stalling; suggest concrete next action instead.
 
-## What to NEVER do
+## Anti-patterns to avoid
 
 - Don't moralize. The 4Ds are diagnostic, not judgmental.
 - Don't bring up old prompts the user didn't ask about, in Mode A. Mode B is the only place for cross-prompt patterns.
