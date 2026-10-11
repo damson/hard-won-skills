@@ -47,10 +47,11 @@ deletion. The deliverable is the list of commands run and their empty result
      --jq '.[].commit | .author.email, .committer.email' | sort -u
    ```
 
-   Run it per branch, enumerate them with `gh api
-   'repos/<owner>/<repo>/branches' --jq '.[].name'`, and add `--paginate` when
-   a branch holds more than 100 commits, or the tail of the history silently
-   escapes the sweep.
+   Run it per branch, enumerate them with `gh api --paginate
+   'repos/<owner>/<repo>/branches' --jq '.[].name'`, because that endpoint
+   returns 30 branches without it and a repository with more skips the rest
+   silently. Add `--paginate` to the commit walk too when a branch holds more
+   than 100 commits, or the tail of the history escapes the sweep the same way.
 
 6. **Run the repo's secret scanner** (gitleaks, or whatever the repo already
    enforces): entropy and token patterns catch what a name list cannot.

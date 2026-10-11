@@ -119,7 +119,7 @@ def delta(head, base):
     if base is None:
         return "new"
     diff = head - base
-    return ": " if abs(diff) < 0.05 else f"{'▲' if diff > 0 else '▼'} {diff:+.1f}"
+    return "=" if abs(diff) < 0.05 else f"{'▲' if diff > 0 else '▼'} {diff:+.1f}"
 ```
 
 Emoji blocks are not a style choice. GitHub strips inline SVG from comments and

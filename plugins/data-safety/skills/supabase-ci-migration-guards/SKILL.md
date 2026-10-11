@@ -5,7 +5,7 @@ description: >
   `auth.users`, `auth.uid()`, `storage.objects`, `storage.buckets`,
   `realtime.subscription`, `supabase_functions.*`, or any policy / function that depends
   on `auth.jwt()`. Auto-fire when a diff in `supabase/migrations/*.sql` matches the regex
-  `(auth|storage|realtime)\.|to_regnamespace|create or replace function .* returns`. Also
+  `(auth|storage|realtime|supabase_functions)\.|to_regnamespace|create or replace function .* returns`. Also
   fire when the user says "fix the CI migration job" / "migration failed in CI" / "vanilla
   postgres errored on this migration" / "schema auth does not exist". Skip if the
   migration only touches the `public` schema with no Supabase-namespace references.

@@ -71,7 +71,7 @@ When the user asks for an end-of-session or multi-prompt review:
 1. Sample up to **8 prompts**, evenly spaced by turn index across the session with the first and last 3 turns excluded (noisy setup/wrap-up). If the exclusion leaves fewer than 8, take all that remain; fewer than 3 → say the session is too thin for Mode B and offer Mode A on a prompt of the user's choice.
 2. Score each prompt on 4D (or skip a D if not applicable to that prompt).
 3. Compute the **average per D**, and a **session total** over the dimensions
-   that actually scored (X / 4×`<scored Ds>`: a session where a D was always
+   that actually scored (X / 5×`<scored Ds>`: a session where a D was always
    N/A totals out of 15, not 20). Trend per D: compare its average over the
    first half of sampled prompts to the second half: ↑ / ↓ when they differ by
    ≥ 0.5, stable otherwise.

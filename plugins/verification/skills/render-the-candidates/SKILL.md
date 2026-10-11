@@ -8,9 +8,11 @@ description: >
   been correctly designed", and on your own impulse to write a third paragraph
   explaining what you think they mean. Do NOT fire on the first miss, where
   only one reading is actually plausible, or where the disagreement is about
-  behaviour rather than about something that can be seen. On an Android or
-  Compose surface, `render-android-ui-candidates` renders through the project's
-  own screenshot harness and measures the result; this is the stack-agnostic form.
+  behaviour rather than about something that can be seen. This is the
+  stack-agnostic form, and it is sufficient on its own. Where the mobile-ui
+  plugin is also installed, an Android or Compose surface is better served by
+  `render-android-ui-candidates`, which renders through the project's own
+  screenshot harness and measures the result.
 ---
 
 # Render the candidates

@@ -26,7 +26,7 @@ frame changed since the action.
 
 ## Procedure
 
-1. **Install the build you mean to test.** `./gradlew:<module>:installDebug`
+1. **Install the build you mean to test.** `./gradlew :<module>:installDebug`
    (the app module under test, not necessarily `:app`), after the change
    compiles. Where the state under test is stored, `adb uninstall` first: a
    preference left by an earlier run is the most common false result.

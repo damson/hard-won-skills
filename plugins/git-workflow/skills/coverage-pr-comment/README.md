@@ -46,7 +46,8 @@ place:
 >
 > **1841/3890 lines**
 >
-> 🟡 **Approaching target**: 12.7 points below the 60% line target >
+> 🟡 **Approaching target**: 12.7 points below the 60% line target
+>
 > | Metric | Base | Head | Δ | Status |
 > |---|---:|---:|---:|:--:|
 > | Line | 41.2% | 47.3% | ▲ +6.1 | 🟡 |

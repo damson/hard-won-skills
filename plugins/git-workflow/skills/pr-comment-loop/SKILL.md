@@ -194,7 +194,7 @@ current repo if no explicit list:
    | 🟡 #1 <short title> | ✅ Applied | <file:line + one-line summary> |
    | 🟡 #2 <short title> | 🚫 Skipped | <one-line reason: false positive / scope / intentional> |
    | 🟢 #3 <short title> | ⏳ Deferred | <follow-up reference> |
-   | 💬 #4 <short title> | 💬 Acknowledged | :  |
+   | 💬 #4 <short title> | 💬 Acknowledged | No action |
 
    Pushed as `<sha>`.
    ```
