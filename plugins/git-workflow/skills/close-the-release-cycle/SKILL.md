@@ -54,13 +54,12 @@ refuses to call it done on a signal that has not been checked.
    `status: identical`, or a files count of zero, means the release is empty:
    stop and say so.
 
-3. **Merge the promotion, if step 1 said you may** — where the policy reserves
-   that for a human, stop at a green PR and hand it over. **With a merge commit,
-   never a squash.** A squashed
-   promotion puts a commit on the release branch that the integration branch
-   holds no ancestor of. Trees still match, so nothing looks wrong until the
-   *next* promotion opens as `CONFLICTING`, in a PR that has nothing to do with
-   the mistake.
+3. **Merge the promotion, if step 1 said you may**: where the policy reserves
+   that for a human, stop at a green PR and hand it over. **With a merge
+   commit, never a squash.** A squashed promotion puts a commit on the release
+   branch that the integration branch holds no ancestor of. Trees still match,
+   so nothing looks wrong until the *next* promotion opens as `CONFLICTING`, in
+   a PR that has nothing to do with the mistake.
 
    ```bash
    gh pr merge <n> --merge
@@ -94,8 +93,8 @@ refuses to call it done on a signal that has not been checked.
 
    That filter returns candidates, not an answer: `nightly`, `beta` and `docs`
    survive it too, and `force=true` on one of those repoints a ref nobody asked
-   you to touch. Move only a tag the released version extends — `v1` for
-   `v1.2.3` — and only where the repo tells consumers to pin it.
+   you to touch. Move only a tag the released version extends, `v1` for
+   `v1.2.3`, and only where the repo tells consumers to pin it.
 
    Nobody pinning it moves until you do, so a correctness fix stays undelivered
    while the release page says otherwise.

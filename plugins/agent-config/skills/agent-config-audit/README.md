@@ -47,14 +47,14 @@ report looks like:
 
 ### Findings
 
-🚧 Boundary violation — AGENTS.md: Commits
+🚧 Boundary violation: AGENTS.md: Commits
   Personal rule "no pod prefix" found in team AGENTS.md.
   Recommendation: move to personal CLAUDE.md
 
-⚠️ Duplication — AGENTS.md: Testing duplicates CLAUDE.md: Testing
+⚠️ Duplication: AGENTS.md: Testing duplicates CLAUDE.md: Testing
   Recommendation: keep in AGENTS.md, remove from CLAUDE.md
 
-✅ OK — 23 rules checked, no other issues
+✅ OK: 23 rules checked, no other issues
 ```
 
 Symlinked config repos get an extra structural-health check (broken chains,

@@ -30,7 +30,7 @@ After the third "reply to the review comments and push" of a session:
 ```markdown
 ## Skill opportunities found in this session
 
-### 1. review-reply-loop — the same fetch → classify → reply → push ran three times
+### 1. review-reply-loop: the same fetch → classify → reply → push ran three times
 
 **Past trigger (turn 14)**: "check the comments on PR 7 and address them"
 

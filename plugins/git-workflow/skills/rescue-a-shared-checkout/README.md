@@ -1,11 +1,11 @@
 # rescue-a-shared-checkout
 
-Separates the uncommitted changes in a shared working tree into the ones already
-safe, the ones genuinely at risk, and the ones that are somebody's work in
-progress — then lands only the middle group, without committing from the shared
-tree. Uncommitted work in a tree with more than one writer is the least safe
-state a repository has: nothing records who wrote it, nothing preserves it, and
-the next branch cut from that tree carries it by accident.
+Separates the uncommitted changes in a shared working tree into the ones
+already safe, the ones genuinely at risk, and the ones that are somebody's work
+in progress: then lands only the middle group, without committing from the
+shared tree. Uncommitted work in a tree with more than one writer is the least
+safe state a repository has: nothing records who wrote it, nothing preserves
+it, and the next branch cut from that tree carries it by accident.
 
 Read [SKILL.md](SKILL.md) for the procedure. This file is what a run looks like
 and when to reach for it.
@@ -81,5 +81,6 @@ Seven dirty paths in a checkout two sessions share.
 - `worktree-bootstrap`, for the opposite problem: a *fresh* worktree missing the
   ignored files and dependencies it needs to run.
 - `branch-hygiene`, for the cleanup after the rescued branch merges.
-- `prove-the-change-shipped`-style verification is what the final discard step
-  applies to the rescue itself: confirm the branch really supersedes the copy before discarding.
+- Before the final discard, confirm the branch really supersedes the copy, and
+  read that back from the ref rather than from the working tree: a `git diff`
+  against a tree that still holds the rescue reports it as landed either way.

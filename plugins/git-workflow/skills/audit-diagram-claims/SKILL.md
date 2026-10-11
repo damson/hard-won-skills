@@ -1,19 +1,19 @@
 ---
 name: audit-diagram-claims
 description: >
-  Use before ticking any "architecture updated" / "diagram updated" checkbox on a PR,
-  and whenever a change alters a cadence, a pipeline stage, a guarantee, a count, or
-  introduces a subsystem. Also fire when the user asks "did you check the diagram",
-  "is the diagram stale", "isn't there a diagram change here", or points out a diagram
-  was skipped. Do NOT fire for changes with no behavioural surface — typo fixes,
-  test-only diffs, dependency bumps, formatting.
+  Use before ticking any "architecture updated" / "diagram updated" checkbox on a PR, and
+  whenever a change alters a cadence, a pipeline stage, a guarantee, a count, or
+  introduces a subsystem. Also fire when the user asks "did you check the diagram", "is
+  the diagram stale", "isn't there a diagram change here", or points out a diagram was
+  skipped. Do NOT fire for changes with no behavioural surface: typo fixes, test-only
+  diffs, dependency bumps, formatting.
 ---
 
 # Audit what the diagram claims
 
 A diagram node is not a shape, it is a set of claims. "Did a box move?" can be
 answered without opening the file, which is exactly why it keeps returning a
-false negative — the shapes are stable while the words inside them rot.
+false negative: the shapes are stable while the words inside them rot.
 
 Ask what each box *asserts*, and what the map does not mention at all.
 
@@ -35,11 +35,11 @@ Ask what each box *asserts*, and what the map does not mention at all.
    | Guarantee | `refuses to write if a slug would collide` | changing the failure mode |
    | Routing | `→ corpus_sentences` | re-pointing a sink |
 
-2. **Check each claim against reality, not against your diff** — a label goes
+2. **Check each claim against reality, not against your diff**: a label goes
    stale from someone else's merge as readily as your own. Read the cron, count
    the registry, open the function the guarantee names.
 
-   **Include the prose next to the diagram** — the legend, the paragraphs under
+   **Include the prose next to the diagram**: the legend, the paragraphs under
    it, and any plain-words summary. They restate the same claims in words and
    rot independently; a summary saying "three inputs" under a diagram with four
    is a contradiction a reader hits before either is checked.
@@ -58,14 +58,14 @@ Ask what each box *asserts*, and what the map does not mention at all.
    shows a subsystem that was never drawn.
 
 4. **Prefer the smallest true edit.** If a claim is false, edit it to what is
-   true today — unless the fix is already in flight, which means you can name it
+   true today, unless the fix is already in flight, which means you can name it
    (`gh pr list --search '<subject>'`, or a branch that changes the file the
    claim describes). Name it or edit it; "someone is probably fixing that" is
    not a reason to leave a falsehood on the map.
 
 5. **Render it before pushing, and prove the check can fail.** A broken diagram
    renders as an error block and is worse than a stale one. The requirement is
-   that you *saw it render* — for anything that is not mermaid, or a repo with
+   that you *saw it render*: for anything that is not mermaid, or a repo with
    no node/npm, use whatever the host provides (the forge's preview, `plantuml
    -checkonly`, opening the `.drawio`) and say which you used. For mermaid in a
    node repo:
@@ -89,10 +89,10 @@ Ask what each box *asserts*, and what the map does not mention at all.
    ' <diagram-file>
    ```
 
-   Then break it on purpose and confirm exit 1: `flowchart TB` → `flowchart ZZ`.
-   Not every mutation works — see the first sharp edge before picking another.
-   Any `package.json` / lockfile diff the install left behind is a side effect
-   of the audit, not part of the change — never commit it.
+   Then break it on purpose and confirm exit 1: `flowchart TB` → `flowchart
+   ZZ`. Not every mutation works: see the first sharp edge before picking
+   another. Any `package.json` / lockfile diff the install left behind is a
+   side effect of the audit, not part of the change. Never commit it.
 
 6. **Report the claims you verified**, not "diagram updated". "Checked cadence,
    count and the two guarantees; added the missing discovery node" is auditable.
@@ -102,29 +102,29 @@ Ask what each box *asserts*, and what the map does not mention at all.
 - **A valid-looking mutation is not a test, and "break the arrow" is one.**
   Inside a quoted label, `[[[` is legal text and parses fine. So does `A -- B`:
   mermaid accepts a bare `--` as an open link, so corrupting `-->` to `--`
-  leaves a valid diagram and a green check. This page recommended exactly that
-  until 2026-09-02, which made the one step whose job is proving the check can
-  fail the step least able to do it.
+  leaves a valid diagram and a green check, which makes the one step whose job
+  is proving the check can fail the step least able to do it.
 
   Mutations measured against mermaid's own `parse()`:
 
   | mutation | result |
   |---|---|
-  | `-->` → `--` | exits 0 — **inert** |
+  | `-->` → `--` | exits 0: **inert** |
   | `-->` → `-->>` | exits 1 ✓ |
   | `flowchart TB` → `flowchart ZZ` | exits 1 ✓ |
 
   Prefer the diagram-type mutation: it is one token, obviously wrong, and
   impossible to mistake for valid syntax in a language you are not fluent in.
 - **Guarantees rot first.** They are added by the PRs least likely to think
-  about pictures — the ones hardening a failure path. Check them before cadences.
+  about pictures: the ones hardening a failure path. Check them before
+  cadences.
 
 ## When to STOP
 
-- **No diagram file in the repo** — nothing to audit; say so.
+- **No diagram file in the repo**: nothing to audit; say so.
 - **The change has no behavioural surface.** Tick nothing and state why, rather
   than performing an audit to justify a checkbox.
-- **The diagram belongs to another team** — report the stale claim, do not edit
+- **The diagram belongs to another team**: report the stale claim, do not edit
   their file.
 - **The rot is large.** More than 3 false claims in step 1's inventory, or any
   false claim about files or systems the PR's changed paths never touch, means

@@ -1,14 +1,13 @@
 ---
 name: probe-migration-in-transaction
 description: >
-  Use when a change adds or alters a SQL migration whose effect is a
-  behaviour — an RLS policy, a view, a trigger, a grant, an enum, a constraint
-  — and you want to know what it really does before opening the PR. Especially
-  when there is no local Postgres: a transaction against the dev database that
-  is rolled back costs nothing and leaves nothing. Do NOT fire for a bulk data
-  write you intend to keep (that is reversible-bulk-write), for a migration
-  that only adds a column nothing reads yet, or when the only database
-  reachable is production.
+  Use when a change adds or alters a SQL migration whose effect is a behaviour (an RLS
+  policy, a view, a trigger, a grant, an enum, a constraint) and you want to know what it
+  really does before opening the PR. Especially when there is no local Postgres: a
+  transaction against the dev database that is rolled back costs nothing and leaves
+  nothing. Do NOT fire for a bulk data write you intend to keep (that is
+  reversible-bulk-write), for a migration that only adds a column nothing reads yet, or
+  when the only database reachable is production.
 ---
 
 # Probe a migration in a transaction
@@ -18,20 +17,20 @@ The deliverable is a role × capability matrix for the PR body.
 ## Procedure
 
 0. **Connect, then prove where you are.** Every `client` below is this one. The
-   connection string comes from the project's dev environment — a
+   connection string comes from the project's dev environment (a
    `DEV_DATABASE_URL` in `.env`, the output of `supabase status`, the CI
-   workflow — never from a guess:
+   workflow), never from a guess:
 
    ```js
    const pg = require('pg');
    const url = process.env.DEV_DATABASE_URL;
-   if (!url) throw new Error('no dev connection string — stop');  // unset, pg
+   if (!url) throw new Error('no dev connection string: stop');  // unset, pg
    const client = new pg.Client(url);   // falls back to PG* env / localhost and
    await client.connect();              // connects *somewhere* without saying so
    ```
 
    Before `begin`, ask the server what it is and compare against the dev target
-   you meant to reach — the host and database named by the same source the URL
+   you meant to reach: the host and database named by the same source the URL
    came from:
 
    ```sql
@@ -39,13 +38,13 @@ The deliverable is a role × capability matrix for the PR body.
    ```
 
    Match against what dev is *known* to be, not against a list of what
-   production might be: anything that is not the expected dev identity —
-   including an identity you cannot place — is the first STOP condition below,
+   production might be: anything that is not the expected dev identity,
+   including an identity you cannot place, is the first STOP condition below,
    now mechanically checkable instead of known out-of-band. Refuse before
    `begin`, not after.
 
 1. **Name the invariant and record it before touching anything.** One count on
-   the table the migration must *not* reach — `widgets`, or whatever the change
+   the table the migration must *not* reach: `widgets`, or whatever the change
    claims to leave alone. Step 6 re-reads it after the rollback; without the
    number beforehand, "did that touch anything?" has no answer.
 
@@ -53,7 +52,7 @@ The deliverable is a role × capability matrix for the PR body.
    inside the transaction. The invariant is about tables the migration should
    never have gone near.
 
-2. **`begin`, then apply the file verbatim.** Read it from disk — never a
+2. **`begin`, then apply the file verbatim.** Read it from disk, never a
    retyped subset, or you have tested something the PR does not contain.
 
    ```js
@@ -62,7 +61,7 @@ The deliverable is a role × capability matrix for the PR body.
    await client.query(sql);          // the whole file, one statement to pg
    ```
 
-3. **Assert the objects exist**, by catalogue rather than by absence of error —
+3. **Assert the objects exist**, by catalogue rather than by absence of error:
    a `create` that silently did nothing raises nothing. Replace the names below
    with the ones the migration actually creates, read from its text:
 
@@ -77,7 +76,7 @@ The deliverable is a role × capability matrix for the PR body.
 
 4. **Seed one account per role, insert at least one row per probed table, then
    impersonate.** The role is the whole point; the owner sees everything and
-   proves nothing. The rows are not optional either — see the per-row sharp edge
+   proves nothing. The rows are not optional either: see the per-row sharp edge
    below. Both die with the transaction.
 
    ```sql
@@ -88,21 +87,21 @@ The deliverable is a role × capability matrix for the PR body.
    ```
 
    On plain Postgres the rule is the same, only found instead of known: read
-   each policy's `qual` AND `with_check` from `pg_policies` — an `update` can
-   pass one and fail the other, and an `insert` answers only to `with_check` —
+   each policy's `qual` AND `with_check` from `pg_policies` (an `update` can
+   pass one and fail the other, and an `insert` answers only to `with_check`),
    find the `roles` it applies to and the function or setting either expression
    consults, and `set local` exactly those.
 
-   Read the definition first rather than assuming which setting it consults —
-   the wrong one silently yields an anonymous session that fails every check for
-   the wrong reason:
+   Read the definition first rather than assuming which setting it consults:
+   the wrong one silently yields an anonymous session that fails every check
+   for the wrong reason:
 
    ```sql
    select pg_get_functiondef(oid) from pg_proc
     where proname = 'uid' and pronamespace = 'auth'::regnamespace;
    ```
 
-5. **Wrap every probe query in its own savepoint** — not one per role, one per
+5. **Wrap every probe query in its own savepoint**, not one per role, one per
    *query*:
 
    ```js
@@ -131,11 +130,11 @@ The deliverable is a role × capability matrix for the PR body.
    ```
 
 7. **Report the matrix, not the verdict.** Derive the columns from the
-   migration itself — one per statement that changes what someone may do:
-   a `create policy ... for select` becomes a read column, `for update` a write
+   migration itself. One per statement that changes what someone may do: a
+   `create policy ... for select` becomes a read column, `for update` a write
    column, each masked expression in a view a column of its own, and every
    `revoke` a column asserting the bypass is shut. Rows are the roles, lowest
-   and highest always included. One unit per column — row counts throughout,
+   and highest always included. One unit per column: row counts throughout,
    with `refused` reserved for a statement that raised:
 
    | role | read | write | privileged column | direct table access |
@@ -153,14 +152,14 @@ The deliverable is a role × capability matrix for the PR body.
    door is locked and says nothing about the window.
 
 8. **Break it on purpose, in a second transaction.** Strip the marker the
-   migration relies on — `security definer`, a `where` clause, a `case when` —
+   migration relies on (`security definer`, a `where` clause, a `case when`),
    apply the mutated text, and confirm the probe that passed now fails. An
    assertion never observed failing is decoration. Same discipline as
    `prove-the-check-can-fail`.
 
    ```js
    const broken = sql.replace('  security definer\n', '');
-   if (broken === sql) throw new Error('the strip did nothing — wrong marker');
+   if (broken === sql) throw new Error('the strip did nothing: wrong marker');
    await client.query('begin');
    try {
      await client.query(broken);
@@ -189,16 +188,16 @@ Each of these produces a **green that means nothing**, which is worse than a
 failure.
 
 - **A shared savepoint fabricates refusals.** One `permission denied` aborts
-  the transaction, so every later query in that savepoint answers
-  `current transaction is aborted` — which tabulates as "refused" and looks
-  exactly like the result you were hoping for. This is why step 5 is per query.
+  the transaction, so every later query in that savepoint answers `current
+  transaction is aborted`, which tabulates as "refused" and looks exactly like
+  the result you were hoping for. This is why step 5 is per query.
 
 - **An RLS qual is evaluated per row, so an empty table tests nothing.** A
   policy over zero rows is never invoked: the correct version and the broken
   one both pass, for the same uninteresting reason. Insert a row first, then
   probe.
 
-- **A view with `security_invoker = false` — the default — bypasses RLS on its
+- **A view with `security_invoker = false`, the default, bypasses RLS on its
   base tables.** If the migration adds one, the row rule must be restated
   inside the view, and the probe must confirm it: a masking view that forgot it
   hands every row to every caller while looking like a tightening.
@@ -211,13 +210,13 @@ failure.
 
 - **The only reachable database is production.** Transactional or not, do not.
   Step 0's `current_database()` / `inet_server_addr()` check is how you find
-  out — this is never a fact to assume.
+  out. This is never a fact to assume.
 - **The migration is destructive** (`drop`, `truncate`, a narrowing type
   change). Rolling back your probe does not make the migration safe; that needs
   the repo's destructive-op review.
 - **Applying it is the maintainer's step.** Probing is not applying, and the
   distinction must survive into the report: say the migration is unpushed.
-- **The behaviour needs a real request** — a page reading a view, an auth
+- **The behaviour needs a real request**: a page reading a view, an auth
   callback. A transaction cannot cover it. Say so plainly rather than implying
   end-to-end coverage you do not have.
 - **The probe would write anything that outlives it.** If you cannot express

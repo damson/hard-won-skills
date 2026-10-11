@@ -1,13 +1,13 @@
 ---
 name: sweep-the-siblings
 description: >
-  Use when a defect turns up in one member of a family of sibling documents —
-  a skill page, a runbook, an ADR, a workflow file, a per-package README — and
-  the family shares an invariant the repo states somewhere. Fires on "is that
-  wrong anywhere else?", on filing an issue for a single instance, and after a
-  reviewer finds a fault that is about form rather than content. Do NOT fire
-  when the repo states no invariant to sweep against, when the family has
-  fewer than three members, or for a defect genuinely local to one file.
+  Use when a defect turns up in one member of a family of sibling documents (a skill page,
+  a runbook, an ADR, a workflow file, a per-package README) and the family shares an
+  invariant the repo states somewhere. Fires on "is that wrong anywhere else?", on filing
+  an issue for a single instance, and after a reviewer finds a fault that is about form
+  rather than content. Do NOT fire when the repo states no invariant to sweep against,
+  when the family has fewer than three members, or for a defect genuinely local to one
+  file.
 ---
 
 # Sweep the siblings

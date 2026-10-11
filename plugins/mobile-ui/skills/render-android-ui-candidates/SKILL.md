@@ -9,6 +9,10 @@ description: >
   the result, because "it looks too big" is settled by numbers and not by more
   adjectives. Do NOT fire for a behavioural question, for a component that does
   not exist yet, or to record goldens, which the baseline-record skill owns.
+  This skill is complete for Android on its own. Off Android, or where what
+  keeps being misread is a requirement rather than an appearance choice,
+  `render-the-candidates` in the verification plugin is the general form if that
+  plugin is installed.
 ---
 
 # Render Android UI candidates, then measure them

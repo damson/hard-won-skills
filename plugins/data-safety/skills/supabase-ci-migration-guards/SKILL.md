@@ -1,24 +1,25 @@
 ---
 name: supabase-ci-migration-guards
 description: >
-  Use before writing or reviewing any migration that references Supabase-managed
-  schemas — `auth.users`, `auth.uid()`, `storage.objects`, `storage.buckets`,
+  Use before writing or reviewing any migration that references Supabase-managed schemas:
+  `auth.users`, `auth.uid()`, `storage.objects`, `storage.buckets`,
   `realtime.subscription`, `supabase_functions.*`, or any policy / function that depends
-  on `auth.jwt()`. Auto-fire when a diff in `supabase/migrations/*.sql` matches the
-  regex `(auth|storage|realtime)\.|to_regnamespace|create or replace function .*
-  returns`. Also fire when the user says "fix the CI migration job" / "migration failed
-  in CI" / "vanilla postgres errored on this migration" / "schema auth does not exist".
-  Skip if the migration only touches the `public` schema with no Supabase-namespace
-  references.
+  on `auth.jwt()`. Auto-fire when a diff in `supabase/migrations/*.sql` matches the regex
+  `(auth|storage|realtime|supabase_functions)\.|to_regnamespace|create or replace function .* returns`. Also
+  fire when the user says "fix the CI migration job" / "migration failed in CI" / "vanilla
+  postgres errored on this migration" / "schema auth does not exist". Skip if the
+  migration only touches the `public` schema with no Supabase-namespace references.
 ---
 
 # Supabase-CI migration compatibility guards
 
 CI runs migrations against vanilla Postgres (with bootstrapped `anon`/`authenticated`/`service_role`/`authenticator` roles but **no Supabase schemas**); production runs them against real Supabase. Any FK, policy, or function that references `auth.*` / `storage.*` / `realtime.*` blows up CI. The three failure modes:
 
-- `ERROR: schema "auth" does not exist` — FK references `auth.users(id)`
-- `ERROR: relation "storage.objects" does not exist` — RLS policy reads storage metadata
-- `ERROR: cannot change return type of existing function` — `CREATE OR REPLACE FUNCTION` whose signature drifted
+- `ERROR: schema "auth" does not exist`: FK references `auth.users(id)`
+- `ERROR: relation "storage.objects" does not exist`: RLS policy reads storage
+  metadata
+- `ERROR: cannot change return type of existing function`: `CREATE OR REPLACE
+  FUNCTION` whose signature drifted
 
 Each costs one fix commit + one CI cycle. The patterns below avoid all three.
 
@@ -34,7 +35,7 @@ For every match, decide: does the referenced object exist in vanilla Postgres? I
 
 ### 2. Guard FKs to `auth.users(id)` (and similar)
 
-**Wrong** — fails in CI:
+**Wrong**: fails in CI:
 ```sql
 create table upload_jobs (
   id          uuid primary key default gen_random_uuid(),
@@ -43,7 +44,7 @@ create table upload_jobs (
 );
 ```
 
-**Right** — column unconstrained, FK bound conditionally at the bottom:
+**Right**: column unconstrained, FK bound conditionally at the bottom:
 ```sql
 -- The FK to auth.users is added in a DO block so vanilla Postgres CI
 -- (which has no `auth` schema) can apply the migration. Supabase
@@ -65,7 +66,8 @@ do $$ begin
 end $$;
 ```
 
-The cost in vanilla CI: an unconstrained UUID column. Acceptable — the CI is testing schema validity, not referential integrity against Supabase data.
+The cost in vanilla CI: an unconstrained UUID column. Acceptable: the CI is
+testing schema validity, not referential integrity against Supabase data.
 
 ### 3. Guard policies that call `auth.uid()` / `auth.jwt()`
 
@@ -83,7 +85,8 @@ do $$ begin
 end $$;
 ```
 
-In CI the table exists with RLS enabled but no auth-aware policy — fine for schema-validity testing.
+In CI the table exists with RLS enabled but no auth-aware policy: fine for
+schema-validity testing.
 
 ### 4. Guard reads of `storage.objects` / `storage.buckets`
 
@@ -106,7 +109,8 @@ In order of preference:
 
 **(a) Don't redefine.** Add a sibling function under a new name (`search_widgets_v2`), and deprecate the old one in a follow-up PR. External consumers stay on `v1` until they migrate.
 
-**(b) Drop and recreate** — only if you're sure no external consumer depends on the old shape:
+**(b) Drop and recreate**. Only if you're sure no external consumer depends on
+the old shape:
 ```sql
 drop function if exists public.search_widgets(text, text, text, int);
 
@@ -116,22 +120,23 @@ create function public.search_widgets(...)
 ```
 Use `cascade` only if you've confirmed dependents downstream.
 
-**(c) Keep the signature, change only the body.** No drop, no return-type changes — pure body refactor. CI accepts this.
+**(c) Keep the signature, change only the body.** No drop, no return-type
+changes: pure body refactor. CI accepts this.
 
 ### 6. Smoke-test locally before pushing
 
-Mirror the CI environment exactly — which means reading it first. Open the
+Mirror the CI environment exactly, which means reading it first. Open the
 project's CI workflow (`.github/workflows/ci.yml`, or wherever the migration
 job lives) and take the Postgres image tag and the bootstrap role list from
 *it*, substituting them into the commands below. The `postgres:17` and the four
-roles shown are one project's values, kept as a worked example — mirroring this
+roles shown are one project's values, kept as a worked example: mirroring this
 snippet instead of that file is how the local smoke test quietly diverges from
 CI:
 
 ```bash
 docker run --rm --name pg-ci -e POSTGRES_PASSWORD=test -p 5432:5432 -d postgres:17
 
-# -d returns before Postgres accepts connections — wait, bounded. `timeout` is
+# -d returns before Postgres accepts connections: wait, bounded. `timeout` is
 # GNU coreutils and is absent from a stock macOS, where this smoke test runs
 # most often, so the bound is a counted loop and the failure is explicit.
 for _ in $(seq 1 30); do
@@ -144,7 +149,7 @@ docker exec pg-ci pg_isready -U postgres || {
   exit 1
 }
 
-# Bootstrap the same roles CI does — the list comes from the workflow file
+# Bootstrap the same roles CI does: the list comes from the workflow file
 psql "host=localhost user=postgres password=test" -c "
   create role anon;
   create role authenticated;
@@ -173,13 +178,23 @@ Future maintainers reading the migration cold should see why the column is uncon
 -- on Supabase envs only.
 ```
 
-## When to STOP and ask
+## When to STOP
 
-- The migration **depends on Supabase-seeded data** (e.g. an `auth.users` row with a specific UUID already exists). The guard pattern doesn't help — you need a pre-seed step or to restructure the migration.
-- The `CREATE OR REPLACE FUNCTION` case is genuinely ambiguous because external API consumers may already depend on the old return shape. Pause, ask the user — dropping the function could break clients.
-- The user explicitly says "this migration is Supabase-only, skip CI compatibility" — they may be running it only via `supabase db push` against the cloud. Confirm before omitting the guards.
-- The project uses a non-Postgres dialect for CI (e.g. SQLite for fast tests) — the `to_regnamespace` probe doesn't exist there. Ask before adapting.
-- **No CI workflow declares a Postgres image or bootstrap roles** — step 6 has nothing authoritative to read, and the worked-example values would silently stand in for the project's. Ask for the real values instead of smoke-testing against the example's.
+- The migration **depends on Supabase-seeded data** (e.g. an `auth.users` row
+  with a specific UUID already exists). The guard pattern doesn't help: you
+  need a pre-seed step or to restructure the migration.
+- The `CREATE OR REPLACE FUNCTION` case is genuinely ambiguous because external
+  API consumers may already depend on the old return shape. Pause, ask the
+  user: dropping the function could break clients.
+- The user explicitly says "this migration is Supabase-only, skip CI
+  compatibility". They may be running it only via `supabase db push` against
+  the cloud. Confirm before omitting the guards.
+- The project uses a non-Postgres dialect for CI (e.g. SQLite for fast tests):
+  the `to_regnamespace` probe doesn't exist there. Ask before adapting.
+- **No CI workflow declares a Postgres image or bootstrap roles**: step 6 has
+  nothing authoritative to read, and the worked-example values would silently
+  stand in for the project's. Ask for the real values instead of smoke-testing
+  against the example's.
 
 ## Quick reference card
 
@@ -195,8 +210,12 @@ Future maintainers reading the migration cold should see why the column is uncon
 
 ## Anti-patterns to avoid
 
-- ❌ Adding the FK at table-creation time and "hoping CI passes" — it won't, you'll burn a fix commit.
-- ❌ Using `to_regclass('auth.users') is not null` alone — if the schema itself is missing, the probe panics. Use `to_regnamespace('auth')` first.
-- ❌ Wrapping the entire migration in `DO $$ begin ... end $$` — loses the per-statement error reporting that makes CI logs readable.
+- ❌ Adding the FK at table-creation time and "hoping CI passes". It won't,
+  you'll burn a fix commit.
+- ❌ Using `to_regclass('auth.users') is not null` alone: if the schema itself
+  is missing, the probe panics. Use `to_regnamespace('auth')` first.
+- ❌ Wrapping the entire migration in `DO $$ begin ... end $$`: loses the
+  per-statement error reporting that makes CI logs readable.
 - ❌ `CREATE OR REPLACE FUNCTION` with a silent return-type change. Either rename the new one or drop the old one explicitly.
-- ❌ Omitting the header comment that explains *why* a column is unconstrained — future maintainers will "helpfully" tighten it up and break CI again.
+- ❌ Omitting the header comment that explains *why* a column is unconstrained:
+  future maintainers will "helpfully" tighten it up and break CI again.

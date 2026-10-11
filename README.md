@@ -27,7 +27,7 @@ the scars: each skill knows not just what to do, but when to stop and ask.
 [Pick your themes](#-pick-your-themes)
 ([git-workflow](#git-workflow) · [agent-config](#agent-config) ·
 [verification](#verification) · [data-safety](#data-safety) ·
-[mobile-ui](#mobile-ui)) ·
+[mobile-ui](#mobile-ui) · [design-ethics](#design-ethics)) ·
 [What a skill looks like](#-what-a-skill-here-looks-like) ·
 [The harness](#-the-harness-behind-these-skills) ·
 [Contributing](#-contributing) ·
