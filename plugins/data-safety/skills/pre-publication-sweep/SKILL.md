@@ -53,6 +53,24 @@ deletion. The deliverable is the list of commands run and their empty result
    silently. Add `--paginate` to the commit walk too when a branch holds more
    than 100 commits, or the tail of the history escapes the sweep the same way.
 
+   **That query reads emails and nothing else**, so on its own it does not
+   deliver what this step is for. Steps 2 to 4 swept the clone, and a commit
+   the clone never had carries file content and a commit message that no local
+   sweep has seen. Fetch what the remote actually holds into a namespace of its
+   own, then re-run those two sweeps against it:
+
+   ```bash
+   git fetch <remote> '+refs/heads/*:refs/remotes/sweep/*' --prune
+   git rev-list --remotes=sweep | while read -r c; do
+     git grep -iIlE '<terms>' "$c"
+   done | sort -u
+   git log --remotes=sweep --format='%ae %ce %s' | grep -iE '<terms>'
+   ```
+
+   A separate namespace rather than the usual remote-tracking refs, so this
+   fetch cannot move a ref something else is reading, and so the two sweeps
+   above can name exactly what they covered.
+
 6. **Run the repo's secret scanner** (gitleaks, or whatever the repo already
    enforces): entropy and token patterns catch what a name list cannot.
 

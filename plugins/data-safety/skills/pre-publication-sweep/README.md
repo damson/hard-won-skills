@@ -38,12 +38,17 @@ The deliverable is the list of commands run and their results, never the word
 > git rev-list --all --remotes | … git grep -iIlE …    → no matches
 > git log --all --format='%ae %ce %s' | grep -iE …     → no matches
 > gh api 'repos/o/r/commits?sha=develop&per_page=100'  → 1 email, the public one
+> git fetch origin '+refs/heads/*:refs/remotes/sweep/*' → 4 refs, 1 the clone lacked
+> git rev-list --remotes=sweep | … git grep -iIlE …    → no matches
+> git log --remotes=sweep --format='%ae %ce %s' | …    → no matches
 > gitleaks detect                                      → no leaks found
 > ```
 >
 > Swept for: 2 personal emails, employer name, 2 internal project names,
 > `sk-` / `ghp_` / `AKIA` prefixes. All branches enumerated; none over 100
-> commits, so no pagination gap.
+> commits, so no pagination gap. The remote carried one branch the clone did
+> not, which is why the content sweeps are repeated against the fetched refs
+> and not only against the clone.
 
 An empty sweep is evidence only when the reader can see what was swept. On any
 hit the skill stops and reports it verbatim: scrubbing is the owner's
