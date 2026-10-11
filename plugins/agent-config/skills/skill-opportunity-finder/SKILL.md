@@ -32,12 +32,13 @@ The user has performed (or asked me to perform) the same multi-step operation th
 If 3+ instances → propose a skill that bundles the procedure.
 
 ### Pattern C: Repeated discovery work
-I (the assistant) keep re-discovering the same information at the top of new turns:
-- Re-checking PR status
-- Re-listing worktrees
-- Re-reading the same file
+The same lookup keeps happening, whichever side asks for it:
+- The user asks the same question again: "is CI green?", "what's still open?",
+  "which branch is that on?"
+- I keep re-discovering the same information at the top of new turns:
+  re-checking PR status, re-listing worktrees, re-reading the same file
 
-If the work is mechanical and the answer changes only when external state changes → propose a skill that wraps the discovery.
+If the work is mechanical and the answer changes only when external state changes → propose a skill that wraps the discovery. Three instances is the bar from either direction, because a lookup done three times costs the same whoever asked for it.
 
 ### Pattern D: Repeated meta-instructions to me
 The user has given me the same process directive multiple times:
@@ -50,7 +51,7 @@ If the directive applies broadly → propose a skill that auto-applies it.
 ## Procedure
 
 1. **Scan the last 30+ turns** (or the whole session if shorter) for the four patterns above.
-2. **Cluster** corrections / operations by **shape**. Two events share a shape when they meet ALL of:
+2. **Cluster** corrections, operations and repeated questions by **shape**. Two events share a shape when they meet ALL of:
    - **Same artefact class**: both about commits, both about PR bodies, both
      about migrations, etc.
    - **Same verb family**: "fix / repair / patch" cluster; "list / show /

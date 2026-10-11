@@ -28,9 +28,10 @@ It does not fire for deliberate history surgery on a single PR, which is
 `rewrite-pr-history`, nor for promoting the integration branch to the branch
 people install from, which is a release cycle with steps after the merge.
 
-It deliberately leaves `BLOCKED` and `UNSTABLE` PRs alone: those mean a red
-check or a missing review, which a rebase does not fix and a force-push only
-reruns.
+It deliberately leaves `BLOCKED` and `UNSTABLE` PRs alone, because a rebase
+fixes neither and a force-push only reruns whatever is already reporting. It
+does not say which of them it is, either: those two names carry no cause, and
+the procedure reads the check rollup rather than guessing one.
 
 ## Example
 

@@ -59,9 +59,26 @@ helping.
    ```
 
 3. **For each open PR where** `mergeable=CONFLICTING` **or** `mergeStateStatus`
-   is `DIRTY` / `BEHIND`. Not `BLOCKED` or `UNSTABLE`: those mean a red check
-   or a missing review, which a rebase does not fix and a force-push only
-   reruns:
+   is `DIRTY` / `BEHIND`. Not `BLOCKED` or `UNSTABLE`: a rebase fixes neither,
+   and a force-push only reruns whatever is already reporting.
+
+   **Those two names do not say why, so do not report a cause from them.**
+   GitHub defines `BLOCKED` as the merge being blocked and `UNSTABLE` as
+   mergeable with a non-passing commit status, which covers a red check, a check
+   still running, a review still pending and a protection rule alike. One
+   rollup carries all of them:
+
+   ```bash
+   gh pr view <n> --json statusCheckRollup \
+     --jq '.statusCheckRollup[] | [.__typename, (.name // .context), (.conclusion // .state)] | @tsv'
+   ```
+
+   `__typename` is the part worth keeping: a `StatusContext` is a legacy commit
+   status and does **not** appear in `repos/<owner>/<repo>/commits/<sha>/check-runs`
+   at all, so an `UNSTABLE` whose every check-run is green is usually one of
+   those still pending. Measured on this repository: three check-runs green
+   while a review bot's `StatusContext` sat pending, and the check-runs endpoint
+   listed three entries where the rollup listed four.
 
    a. Pick the worktree to work in: call it `$wt`:
    ```bash
