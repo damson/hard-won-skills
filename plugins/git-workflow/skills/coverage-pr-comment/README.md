@@ -46,15 +46,15 @@ place:
 >
 > **1841/3890 lines**
 >
-> 🟡 **Approaching target** — 12.7 points below the 60% line target
->
+> 🟡 **Approaching target**: 12.7 points below the 60% line target >
 > | Metric | Base | Head | Δ | Status |
 > |---|---:|---:|---:|:--:|
 > | Line | 41.2% | 47.3% | ▲ +6.1 | 🟡 |
 > | Branch | 25.1% | 24.4% | ▼ -0.7 | 🔴 |
 >
 > <sub>🟦 covered on main &nbsp; 🟩 added here &nbsp; 🟥 removed here &nbsp; ⬜ uncovered</sub>
-> <sub>🔴 below floor · 🟡 below target · 🟢 at target — line 40/60, branch 25/45</sub>
+> <sub>🔴 below floor · 🟡 below target · 🟢 at target: line 40/60, branch
+  25/45</sub>
 
 That is the live markdown, not a screenshot: GitHub renders it here exactly as
 it renders in the comment, so this preview cannot drift from the format the skill
@@ -72,7 +72,7 @@ Source, for copying:
 
 **1841/3890 lines**
 
-🟡 **Approaching target** — 12.7 points below the 60% line target
+🟡 **Approaching target**: 12.7 points below the 60% line target
 
 | Metric | Base | Head | Δ | Status |
 |---|---:|---:|---:|:--:|
@@ -80,7 +80,7 @@ Source, for copying:
 | Branch | 25.1% | 24.4% | ▼ -0.7 | 🔴 |
 
 <sub>🟦 covered on main &nbsp; 🟩 added here &nbsp; 🟥 removed here &nbsp; ⬜ uncovered</sub>
-<sub>🔴 below floor · 🟡 below target · 🟢 at target — line 40/60, branch 25/45</sub>
+<sub>🔴 below floor · 🟡 below target · 🟢 at target: line 40/60, branch 25/45</sub>
 ```
 
 Reading it: eight blue blocks of coverage `main` already had, one green block

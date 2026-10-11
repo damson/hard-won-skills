@@ -1,11 +1,11 @@
 ---
 name: claude-md-pointer-check
 description: >
-  Use before creating a CLAUDE.md, or before an edit that adds or rewrites a
-  whole section of one — not for typo- or line-level fixes. Detects when a
-  sibling AGENTS.md or README.md already covers the planned content, rewrites
-  the CLAUDE.md as a pointer + Claude-only delta instead of a duplicate, and
-  flags unactionable phrasing found in the sibling on the way through.
+  Use before creating a CLAUDE.md, or before an edit that adds or rewrites a whole section
+  of one. Not for typo- or line-level fixes. Detects when a sibling AGENTS.md or README.md
+  already covers the planned content, rewrites the CLAUDE.md as a pointer + Claude-only
+  delta instead of a duplicate, and flags unactionable phrasing found in the sibling on
+  the way through.
 ---
 
 # CLAUDE.md pointer check
@@ -14,7 +14,7 @@ CLAUDE.md should rarely hold canonical content. Correct shapes:
 
 | Context | Correct CLAUDE.md |
 |---|---|
-| Sibling `AGENTS.md` exists | One-line pointer: `See [AGENTS.md](AGENTS.md) — the same instructions apply to Claude.` |
+| Sibling `AGENTS.md` exists | One-line pointer: `See [AGENTS.md](AGENTS.md): the same instructions apply to Claude.` |
 | Project `README.md` covers commands + architecture | Pointer to README + only Claude-specific behavioral directives (self-modification rules, evaluator quirks, agent-only conventions) |
 | Greenfield, no siblings | Write CLAUDE.md normally |
 
@@ -26,12 +26,12 @@ In the same directory:
 - `AGENTS.md` (canonical agent-instructions file)
 - `README.md` (human-facing project docs, only relevant at project root)
 
-If neither exists, this skill does not apply — write CLAUDE.md normally and
+If neither exists, this skill does not apply: write CLAUDE.md normally and
 exit.
 
-**Resolve symlinks before comparing.** In many repos the sibling `AGENTS.md`
-is a symlink *to* the CLAUDE.md you are editing (`readlink AGENTS.md`). If it
-resolves to the same file, CLAUDE.md is already the canonical copy — comparing
+**Resolve symlinks before comparing.** In many repos the sibling `AGENTS.md` is
+a symlink *to* the CLAUDE.md you are editing (`readlink AGENTS.md`). If it
+resolves to the same file, CLAUDE.md is already the canonical copy: comparing
 it against itself would mark every section a duplicate and rewrite the
 canonical file into a pointer at its own symlink. Skip to step 4.
 
@@ -40,20 +40,22 @@ canonical file into a pointer at its own symlink. Skip to step 4.
 For each section of the planned CLAUDE.md, apply the deletion test: **would
 dropping this section lose any fact or command a sibling does not already
 state?** Same *topic* is not overlap; same *information* is. A section that
-adds even one repo-specific rule to a topic the README covers is a keeper —
+adds even one repo-specific rule to a topic the README covers is a keeper:
 trimmed to the delta, not dropped.
 
 | Planned section fails the deletion test against | Action |
 |---|---|
-| AGENTS.md (any sibling) | Drop the section — it belongs in AGENTS.md or is already there |
-| README.md (commands, architecture, mental model) | Drop the section — defer to README |
+| AGENTS.md (any sibling) | Drop the section: it belongs in AGENTS.md or is already there |
+| README.md (commands, architecture, mental model) | Drop the section: defer to README |
 | Neither (Claude-only directive) | Keep |
 
 Examples of legitimate Claude-only directives:
 - "`.claude/settings.json` cannot be auto-written from this repo"
-- "The scoring harness is non-deterministic ±1–2 — don't claim a trend from a single run"
-- "When adding an entry, edit the registry file only — never touch the scripts
-  that read it" (a Claude-behavior rule the human reader of README doesn't need)
+- "The scoring harness is non-deterministic ±1–2. Don't claim a trend from a
+  single run"
+- "When adding an entry, edit the registry file only. Never touch the scripts
+  that read it" (a Claude-behavior rule the human reader of README doesn't
+  need)
 - "Never push to `main`; use the pre-installed hook + the sync script"
 
 Examples of content that belongs **elsewhere**:
@@ -70,15 +72,15 @@ were marked "drop" in step 2, rewrite the whole file as a pointer:
 ```markdown
 # CLAUDE.md
 
-See [AGENTS.md](AGENTS.md) — the same instructions apply to Claude.
+See [AGENTS.md](AGENTS.md): the same instructions apply to Claude.
 ```
 
 or
 
 ```markdown
-# CLAUDE.md — <project>
+# CLAUDE.md: <project>
 
-Read [README.md](README.md) first — it covers commands, architecture, and
+Read [README.md](README.md) first: it covers commands, architecture, and
 git flow. The directives below are Claude-only and don't belong in README.
 
 ## Claude-only directives
@@ -99,7 +101,7 @@ instructions but give an agent nothing to act on:
 
 If found, surface each match inline (file path + line number + the problem
 phrase) and propose a concrete replacement as a unified diff. The fix probably
-belongs in the sibling, not this file — ask the user before editing the sibling.
+belongs in the sibling, not this file: ask the user before editing the sibling.
 
 ## When to STOP
 

@@ -1,16 +1,16 @@
 ---
 name: android-verify-on-device
 description: >
-  Use when a UI or behaviour change has to be confirmed on a running Android app
-  rather than by a test — a setting that must take effect, a screen that has never
-  been opened, a class the project cannot construct under Robolectric. Fire when the
-  user says "check it on the device", "does it actually work", "run it and look", or
-  when a change lands in a class that reaches Play Services and so has no unit-test
-  seam. Fire also when a layout question has been answered twice from captures and the
-  answer keeps moving, or when what is on screen depends on something a test cannot
-  supply: a filled ad, a real inset, an orientation the manifest may lock away. Skip
-  when a screenshot golden or a Robolectric test can hold the same claim — they are
-  cheaper and they run in CI, which this never does.
+  Use when a UI or behaviour change has to be confirmed on a running Android app rather
+  than by a test: a setting that must take effect, a screen that has never been opened, a
+  class the project cannot construct under Robolectric. Fire when the user says "check it
+  on the device", "does it actually work", "run it and look", or when a change lands in a
+  class that reaches Play Services and so has no unit-test seam. Fire also when a layout
+  question has been answered twice from captures and the answer keeps moving, or when what
+  is on screen depends on something a test cannot supply: a filled ad, a real inset, an
+  orientation the manifest may lock away. Skip when a screenshot golden or a Robolectric
+  test can hold the same claim. They are cheaper and they run in CI, which this never
+  does.
 ---
 
 # Verify a change on a device
@@ -26,9 +26,10 @@ frame changed since the action.
 
 ## Procedure
 
-1. **Install the build you mean to test.** `./gradlew :<module>:installDebug` —
-   the app module under test, not necessarily `:app` — after the change compiles. Where the state under test is stored, `adb uninstall` first —
-   a preference left by an earlier run is the most common false result.
+1. **Install the build you mean to test.** `./gradlew:<module>:installDebug`
+   (the app module under test, not necessarily `:app`), after the change
+   compiles. Where the state under test is stored, `adb uninstall` first: a
+   preference left by an earlier run is the most common false result.
 
 2. **Launch and wait for a real frame**, not for the command to return:
 
@@ -40,13 +41,13 @@ frame changed since the action.
    ```
 
    **Clear the buffer first, or the wait is not a wait.** `logcat -d` dumps the
-   whole ring buffer, so the `Displayed` line from a launch ten minutes ago matches
-   on the first pass and the loop returns before this launch has drawn anything —
-   green, instant, and wrong. If the buffer cannot be cleared, match on a line
-   newer than a timestamp you took first (`adb logcat -d -t "$ts"`).
+   whole ring buffer, so the `Displayed` line from a launch ten minutes ago
+   matches on the first pass and the loop returns before this launch has drawn
+   anything: green, instant, and wrong. If the buffer cannot be cleared, match
+   on a line newer than a timestamp you took first (`adb logcat -d -t "$ts"`).
 
-   `am start` cannot reach an activity declared `android:exported="false"` — reach
-   those through the app's own UI, not through adb.
+   `am start` cannot reach an activity declared `android:exported="false"`:
+   reach those through the app's own UI, not through adb.
 
 3. **Locate controls, never guess coordinates.**
 
@@ -55,11 +56,11 @@ frame changed since the action.
    adb shell cat /sdcard/ui.xml | tr '>' '\n' | grep 'content-desc="Settings"'
    ```
 
-   Read `bounds="[l,t][r,b]"` and tap its centre. A guessed tap that misses does not
-   fail — on a drawing canvas it draws a stroke, on a list it scrolls, and either way
-   the next screenshot shows a screen you did not intend and no error anywhere.
-   `uiautomator` also proves the control is *present*, which a screenshot of a
-   collapsed drawer does not.
+   Read `bounds="[l,t][r,b]"` and tap its centre. A guessed tap that misses
+   does not fail: on a drawing canvas it draws a stroke, on a list it scrolls,
+   and either way the next screenshot shows a screen you did not intend and no
+   error anywhere. `uiautomator` also proves the control is *present*, which a
+   screenshot of a collapsed drawer does not.
 
 4. **Capture against the frame from before the action**, not against the last one.
    Equality is the right stop condition but the wrong start: a launch splash and the
@@ -91,7 +92,7 @@ frame changed since the action.
    under you. Report a feature broken only from a frame you have confirmed is its own.
 
 6. **Crop 1:1 before claiming anything about a small element.** A downscaled
-   full-screen capture invents detail — a duplicated handle, an icon that is not
+   full-screen capture invents detail: a duplicated handle, an icon that is not
    there. Derive the box from the `bounds="[l,t][r,b]"` step 3 already parsed,
    padded by roughly half the control's size so its surroundings are visible:
 
@@ -111,12 +112,12 @@ frame changed since the action.
    adb shell run-as <pkg> cat /data/data/<pkg>/shared_prefs/<name>.xml
    ```
 
-   `run-as` works only on a debuggable build. "package not debuggable" means the
-   build, not the state: reinstall the debug variant (step 1) and re-drive — or,
-   where reinstalling would wipe the very state under test, fall back to reading
-   the outcome off a confirmed frame (steps 3–6). A frame proves the rendered
-   state, not that it was persisted: when the claim is survival, force-stop and
-   relaunch (no data clear) before reading the frame.
+   `run-as` works only on a debuggable build. "package not debuggable" means
+   the build, not the state: reinstall the debug variant (step 1) and re-drive,
+   or, where reinstalling would wipe the very state under test, fall back to
+   reading the outcome off a confirmed frame (steps 3–6). A frame proves the
+   rendered state, not that it was persisted: when the claim is survival,
+   force-stop and relaunch (no data clear) before reading the frame.
 
 8. **Restore what you changed.** Emulator-wide settings outlive the run:
    `adb shell cmd uimode night auto`, and any
@@ -135,27 +136,28 @@ as a finished screen rather than a missing one:
 - **A configuration the app cannot reach.** A landscape golden of an activity locked to
   portrait reads exactly like one a user could see. Check the manifest before measuring
   anything off an orientation.
-- **A preview that pins what the component would have decided.** Passing a parameter the
-  component defaults from the window means every capture shows one branch — usually the
-  branch the preview exists to disprove.
+- **A preview that pins what the component would have decided.** Passing a
+  parameter the component defaults from the window means every capture shows
+  one branch: usually the branch the preview exists to disprove.
 
 When a capture has answered the same layout question twice and the answer keeps changing,
 stop reading captures. One run on a device settles it.
 
 ## Report only what you saw
 
-Name the build, the device and its API level, and what you drove. Where a step could
-not be driven, say so — an unstated gap reads as coverage.
+Name the build, the device and its API level, and what you drove. Where a step
+could not be driven, say so: an unstated gap reads as coverage.
 
 ## When to STOP
 
-- **The behaviour can be held by a test.** Stop and write the test; it runs in CI and
-  this does not. Hand-driving is for arrangements the project genuinely cannot
-  construct — a View reaching an ad SDK, a manifest-declared activity, a real inset.
+- **The behaviour can be held by a test.** Stop and write the test; it runs in
+  CI and this does not. Hand-driving is for arrangements the project genuinely
+  cannot construct: a View reaching an ad SDK, a manifest-declared activity, a
+  real inset.
 - **Three navigation attempts have failed.** The app is not the problem; the driving
   is. Switch to `uiautomator` bounds if you were guessing, and if that fails, say the
   path could not be driven rather than reporting the feature broken.
 - **The result contradicts a passing test.** Suspect the capture before the code, and
   re-read step 4.
-- **A destructive step is needed** — wiping app data, uninstalling something the user
-  did not install, changing a device-wide setting you cannot restore.
+- **A destructive step is needed**: wiping app data, uninstalling something the
+  user did not install, changing a device-wide setting you cannot restore.

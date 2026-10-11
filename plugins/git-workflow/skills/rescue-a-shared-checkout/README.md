@@ -1,11 +1,11 @@
 # rescue-a-shared-checkout
 
-Separates the uncommitted changes in a shared working tree into the ones already
-safe, the ones genuinely at risk, and the ones that are somebody's work in
-progress — then lands only the middle group, without committing from the shared
-tree. Uncommitted work in a tree with more than one writer is the least safe
-state a repository has: nothing records who wrote it, nothing preserves it, and
-the next branch cut from that tree carries it by accident.
+Separates the uncommitted changes in a shared working tree into the ones
+already safe, the ones genuinely at risk, and the ones that are somebody's work
+in progress: then lands only the middle group, without committing from the
+shared tree. Uncommitted work in a tree with more than one writer is the least
+safe state a repository has: nothing records who wrote it, nothing preserves
+it, and the next branch cut from that tree carries it by accident.
 
 Read [SKILL.md](SKILL.md) for the procedure. This file is what a run looks like
 and when to reach for it.

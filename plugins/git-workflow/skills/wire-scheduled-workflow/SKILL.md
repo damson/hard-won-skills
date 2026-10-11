@@ -2,23 +2,23 @@
 name: wire-scheduled-workflow
 description: >
   Use when adding, renaming or debugging a GitHub Actions workflow that carries a
-  `schedule:` or `workflow_dispatch:` trigger — especially in a gitflow repo where
-  workflows land on `develop` first. Fire on "the cron never fired", "the
-  workflow doesn't show up", "dispatch says workflow not found on the default
-  branch", HTTP 404 from `gh workflow run`, or a review of a diff that adds
-  either trigger. Skip for workflows with only `push` / `pull_request` triggers —
-  those run from the pushed ref and have no registration step.
+  `schedule:` or `workflow_dispatch:` trigger, especially in a gitflow repo where
+  workflows land on `develop` first. Fire on "the cron never fired", "the workflow doesn't
+  show up", "dispatch says workflow not found on the default branch", HTTP 404 from `gh
+  workflow run`, or a review of a diff that adds either trigger. Skip for workflows with
+  only `push` / `pull_request` triggers: those run from the pushed ref and have no
+  registration step.
 ---
 
 # Wire a scheduled workflow so it actually runs
 
 GitHub registers `schedule` and `workflow_dispatch` only from the copy of the
 workflow on the **default branch**. A workflow merged to `develop` in a gitflow
-repo is not registered at all: the cron never fires, `gh workflow list` does not
-show it, and a dispatch answers `404: workflow not found on the default branch`.
-Nothing errors — two cron windows can pass before anyone notices. The same
-applies to a **rename**: the new filename is a new, unregistered workflow until
-it reaches the default branch.
+repo is not registered at all: the cron never fires, `gh workflow list` does
+not show it, and a dispatch answers `404: workflow not found on the default
+branch`. Nothing errors: two cron windows can pass before anyone notices. The
+same applies to a **rename**: the new filename is a new, unregistered workflow
+until it reaches the default branch.
 
 ## Procedure
 
@@ -42,19 +42,19 @@ it reaches the default branch.
    git ls-tree "origin/$def" -- .github/workflows/<file>.yml   # empty = not there yet
    ```
 
-   A failed fetch stops the trace — the emptiness of `ls-tree` means nothing
+   A failed fetch stops the trace: the emptiness of `ls-tree` means nothing
    against a ref you could not refresh.
 
    Empty output means the file has not reached the default branch; in a gitflow
    repo the path there is the next release. Two traps on the way:
 
    - **The workflow gates its own promotion.** A release workflow that lives
-     only on `develop` cannot run to promote itself to `main` — putting it
+     only on `develop` cannot run to promote itself to `main`: putting it
      there *is* a release. The first promotion must be done by hand: read the
      workflow's job steps and replicate only the ones that run *before* the
-     merge — the proposal content (version bump, changelog, PR body) — then
-     open the PR and merge it. Anything the workflow does *after* its merge —
-     the tag, a publish, a back-merge — happens from the **merged** SHA, never
+     merge (the proposal content (version bump, changelog, PR body)), then
+     open the PR and merge it. Anything the workflow does *after* its merge: 
+     the tag, a publish, a back-merge: happens from the **merged** SHA, never
      before: a tag cut pre-merge points at a commit a squash merge discards.
      Every run after that is automatic.
    - **A long-lived PR is not a path.** The workflow registers when the file
@@ -68,14 +68,14 @@ it reaches the default branch.
    ```
 
    A dispatch that starts a run is the proof. For the cron itself, check the
-   run list after the first window passes — and know that a workflow whose
+   run list after the first window passes, and know that a workflow whose
    *only* value was the schedule has still never had its steps exercised until
    then; a `workflow_dispatch` trigger alongside the cron exists precisely so
    the steps can be proven before the window.
 
-5. **Write the trap down where the next rename will find it** — a comment at
-   the top of the workflow or a line in the repo's release doc. The rename
-   variant re-bites repos that survived the first variant.
+5. **Write the trap down where the next rename will find it**: a comment at the
+   top of the workflow or a line in the repo's release doc. The rename variant
+   re-bites repos that survived the first variant.
 
 ## Sharp edges
 
@@ -87,16 +87,16 @@ it reaches the default branch.
   quiet repo is usually this, not a syntax error.
 - **Auto-merges performed with `GITHUB_TOKEN` raise no `push` event** for other
   workflows, so a push-triggered job cannot be the only path to something that
-  matters — pair it with the schedule as the guaranteed path.
+  matters: pair it with the schedule as the guaranteed path.
 
 ## When to STOP
 
-- **The workflow needs secrets or permissions you cannot see** — registration
-  is checkable from outside, the run's success is not; hand the verification to
+- **The workflow needs secrets or permissions you cannot see**: registration is
+  checkable from outside, the run's success is not; hand the verification to
   someone who can read the run logs.
 - **The manual bootstrap would itself be a release** (as in the self-gating
-  case) and the repo has release discipline — follow the repo's release
+  case) and the repo has release discipline: follow the repo's release
   procedure for that one promotion rather than pushing the file to the default
   branch directly.
-- **The cron fired but the job did the wrong thing** — that is the workflow's
+- **The cron fired but the job did the wrong thing**, that is the workflow's
   logic, not its wiring; debug it as code, not as registration.

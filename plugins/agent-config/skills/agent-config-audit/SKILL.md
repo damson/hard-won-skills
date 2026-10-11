@@ -18,19 +18,18 @@ Audit the AI instruction files active for the current project. Report findings, 
 ## Step 1: Resolve the Active File Stack
 
 From the current working directory, resolve the project's instruction-file
-stack — items 1, 3 and 4 are loaded by the harness; 2 and 5 are audited when
-present (all five resolved; scoping flags filter afterwards — see Flags):
+stack (items 1, 3 and 4 are loaded by the harness; 2 and 5 are audited when
+present (all five resolved; scoping flags filter afterwards), see Flags):
 
-1. **Global CLAUDE.md** — `~/.claude/CLAUDE.md`
-2. **Global preference/rule files** — whatever else `~/.claude/` loads.
-   Enumerate, don't assume names:
-   `ls ~/.claude/*.md ~/.claude/rules/*.md 2>/dev/null`, minus the
-   `CLAUDE.md` item 1 already covers — take what exists
-3. **Project AGENTS.md** — `AGENTS.md` in the project root
-4. **Project CLAUDE.md** — `CLAUDE.md` in the project root
-5. **Project preference/rule files** — under the project's `.claude/`
+1. **Global CLAUDE.md**: `~/.claude/CLAUDE.md`
+2. **Global preference/rule files**: whatever else `~/.claude/` loads.
+   Enumerate, don't assume names: `ls ~/.claude/*.md ~/.claude/rules/*.md
+   2>/dev/null`, minus the `CLAUDE.md` item 1 already covers: take what exists
+3. **Project AGENTS.md**: `AGENTS.md` in the project root
+4. **Project CLAUDE.md**: `CLAUDE.md` in the project root
+5. **Project preference/rule files**: under the project's `.claude/`
 
-Any of these may be a symlink into a config repo — follow the chain to its
+Any of these may be a symlink into a config repo: follow the chain to its
 source (`readlink -f`) so the audit edits the real file, not a link
 
 For each file found, report:
@@ -46,9 +45,11 @@ Print the stack before running checks so the user knows the scope.
 
 For each finding, record: severity (`🔴 Contradiction` / `⚠️ Duplication` / `📦 Bloat` / `🚧 Boundary violation` / `✅ OK`), file + section, and a recommended fix.
 
-### 2a — Personal/Team Boundary
+### 2a: Personal/Team Boundary
 
-Team files (`AGENTS.md` in the project repo) should contain **only** team conventions — rules agreed upon by the whole team. Flag any of the following if found in a team file:
+Team files (`AGENTS.md` in the project repo) should contain **only** team
+conventions: rules agreed upon by the whole team. Flag any of the following if
+found in a team file:
 
 - Personal commit style preferences (e.g. no pod prefix, "Extract" wording)
 - No-AI-signature rules
@@ -56,7 +57,7 @@ Team files (`AGENTS.md` in the project repo) should contain **only** team conven
 - Personal story point sizing
 - Personal tool shortcuts or aliases
 
-### 2b — Contradictions
+### 2b: Contradictions
 
 For each topic that appears in multiple files (commit format, naming, testing framework, etc.), compare the rules:
 
@@ -72,39 +73,42 @@ Example of intentional layering (not a conflict):
 > forge's merge-strategy settings, and the repo's hooks. Found in none → report
 > the pair as unresolved and ask the user rather than marking OK.
 
-### 2c — Duplication
+### 2c: Duplication
 
 For each rule or section, check if the same content appears in multiple files.
 Near-verbatim means the directives require the same behaviour and differ only
-in wording — if the required behaviours differ at all, route it through 2b as
-a potential contradiction instead:
+in wording: if the required behaviours differ at all, route it through 2b as a
+potential contradiction instead:
 
 - Same file, different section → likely bloat in one of them
 - Same content in global preferences AND global CLAUDE.md → one is redundant; flag which to remove
 - Same content in project CLAUDE.md AND team AGENTS.md → intentional only if one of them is a symlink to the other or the personal copy says why it repeats the rule; otherwise flag as accidental duplication
 
-Report: source file + section, duplicate file + section, and recommendation (keep in X, remove from Y, or "intentional — leave both").
+Report: source file + section, duplicate file + section, and recommendation
+(keep in X, remove from Y, or "intentional: leave both").
 
-### 2d — Bloat
+### 2d: Bloat
 
 Within each file, flag:
 
 - Sections that are pure recaps of other sections in the same file (summary/reminders sections that restate earlier rules verbatim)
 - Generic non-actionable advice ("organize them logically", "follow best practices")
 - Reference material that could be a single pointer line (e.g. a list of 5 doc subdirectories that could be "docs in `/docs/`")
-- Rules that restate the language's or framework's official style-guide default with no project-specific deviation (e.g. "Classes: PascalCase" in Kotlin) — noise a competent reader already assumes
+- Rules that restate the language's or framework's official style-guide default
+  with no project-specific deviation (e.g. "Classes: PascalCase" in Kotlin):
+  noise a competent reader already assumes
 - Procedural checklists whose steps the agent cannot perform. The test: a step is agent-actionable if it maps to a tool invocation or a file edit; flag steps that require physical action, a GUI-only tool, or credentials the agent does not hold
 
-### 2e — Structural health (only where the setup uses a config repo)
+### 2e: Structural health (only where the setup uses a config repo)
 
-Skip this check entirely when Step 1 found no symlinks — plain files in place
+Skip this check entirely when Step 1 found no symlinks: plain files in place
 are a valid setup, not a finding. Where symlinks exist:
 
 - Check that each file's symlink chain resolves to a real file (no broken links)
 - Check that files meant to be centralised are symlinked, not standalone copies
   that can drift from the config repo. The test for "meant to be centralised":
   a plain file is a drift candidate only when a counterpart already resolves
-  into the config repo — a sibling file in the same directory, or the same
+  into the config repo: a sibling file in the same directory, or the same
   logical file (`CLAUDE.md`, `AGENTS.md`) in another project the repo manages,
   where "manages" is read from the config repo itself: the projects its
   registry or its existing symlink targets already name, never guessed by
@@ -126,22 +130,22 @@ Print a structured report:
 
 ### Findings
 
-🔴 Contradiction — [file:section] vs [file:section]
+🔴 Contradiction: [file:section] vs [file:section]
   Both files define commit format but with conflicting rules.
   Recommendation: ...
 
-⚠️ Duplication — [file:section] duplicates [file:section]
+⚠️ Duplication: [file:section] duplicates [file:section]
   Recommendation: keep in X, remove from Y
 
-📦 Bloat — [file:section]
+📦 Bloat: [file:section]
   "Important Reminders" restates 9 rules already defined earlier in the same file.
   Recommendation: remove section
 
-🚧 Boundary violation — [file:section]
+🚧 Boundary violation: [file:section]
   Personal rule "no pod prefix" found in team AGENTS.md.
   Recommendation: move to personal CLAUDE.md
 
-✅ OK — [N] rules checked, no issues
+✅ OK: [N] rules checked, no issues
 ```
 
 If no issues are found, say so clearly.
@@ -160,7 +164,7 @@ Do **not** apply fixes without explicit approval. Do **not** batch-apply without
 ## Flags
 
 Resolve the full stack first (Step 1), then filter by the resolved owner:
-`--personal` keeps only files classified personal, `--team` only team-owned —
+`--personal` keeps only files classified personal, `--team` only team-owned:
 ownership comes from the classification rule, not from fixed list positions.
 `--fix` enables Step 4. `--team` and `--personal` together contradict each
 other: stop and ask which scope is meant rather than guessing a union.

@@ -1,24 +1,22 @@
 ---
 name: watch-what-the-merge-triggered
 description: >
-  Use immediately after merging into a branch that workflows watch — an
-  integration branch, a release branch, anything with `on: push`. Fires on
-  "merged", "it landed", "that's in now" when the base has deploy, migrate,
-  publish or notify workflows, and whenever a merged PR touched a workflow file
-  or a path some workflow filters on. Owns the run the MERGE starts: which
-  workflows it triggers, watching them to a terminal state pinned to the merge
-  commit, and treating that run as the first and only exercise of merge-time
-  credentials. Do NOT fire for a merge into a branch nothing watches, for the
-  PR's own checks (await-pr-checks owns those), or to confirm that the merged
-  diff contains what was claimed, which is a question about content rather than
-  about runs.
+  Use immediately after merging into a branch that workflows watch. An integration branch,
+  a release branch, anything with `on: push`. Fires on "merged", "it landed", "that's in
+  now" when the base has deploy, migrate, publish or notify workflows, and whenever a
+  merged PR touched a workflow file or a path some workflow filters on. Owns the run the
+  MERGE starts: which workflows it triggers, watching them to a terminal state pinned to
+  the merge commit, and treating that run as the first and only exercise of merge-time
+  credentials. Do NOT fire for a merge into a branch nothing watches, for the PR's own
+  checks (await-pr-checks owns those), or to confirm that the merged diff contains what
+  was claimed, which is a question about content rather than about runs.
 ---
 
 # Watch what the merge triggered
 
 A pull request's checks run on a merge *preview*, with pull-request-scoped
 secrets. The merge produces a different commit, and `on: push` workflows run
-against it holding credentials a pull request was deliberately denied — so the
+against it holding credentials a pull request was deliberately denied, so the
 first run after a merge is not a repeat of the PR's checks but the first
 execution of a configuration nothing could have tested.
 
@@ -44,7 +42,7 @@ guard a typo produces a confident all-clear.
 
 Every read below is pinned to `$mc`. A run for the branch tip is the PR's run,
 and a run for "the latest push to base" may be somebody else's merge a minute
-later — which is not a hypothetical on a repo with more than one session
+later, which is not a hypothetical on a repo with more than one session
 working.
 
 ### 2. Work out what SHOULD have started, before looking at what did
@@ -57,7 +55,7 @@ git fetch --prune
 git show --name-only --format= --first-parent "$mc"     # what the merge changed
 
 # The candidates: every workflow on the base branch with a push trigger.
-# `grep push:` is not the test — it matches a `paths:`-level key, and `^on:`
+# `grep push:` is not the test: it matches a `paths:`-level key, and `^on:`
 # alone matches every workflow in the tree. Read the on: block and stop at the
 # next top-level key.
 for w in $(git ls-tree --name-only "origin/$base" .github/workflows/); do
@@ -71,19 +69,19 @@ git show "origin/$base:.github/workflows/<file>" | sed -n '1,40p'   # one on: bl
 ```
 
 Two things decide it: the `branches:` filter must contain `$base`, and any
-`paths:`/`paths-ignore:` filter must match — or fail to exclude — one of the
-changed files. Read both lists against that file list; a workflow with
-no path filter matches every push to that branch.
+`paths:`/`paths-ignore:` filter must match, or fail to exclude, one of the
+changed files. Read both lists against that file list; a workflow with no path
+filter matches every push to that branch.
 
-**`--first-parent` is load-bearing where the base takes merge commits.** A merge
-commit's default diff is against *all* its parents at once, so `git show
---name-only` prints nothing for one — not an error, an empty list, which reads
+**`--first-parent` is load-bearing where the base takes merge commits.** A
+merge commit's default diff is against *all* its parents at once, so `git show
+--name-only` prints nothing for one, not an error, an empty list, which reads
 as "no path filter matched". A squashing repo never sees it, which is how it
 survives being copied between repos.
 
 **A workflow listed in its own `paths:` filter fires on the merge that adds
 it.** That is the common surprise, and it is the moment a brand-new deploy or
-migrate workflow runs for the very first time — against production-adjacent
+migrate workflow runs for the very first time: against production-adjacent
 credentials, on a commit nobody has tested it on.
 
 Knowing the expected list first is what separates *"nothing ran"* from
@@ -92,7 +90,7 @@ opposite things.
 
 ### 3. Watch each to a terminal state, filtered by SHA
 
-Set the bound first — the workflow's own `timeout-minutes` plus one is the only
+Set the bound first: the workflow's own `timeout-minutes` plus one is the only
 limit the run cannot exceed:
 
 ```bash
@@ -116,7 +114,7 @@ for _ in $(seq 1 "$tries"); do
 done
 
 # Both non-answers are answers, and neither may fall through to step 4.
-[ -n "$r" ] || { echo "no push run for $mc — check step 2 expected one"; exit 0; }
+[ -n "$r" ] || { echo "no push run for $mc: check step 2 expected one"; exit 0; }
 case "$r" in *'"status":"completed"'*) ;; *) echo "still running at the bound"; exit 0;; esac
 ```
 
@@ -127,13 +125,13 @@ run_id=$(printf '%s' "$r" | jq -r .databaseId)   # only after the two checks abo
 Judge by `status` then `conclusion`, per the checks-watching discipline
 (`await-pr-checks`). Two answers are not failures and must not be read as any:
 
-- **no run for `$mc` after ~5 minutes**, when step 2 said none was expected —
+- **no run for `$mc` after ~5 minutes**, when step 2 said none was expected:
   correct, say so;
-- **a run with zero jobs** — the trigger or the account refused it, not the
-  code. The reason lives only in the run's annotations, not in any job log:
-  `gh run view "$run_id" | grep -A2 ANNOTATIONS`. Not the `check-runs`
-  API — that endpoint keys on a *check run* id, which a zero-job run does not
-  have, so the workflow run id gives a 404 that reads like a missing run.
+- **a run with zero jobs**: the trigger or the account refused it, not the
+  code. The reason lives only in the run's annotations, not in any job log: `gh
+  run view "$run_id" | grep -A2 ANNOTATIONS`. Not the `check-runs` API: that
+  endpoint keys on a *check run* id, which a zero-job run does not have, so the
+  workflow run id gives a 404 that reads like a missing run.
 
 ### 4. Read the jobs, not the run
 
@@ -160,9 +158,9 @@ determined rather than reporting the colour as the answer.
 
 ### 5. Name what the run proved, and what it did not
 
-**Where the claims go:** into the reply that reports the merge, one line each — this
-is the report, not a note to yourself. Where a pull request is still open on
-the same subject, the same lines go in its sticky comment so the record
+**Where the claims go:** into the reply that reports the merge, one line each.
+This is the report, not a note to yourself. Where a pull request is still open
+on the same subject, the same lines go in its sticky comment so the record
 outlives the session. Never a new file.
 
 State each claim with the evidence beside it:
@@ -184,20 +182,20 @@ secret this run never read.
 | Job runs, fails on the code | A real defect the PR's checks could not see | the log, as usual |
 
 Only the third is a code fix. The first is not yours, and the second belongs in
-a follow-up PR — never a push to the branch you just merged into.
+a follow-up PR, never a push to the branch you just merged into.
 
 ## Sharp edges
 
 - **`git merge-base --is-ancestor <branch-tip>` is not a merge test** where
   merges are squashed. Ask about `$mc`, which is on the base by construction.
 - **A merge kills the PR's in-flight runs.** A run recorded as failed with zero
-  jobs, updated at the merge time, is that — not a new failure to chase.
+  jobs, updated at the merge time, is that, not a new failure to chase.
 
 ## When to STOP
 
 - **The base is watched by nothing.** Say so in one line and stop; there is no
   run to wait for.
-- **A run fails for a reason outside the repository** — billing, a disabled
+- **A run fails for a reason outside the repository**: billing, a disabled
   workflow, a queue. Report the annotation verbatim and hand back; retrying
   cannot fix an account.
 - **The fix belongs on the branch you just merged into.** Open a pull request.
