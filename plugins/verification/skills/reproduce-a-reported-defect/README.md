@@ -74,9 +74,9 @@ gets quoted. "Checked, not an issue" is not a rejection anybody can audit.
 the sequence it drove did not reproduce the claim, which is not the same as the
 claim being false. Without a contradicting line the answer is inconclusive, with
 the run count and what would settle it. An order or a bound usually has such a
-line and the probe shows you where to read for it; a race often has none, and
-that is the one that gets closed anyway, then comes back as an incident with a
-link to the rejection.
+line and the probe shows you where to read for it; a race often has none. Closing
+one anyway is the mistake, and it comes back as an incident pointing at a
+rejection that should never have been written.
 
 ## What it cost to learn
 

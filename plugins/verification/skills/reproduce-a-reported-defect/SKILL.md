@@ -97,7 +97,8 @@ claimed failure happen, and let it answer.
    The two cases differ in how easily the line is found, not in whether it is
    needed. An order or a bound usually has one: the probe tells you where to read,
    and the source then says the sequence cannot happen. A race often has none, and
-   that is the case that gets closed anyway.
+   closing it anyway is the mistake this step exists to prevent, not a shortcut it
+   allows.
 
 6. **Say what the probe could not reach.** A probe often proves the mechanism
    while leaving the reachability open: one proved that state was read at the
