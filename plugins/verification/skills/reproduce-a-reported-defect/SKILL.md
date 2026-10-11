@@ -71,9 +71,10 @@ claimed failure happen, and let it answer.
    made rather than an omission nobody noticed.
 
 5. **Not reproduced is two different answers, and only one of them is a
-   rejection.** A probe that does not fail has shown that this run did not fail.
-   For an order or a bound that is enough; for a race it is one sample, and a
-   green probe disproves nothing.
+   rejection.** A green probe establishes exactly one thing: the sequence it drove
+   did not reproduce the claim. It is never the rejection by itself, for a race or
+   for anything else. What makes a rejection is a line of source that contradicts
+   the claim, and the probe's job is to send you looking for it.
 
    | What the probe did | What the source says | The answer |
    |---|---|---|
@@ -89,9 +90,14 @@ claimed failure happen, and let it answer.
    **Where there is no such line, say inconclusive and say what you ran**: the
    sequence the probe drove, how many times, and what would settle it. That is a
    worse outcome to write and the only honest one, because "my probe passed" and
-   "the claim is false" are the same sentence only for a defect that happens every
-   time. Repeating a probe raises confidence and never reaches proof, so say how
-   many runs rather than implying a verdict with them.
+   "the claim is false" are different sentences. Repeating a probe raises
+   confidence and never reaches proof, so say how many runs rather than implying a
+   verdict with them.
+
+   The two cases differ in how easily the line is found, not in whether it is
+   needed. An order or a bound usually has one: the probe tells you where to read,
+   and the source then says the sequence cannot happen. A race often has none, and
+   that is the case that gets closed anyway.
 
 6. **Say what the probe could not reach.** A probe often proves the mechanism
    while leaving the reachability open: one proved that state was read at the

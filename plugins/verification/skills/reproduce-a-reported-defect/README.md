@@ -70,12 +70,13 @@ Two other findings in that batch were rejected without a test, and a rejection
 carries the same burden as a reproduction: the line that contradicts the claim
 gets quoted. "Checked, not an issue" is not a rejection anybody can audit.
 
-**A probe that comes back green is not that line.** For an order or a bound it
-settles the question; for a race it is one sample, and the honest answer is
-inconclusive with the run count and what would settle it. The skill keeps those
-two apart because the pull is always towards closing the finding, and a race
-rejected on one passing run comes back as an incident with a link to the
-rejection.
+**A probe that comes back green is not that line.** All it establishes is that
+the sequence it drove did not reproduce the claim, which is not the same as the
+claim being false. Without a contradicting line the answer is inconclusive, with
+the run count and what would settle it. An order or a bound usually has such a
+line and the probe shows you where to read for it; a race often has none, and
+that is the one that gets closed anyway, then comes back as an incident with a
+link to the rejection.
 
 ## What it cost to learn
 
