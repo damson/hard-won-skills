@@ -113,7 +113,7 @@ the guard wrong on day one and teaches everyone to ignore it.
 # -z and -0 throughout: a path with a space splits into words otherwise, `wc`
 # fails on each fragment, and the empty count then PASSES the comparison, so the
 # one file the cap could not read reports as under it
-CAP=$(git ls-files -z '*.md' | xargs -0 wc -l | awk '$2!="total"{print $1}' \
+CAP=$(git ls-files -z '*.md' | xargs -0 wc -l | awk '$(2)!="total"{print $(1)}' \
         | sort -n | tail -1)                     # the longest survivor
 CAP=$(( (CAP + 9) / 10 * 10 ))                   # round up to a readable number
 echo "cap: $CAP"

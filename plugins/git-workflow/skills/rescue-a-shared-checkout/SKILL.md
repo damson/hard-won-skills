@@ -45,18 +45,18 @@ git rev-parse --verify --quiet "$REMOTE/$BASE^{commit}" >/dev/null ||
 # Git records a mode, not just bytes, and only two kinds of path can be compared
 # at all. A FIFO, a socket or a device is not work to rescue, and `cmp` on a FIFO
 # waits for a writer that never comes.
-mode_of()  { if [ -L "$1" ]; then echo 120000; elif [ -x "$1" ]; then echo 100755; else echo 100644; fi; }
-comparable() { [ -L "$1" ] || [ -f "$1" ]; }
+mode_of()  { if [ -L "${1}" ]; then echo 120000; elif [ -x "${1}" ]; then echo 100755; else echo 100644; fi; }
+comparable() { [ -L "${1}" ] || [ -f "${1}" ]; }
 
 # True when the branch holds this path with the same mode AND the same content.
 # A symlink's content is its target TEXT: `cmp` would follow the link and compare
 # whatever it points at, so a retargeted link could read as unchanged.
 same_as_branch() {
-  bm=$(git ls-tree "$REMOTE/$BASE" -- "$1" | cut -d" " -f1)
-  [ -n "$bm" ] && [ "$bm" = "$(mode_of "$1")" ] || return 1
-  if [ -L "$1" ]
-    then [ "$(git show "$REMOTE/$BASE:$1")" = "$(readlink -- "$1")" ]
-    else git show "$REMOTE/$BASE:$1" | cmp -s -- - "$1"
+  bm=$(git ls-tree "$REMOTE/$BASE" -- "${1}" | cut -d" " -f1)
+  [ -n "$bm" ] && [ "$bm" = "$(mode_of "${1}")" ] || return 1
+  if [ -L "${1}" ]
+    then [ "$(git show "$REMOTE/$BASE:${1}")" = "$(readlink -- "${1}")" ]
+    else git show "$REMOTE/$BASE:${1}" | cmp -s -- - "${1}"
   fi
 }
 
@@ -182,7 +182,7 @@ advisory, say in the pull request which of them you ran, and where a writer can
 be asked, ask instead. For a second opinion, ask who holds the files open:
 
 ```bash
-lsof +D <dir> 2>/dev/null | awk 'NR>1 {print $1, $NF}' | sort -u
+lsof +D <dir> 2>/dev/null | awk 'NR>1 {print $(1), $NF}' | sort -u
 ```
 
 Cluster the timestamps too: a group of files sharing one timestamp to the
