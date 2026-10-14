@@ -64,13 +64,13 @@ works from one that reads as though it does.
    awk -v want="$BLOCK" '
      /^[ \t]*(```|~~~)(bash|sh|shell)$/ {
        n++
-       if (n == want) { match($0, /[`~]/); pad = RSTART - 1
-                        fence = substr($0, RSTART, 1); inb = 1 }
+       if (n == want) { match($(0), /[`~]/); pad = RSTART - 1
+                        fence = substr($(0), RSTART, 1); inb = 1 }
        next
      }
-     inb && /^[ \t]*(```|~~~)[ \t]*$/ { match($0, /[`~]/)
-                                       if (substr($0, RSTART, 1) == fence) exit }
-     inb { line = $0
+     inb && /^[ \t]*(```|~~~)[ \t]*$/ { match($(0), /[`~]/)
+                                       if (substr($(0), RSTART, 1) == fence) exit }
+     inb { line = $(0)
            # strip the fence indent, but only where it IS indent: a body line
            # less indented than its fence would otherwise lose real characters
            if (substr(line, 1, pad) ~ /^[ \t]*$/) line = substr(line, pad + 1)

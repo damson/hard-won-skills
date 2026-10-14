@@ -69,7 +69,7 @@ frame changed since the action.
    frame to change first, then for it to stop changing.
 
    ```bash
-   grab() { adb shell screencap -p /sdcard/n.png >/dev/null; adb pull /sdcard/n.png "$1" >/dev/null; }
+   grab() { adb shell screencap -p /sdcard/n.png >/dev/null; adb pull /sdcard/n.png "${1}" >/dev/null; }
 
    grab before.png                        # BEFORE the tap
    adb shell input tap "$x" "$y"

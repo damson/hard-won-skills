@@ -108,7 +108,7 @@ merge style the repo forbids, or while a review sits unanswered.
    ran.
 
    ```bash
-   head=$(awk -v n=<n> '$1 == n { print $2 }' authorised.tsv)   # this PR's pin, not the last one read
+   head=$(awk -v n=<n> '$(1) == n { print $(2) }' authorised.tsv)   # this PR's pin, not the last one read
    gh pr merge <n> --squash --match-head-commit "$head"        # --merge or --rebase, per step 4
    ```
 
