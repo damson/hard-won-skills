@@ -57,29 +57,40 @@ git show --name-only --format= --first-parent "$mc"     # what the merge changed
 # The candidates: every workflow on the base branch with a push trigger.
 # `grep push:` is not the test: it matches a `paths:`-level key, and `^on:`
 # alone matches every workflow in the tree. Read the on: block and stop at the
-# next top-level key. Every line loses its comment and its quotes first, so
-# `# no push here` does not count and `"on":`, `["push"]` and `{push: {}}` do.
+# next top-level key. Every line loses its quotes and its comment first, a `#`
+# counting only outside quotes and after a space, so `# no push here` does not
+# count and `"on":`, `["push"]`, `{push: {}}` and `"issue #"` before a push do.
 # Inline, `push` must be a whole event name, not `pushed`. In the block, only
-# keys or `- push` items at the block's own indent count, so an input or a
-# branch named push further in does not.
+# keys or `- push` items at the block's own indent count (or at column 0, which
+# YAML allows for a sequence), so an input or a branch named push further in
+# does not.
 for w in $(git ls-tree --name-only "origin/$base" .github/workflows/); do
   git show "origin/$base:$w" | awk '
-      { line=$(0); sub(/\r$/, "", line); sub(/#.*/, "", line); gsub(/["\047]/, "", line) }
+      function bare(s,   i, c, q, out) {
+          for (i = 1; i <= length(s); i++) { c = substr(s, i, 1)
+              if (q != "") { if (c == q) q = ""; else out = out c; continue }
+              if (c == "\"" || c == "\047") { q = c; continue }
+              if (c == "#" && (i == 1 || substr(s, i - 1, 1) ~ /[[:space:]]/)) break
+              out = out c }
+          return out }
+      { line = bare($(0)); sub(/\r$/, "", line) }
       line ~ /^on:/ { inon=1; if (line ~ /(^on:|[[{,[:space:]])push([]}:,[:space:]]|$)/) found=1; next }
-      inon && line ~ /^[^[:space:]]/ { inon=0 }
+      inon && line ~ /^-[[:space:]]*push[[:space:]]*([],:]|$)/ { found=1 }
+      inon && line ~ /^[^-[:space:]]/ { inon=0 }
       inon && match(line, /^[[:space:]]+[^[:space:]]/) { if (!ind) ind=RLENGTH
-          if (RLENGTH == ind && line ~ /^[[:space:]]+(-[[:space:]]*)?push[[:space:]]*(:|,|$)/) found=1 }
+          if (RLENGTH == ind && line ~ /^[[:space:]]+(-[[:space:]]*)?push[[:space:]]*([],:]|$)/) found=1 }
       END { exit !found }' && echo "$w"
 done
 git show "origin/$base:.github/workflows/<file>" | sed -n '1,40p'   # one on: block
 ```
 
 The scan reads text, not YAML, so treat its list as candidates rather than the
-answer. It still misses a `#` inside a quoted value ahead of `push`
-(`on: ["#x", push]`), and on one inline line it counts a key or value named
-push at any depth (`on: {workflow_dispatch: {inputs: {push: {}}}}`). The first
-drops a run to watch, so open the `on:` block of any workflow that deploys
-before trusting a list that omits it.
+answer. Its known error runs the safe way: on one inline line it counts a key
+or value named push at any depth (`on: {workflow_dispatch: {inputs: {push:
+{}}}}`), which adds a run to watch that never starts. What it cannot see at
+all is YAML it does not model (anchors, aliases, an `on` key written another
+way), so when a workflow you expected to fire is missing from the list, read
+its `on:` block before concluding it did not.
 
 Two things decide it: the `branches:` filter must contain `$base`, and any
 `paths:`/`paths-ignore:` filter must match, or fail to exclude, one of the
