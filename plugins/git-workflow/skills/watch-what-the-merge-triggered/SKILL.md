@@ -60,7 +60,7 @@ git show --name-only --format= --first-parent "$mc"     # what the merge changed
 # next top-level key.
 for w in $(git ls-tree --name-only "origin/$base" .github/workflows/); do
   git show "origin/$base:$w" | awk '
-      /^on:/ { inon=1; if ($0 ~ /push/) found=1; next }   # inline `on: [push]`
+      /^on:/ { inon=1; if ($(0) ~ /push/) found=1; next }   # inline `on: [push]`
       inon && /^[^[:space:]]/ { inon=0 }
       inon && /^[[:space:]]+push:/ { found=1 }
       END { exit !found }' && echo "$w"

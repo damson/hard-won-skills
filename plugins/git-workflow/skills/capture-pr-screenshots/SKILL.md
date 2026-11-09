@@ -47,7 +47,7 @@ used by the files there.
 - Ensure env files exist. In a secondary worktree they are gitignored and
   absent: link the primary's:
   ```bash
-  MAIN=$(git worktree list --porcelain | awk '/^worktree /{print $2; exit}')
+  MAIN=$(git worktree list --porcelain | awk '/^worktree /{print $(2); exit}')
   ln -sfn "$MAIN/.env" .env.local        # adjust to the name the app reads
   ```
 - Install at the repo root first; workspace layouts put binaries in the root `node_modules`.
