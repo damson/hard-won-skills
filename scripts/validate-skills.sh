@@ -10,7 +10,8 @@
 # contributors get the exact check CI runs with zero extra clones, and CI needs
 # no network fetch beyond its own checkout. The four logging helpers it took
 # from the harness's lib/common.sh are inlined below; nothing else was changed
-# except the default root, which walks plugins/*/skills.
+# except the default root, which walks plugins/*/skills, and one check the
+# harness does not have yet: a bare `$N` in a skill body. A refresh keeps it.
 #
 # Refresh when the harness's copy moves:
 #
@@ -117,6 +118,14 @@ for p in "${skills[@]}"; do
 
     grep -qE '^## +When to STOP' "$f" \
         || problem "$leaf: no '## When to STOP' section"
+
+    # A skill body is filled in with its invocation's arguments before the agent
+    # reads it, fenced code included: `$1` becomes the second word passed. Invoked
+    # with no arguments it reads intact, so nothing else here would notice.
+    # `${1}` (shell) and `$(1)` (awk) mean the same and are left alone.
+    if lines=$(grep -nE '\$[0-9]' "$f" | cut -d: -f1 | paste -sd, -) && [ -n "$lines" ]; then
+        problem "$leaf: bare \$N on line(s) $lines is replaced by the invocation's arguments; write \${N} in shell or \$(N) in awk"
+    fi
 
     for s in ${seen_leaves[@]+"${seen_leaves[@]}"}; do
         [ "$s" = "$leaf" ] && problem "$leaf: duplicate leaf name — skills install flat and would shadow each other"
