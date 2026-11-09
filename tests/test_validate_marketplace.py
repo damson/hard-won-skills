@@ -38,10 +38,20 @@ def test_wrong_table_count_fails(validator, capsys):
     assert "1 problem(s)" in capsys.readouterr().err
 
 
-def test_missing_skill_in_section_fails(validator):
-    code, problems = run(validator, FIXTURES / "missing_section_skill")
+def test_skill_missing_from_its_plugin_page_fails(validator):
+    code, problems = run(validator, FIXTURES / "unlisted_skill")
     assert code == 1
-    assert any("does not mention skill 'skill-two'" in p for p in problems)
+    assert problems == ["plugins/alpha/README.md: does not link skill 'skill-two'"]
+
+
+def test_root_readme_needs_no_per_plugin_section(validator, tmp_path):
+    # The root README stops at the table: skill lists live on plugin pages,
+    # so a root README naming no skill at all is complete.
+    root = broken_copy(tmp_path)
+    readme = root / "README.md"
+    assert "skill-one" not in readme.read_text()
+    code, problems = run(validator, root)
+    assert code == 0, problems
 
 
 def test_bad_semver_fails(validator):
@@ -163,13 +173,14 @@ def test_unreadable_marketplace_json_is_one_problem_not_a_crash(validator, tmp_p
     assert any("marketplace.json is unreadable" in p for p in problems)
 
 
-def test_stale_skill_name_in_section_fails(validator, tmp_path):
+def test_stale_skill_link_on_plugin_page_fails(validator, tmp_path):
     root = broken_copy(tmp_path)
     shutil.rmtree(root / "plugins" / "alpha" / "skills" / "skill-two")
     code, problems = run(validator, root)
     assert code == 1
-    assert any(
-        "names 'skill-two', which is not in the tree" in p for p in problems
+    assert (
+        "plugins/alpha/README.md: links 'skill-two', which is not in the tree"
+        in problems
     )
 
 

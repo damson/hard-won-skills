@@ -92,7 +92,7 @@ def check_manifests():
 
 
 def check_readme():
-    """The README's counts and skill lists match the tree.
+    """The README's counts, and each plugin page's skill list, match the tree.
 
     This is the check that would have caught the 7 → 8 edit being made by hand.
     """
@@ -139,26 +139,20 @@ def check_readme():
                 f"the tree has {len(skills)}"
             )
 
-        # Each plugin's section ends with a backtick list of its skills. A skill
-        # absent from it is undocumented; a name present but gone from the tree
-        # sends readers looking for something that was renamed or removed.
-        # Stop at the next heading of ANY level. Anchoring on '### ' alone runs
-        # the last plugin's section into the README's trailing prose, where
-        # backticked words like `bats` read as skill names.
-        section = re.search(
-            rf"^### {re.escape(plugin.name)}$(.*?)(?=^#{{1,6}} |\Z)",
-            readme,
-            re.MULTILINE | re.DOTALL,
-        )
-        if not section:
-            problem(f"README.md: no '### {plugin.name}' section")
-            continue
-        named = set(re.findall(r"`([a-z0-9-]+)`", section.group(1)))
+        # The root README stops at the table; each plugin's own page lists its
+        # skills, one link per skill folder. A skill absent from it is
+        # undocumented; a link to one gone from the tree sends readers looking
+        # for something that was renamed or removed.
+        page = plugin / "README.md"
+        if not page.is_file():
+            continue  # reported by check_manifests
+        linked = set(re.findall(r"\]\(skills/([a-z0-9-]+)/", page.read_text()))
+        rel = page.relative_to(ROOT)
         for skill in skills:
-            if skill not in named:
-                problem(f"README.md: '### {plugin.name}' does not mention skill '{skill}'")
-        for stale in sorted(named - set(skills)):
-            problem(f"README.md: '### {plugin.name}' names '{stale}', which is not in the tree")
+            if skill not in linked:
+                problem(f"{rel}: does not link skill '{skill}'")
+        for stale in sorted(linked - set(skills)):
+            problem(f"{rel}: links '{stale}', which is not in the tree")
 
 
 MD_LINK = re.compile(r"!?\[[^\]]*\]\(([^)\s]+)(?:\s+\"[^\"]*\")?\)")
