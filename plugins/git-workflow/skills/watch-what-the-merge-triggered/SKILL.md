@@ -68,6 +68,7 @@ for w in $(git ls-tree --name-only "origin/$base" .github/workflows/); do
   git show "origin/$base:$w" | awk '
       function bare(s,   i, c, q, out) {
           for (i = 1; i <= length(s); i++) { c = substr(s, i, 1)
+              if (q == "\"" && c == "\\") { out = out substr(s, ++i, 1); continue }
               if (q != "") { if (c == q) q = ""; else out = out c; continue }
               if (c == "\"" || c == "\047") { q = c; continue }
               if (c == "#" && (i == 1 || substr(s, i - 1, 1) ~ /[[:space:]]/)) break
@@ -89,8 +90,9 @@ answer. Its known error runs the safe way: on one inline line it counts a key
 or value named push at any depth (`on: {workflow_dispatch: {inputs: {push:
 {}}}}`), which adds a run to watch that never starts. What it cannot see at
 all is YAML it does not model (anchors, aliases, an `on` key written another
-way), so when a workflow you expected to fire is missing from the list, read
-its `on:` block before concluding it did not.
+way), so a workflow absent from the list is unverified, not ruled out: read
+the `on:` block of every workflow the list leaves out before reporting that
+the merge started nothing else.
 
 Two things decide it: the `branches:` filter must contain `$base`, and any
 `paths:`/`paths-ignore:` filter must match, or fail to exclude, one of the
