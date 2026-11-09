@@ -73,10 +73,11 @@ Then the conventions the validators cannot see:
    only what you actually verified: one aspirational tick makes every other
    tick unreliable.
 2. **Bookkeeping travels with the change.** A skill added, removed or
-   materially changed updates, in the same PR: the root README's theme table
-   and skill list, the plugin folder's README table, and a **minor** bump of
-   that plugin's version in `.claude-plugin/plugin.json`. The release workflow
-   owns the patch field; never pre-apply it.
+   materially changed updates, in the same PR: the plugin folder's README
+   table, the root README's plugin table and welcome total when the count
+   moves, and a **minor** bump of that plugin's version in
+   `.claude-plugin/plugin.json`. The root README lists plugins, not skills. The
+   release workflow owns the patch field; never pre-apply it.
 3. **If your change touches a check or a guard, prove it can fail** before
    trusting it: break the thing on purpose, watch it go red, restore. This
    repo ships a skill for exactly that discipline, and applies it to itself.

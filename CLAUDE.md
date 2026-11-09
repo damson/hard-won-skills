@@ -9,14 +9,13 @@ directives below are agent-only.
 - Run all three checks CI runs: `./scripts/validate-skills.sh`,
   `python3 scripts/validate-marketplace.py` and
   `python3 scripts/validate-shell-blocks.py`.
-- A skill added, removed or materially changed updates the README theme table
-  and skill list, and minor-bumps its plugin's version, **in the same PR**. The
-  release workflow adds the patch bump; never pre-apply it.
+- A skill added, removed or materially changed updates its plugin page's skill
+  table (and the root README's counts when they move) and minor-bumps its
+  plugin's version, **in the same PR**. The root README lists plugins, never
+  skills. The release workflow adds the patch bump; never pre-apply it.
 - A `SKILL.md` edit checks the sibling `README.md` for claims it falsifies:
   the README narrates the procedure, and a changed step reads as documented
   behaviour until someone notices.
-- In a plugin's README section, any backticked lowercase word is read as a
-  skill name by `validate-marketplace.py`, so keep prose there backtick-free.
 
 ## Branches and merges
 

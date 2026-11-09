@@ -7,7 +7,7 @@ body:
     id: skill
     attributes:
       label: Skill
-      description: The skill's name, as it appears in the theme table.
+      description: The skill's name, as it appears on its plugin's page.
       placeholder: e.g. rewrite-pr-history
     validations:
       required: true

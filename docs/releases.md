@@ -214,8 +214,9 @@ validator rejects it in favour of `${1}` in shell or `$(1)` in awk.
 `scripts/validate-marketplace.py` has no upstream. It checks the wiring the
 harness knows nothing about: that `marketplace.json` lists every plugin
 directory and no phantom ones, that each `plugin.json` name matches its folder
-and carries a semver version, and that the README's per-plugin skill counts and
-skill lists still match the tree.
+and carries a semver version, that the README's plugin table and welcome line
+count the skills the tree holds, and that each plugin page links every skill it
+ships and no other.
 
 `scripts/validate-shell-blocks.py` has no upstream either. It parses every
 fenced shell block in every skill with `bash -n`, which never executes them.
