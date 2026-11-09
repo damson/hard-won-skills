@@ -62,9 +62,17 @@ beside its procedure with its triggers and a worked example.
 | **[mobile-ui](plugins/mobile-ui/README.md)** | 8 | Android / Compose screenshots, Figma components, on-device checks |
 | **[design-ethics](plugins/design-ethics/README.md)** | 1 | Whether a money or consent flow persuades or deceives |
 
-Not sure where to begin? **[verification](plugins/verification/README.md)** takes a minute to
-read and changes how you look at every green checkmark you'll ever see again.
-If you only ever install one plugin, that's the one we'd hand you.
+Not sure where to begin? These three pay for themselves first:
+
+- **[`prove-the-check-can-fail`](plugins/verification/skills/prove-the-check-can-fail/README.md)**
+  (verification): breaks the thing on purpose and watches the check go red, so
+  a green check means it was actually looking.
+- **[`await-pr-checks`](plugins/git-workflow/skills/await-pr-checks/README.md)**
+  (git-workflow): waits out a PR's CI at a pinned commit and names every check,
+  so one that never ran cannot read as passed.
+- **[`pre-publication-sweep`](plugins/data-safety/skills/pre-publication-sweep/README.md)**
+  (data-safety): sweeps the tree, every commit and the remote for secrets and
+  names before a repo goes public, where nothing can be taken back.
 
 ## 🧬 What a skill here looks like
 
