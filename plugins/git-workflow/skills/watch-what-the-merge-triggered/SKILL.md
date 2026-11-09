@@ -57,10 +57,12 @@ git show --name-only --format= --first-parent "$mc"     # what the merge changed
 # The candidates: every workflow on the base branch with a push trigger.
 # `grep push:` is not the test: it matches a `paths:`-level key, and `^on:`
 # alone matches every workflow in the tree. Read the on: block and stop at the
-# next top-level key.
+# next top-level key. Inline, `push` must be a whole event name outside the
+# comment: a bare substring also matches `# no push here` and `pushed`.
 for w in $(git ls-tree --name-only "origin/$base" .github/workflows/); do
   git show "origin/$base:$w" | awk '
-      /^on:/ { inon=1; if ($(0) ~ /push/) found=1; next }   # inline `on: [push]`
+      /^on:/ { inon=1; line=$(0); sub(/#.*/, "", line)              # inline `on: [push]`
+               if (line ~ /(^on:|[[, ])[[:space:]]*push([],[:space:]]|$)/) found=1; next }
       inon && /^[^[:space:]]/ { inon=0 }
       inon && /^[[:space:]]+push:/ { found=1 }
       END { exit !found }' && echo "$w"

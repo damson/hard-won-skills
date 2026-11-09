@@ -74,8 +74,8 @@ Any existing worktree of the same repo has the machine-local config (it's per-ma
 
 ```bash
 SOURCE=$(git worktree list --porcelain \
-  | awk '/^worktree / {print $(2)}' \
-  | grep -v "^$(pwd)$" \
+  | awk '/^worktree / {sub(/^worktree /, ""); print}' \
+  | grep -vxF "$(git rev-parse --show-toplevel)" \
   | head -1)
 echo "Donor: ${SOURCE:-<none. This is the only worktree>}"
 ```

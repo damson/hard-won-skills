@@ -48,7 +48,8 @@ the review reply exists, then merges the first in whichever method those rules
 leave standing, bound to the SHA recorded for *that* pull request:
 
 ```bash
-head=$(awk -v n=12 '$(1) == n { print $(2) }' authorised.tsv)
+head=$(awk -v n=12 '$(1) == n { h = $(2) } END { print h }' authorised.tsv)
+[ -n "$head" ] || { echo "no pin recorded for #12"; exit 1; }
 gh pr merge 12 --squash --match-head-commit "$head"
 ```
 
@@ -58,7 +59,9 @@ prefers one; on this repository's promotion base the same lookup returns
 The pinned SHA is what makes a commit pushed in the meantime refuse the merge
 rather than ride in on an authorisation given for something else, and reading
 it back per pull request is what stops the second merge inheriting the first
-one's head.
+one's head. The lookup keeps the latest row, because a pull request authorised
+again after a push has two, and it refuses an empty result, because a blank
+value makes the merge command drop the pin without a word.
 
 The child is dealt with before the parent moves, not after: a stacked pull
 request does not follow its parent through a merge, it is left pointing at a
