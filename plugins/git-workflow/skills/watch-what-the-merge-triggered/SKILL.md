@@ -57,19 +57,29 @@ git show --name-only --format= --first-parent "$mc"     # what the merge changed
 # The candidates: every workflow on the base branch with a push trigger.
 # `grep push:` is not the test: it matches a `paths:`-level key, and `^on:`
 # alone matches every workflow in the tree. Read the on: block and stop at the
-# next top-level key. Inline, `push` must be a whole event name outside the
-# comment: a bare substring also matches `# no push here` and `pushed`. Quotes
-# are dropped first, so `["push"]` and `{push: {}}` still count.
+# next top-level key. Every line loses its comment and its quotes first, so
+# `# no push here` does not count and `"on":`, `["push"]` and `{push: {}}` do.
+# Inline, `push` must be a whole event name, not `pushed`. In the block, only
+# keys or `- push` items at the block's own indent count, so an input or a
+# branch named push further in does not.
 for w in $(git ls-tree --name-only "origin/$base" .github/workflows/); do
   git show "origin/$base:$w" | awk '
-      /^on:/ { inon=1; line=$(0); sub(/#.*/, "", line); gsub(/["\047]/, "", line)
-               if (line ~ /(^on:|[[{,[:space:]])push([]}:,[:space:]]|$)/) found=1; next }
-      inon && /^[^[:space:]]/ { inon=0 }
-      inon && /^[[:space:]]+push:/ { found=1 }
+      { line=$(0); sub(/\r$/, "", line); sub(/#.*/, "", line); gsub(/["\047]/, "", line) }
+      line ~ /^on:/ { inon=1; if (line ~ /(^on:|[[{,[:space:]])push([]}:,[:space:]]|$)/) found=1; next }
+      inon && line ~ /^[^[:space:]]/ { inon=0 }
+      inon && match(line, /^[[:space:]]+[^[:space:]]/) { if (!ind) ind=RLENGTH
+          if (RLENGTH == ind && line ~ /^[[:space:]]+(-[[:space:]]*)?push[[:space:]]*(:|,|$)/) found=1 }
       END { exit !found }' && echo "$w"
 done
 git show "origin/$base:.github/workflows/<file>" | sed -n '1,40p'   # one on: block
 ```
+
+The scan reads text, not YAML, so treat its list as candidates rather than the
+answer. It still misses a `#` inside a quoted value ahead of `push`
+(`on: ["#x", push]`), and on one inline line it counts a key or value named
+push at any depth (`on: {workflow_dispatch: {inputs: {push: {}}}}`). The first
+drops a run to watch, so open the `on:` block of any workflow that deploys
+before trusting a list that omits it.
 
 Two things decide it: the `branches:` filter must contain `$base`, and any
 `paths:`/`paths-ignore:` filter must match, or fail to exclude, one of the
