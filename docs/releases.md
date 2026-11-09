@@ -206,7 +206,10 @@ commit named in its header. It began as a copy because the harness was private
 then; it stays one now that the harness is public because the copy is what
 keeps contribution self-contained: the exact check CI runs sits in the repo,
 runnable with zero extra clones and no network. `diff` the two files when the
-harness moves.
+harness moves. One check is local and survives a refresh: a skill body is
+filled in with its invocation's arguments before the agent reads it, so a bare
+`$1` in fenced code reaches the agent as whatever word was passed, and the
+validator rejects it in favour of `${1}` in shell or `$(1)` in awk.
 
 `scripts/validate-marketplace.py` has no upstream. It checks the wiring the
 harness knows nothing about: that `marketplace.json` lists every plugin

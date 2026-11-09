@@ -56,17 +56,41 @@ git show --name-only --format= --first-parent "$mc"     # what the merge changed
 
 # The candidates: every workflow on the base branch with a push trigger.
 # `grep push:` is not the test: it matches a `paths:`-level key, and `^on:`
-# alone matches every workflow in the tree. Read the on: block and stop at the
-# next top-level key.
+# alone matches every workflow in the tree. The on: block runs from `on:` to
+# the next top-level key, and any whole word `push` inside it counts. That
+# over-counts on purpose: placing push precisely means parsing YAML, and every
+# shortcut tried misses real triggers, the costly direction. Quotes and
+# comments go first, a quote opening only where a YAML scalar can start and a
+# `#` only outside quotes after a space, so `# no push here` does not count
+# and `"issue #"` ahead of a push does not hide it.
 for w in $(git ls-tree --name-only "origin/$base" .github/workflows/); do
   git show "origin/$base:$w" | awk '
-      /^on:/ { inon=1; if ($(0) ~ /push/) found=1; next }   # inline `on: [push]`
-      inon && /^[^[:space:]]/ { inon=0 }
-      inon && /^[[:space:]]+push:/ { found=1 }
+      function bare(s,   i, c, p, q, out) {
+          for (i = 1; i <= length(s); i++) { c = substr(s, i, 1); p = substr(s, i - 1, 1)
+              if (q == "\"" && c == "\\") { out = out substr(s, ++i, 1); continue }
+              if (q == "\047" && c == q && substr(s, i + 1, 1) == q) { out = out c; i++; continue }
+              if (q != "") { if (c == q) q = ""; else out = out c; continue }
+              if ((c == "\"" || c == "\047") && (i == 1 || p ~ /[[:space:][{,:-]/)) { q = c; continue }
+              if (c == "#" && (i == 1 || p ~ /[[:space:]]/)) break
+              out = out c }
+          return out }
+      { line = bare($(0)); sub(/\r$/, "", line) }
+      line ~ /^on[[:space:]]*:/ { inon=1 }
+      inon && line ~ /^[^-[:space:]]/ && line !~ /^on[[:space:]]*:/ { inon=0 }
+      inon && line ~ /(^|[^[:alnum:]_-])push([^[:alnum:]_-]|$)/ { found=1 }
       END { exit !found }' && echo "$w"
 done
 git show "origin/$base:.github/workflows/<file>" | sed -n '1,40p'   # one on: block
 ```
+
+The scan reads text, not YAML, so its list is candidates rather than the
+answer, and its error runs the cheap way: an input, a branch, a path or a
+description inside the `on:` block that says push puts its workflow on the
+list, and reading that workflow's `on:` block clears it. What it cannot see at
+all is YAML it does not model (aliases, escaped characters spelling push, an
+`on` key written another way), so a workflow absent from the list is
+unverified, not ruled out: read the `on:` block of every workflow the list
+leaves out before reporting that the merge started nothing else.
 
 Two things decide it: the `branches:` filter must contain `$base`, and any
 `paths:`/`paths-ignore:` filter must match, or fail to exclude, one of the
