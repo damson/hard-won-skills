@@ -145,8 +145,8 @@
 - [ ] Review findings addressed or explicitly skip-justified after every
       push (a new push invalidates the previous review; re-read it)
 - [ ] Marketplace bookkeeping in sync: a skill added, removed or materially
-      changed updates the README theme table and bumps its plugin's version in
-      the same PR
+      changed updates its plugin page's skill table (and the root README's
+      counts when they move) and bumps its plugin's version in the same PR
 
 <!--
     Maintainers additionally run an automated review and a skill-quality eval
