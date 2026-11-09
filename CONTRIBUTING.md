@@ -76,8 +76,9 @@ Then the conventions the validators cannot see:
    materially changed updates, in the same PR: the plugin folder's README
    table, the root README's plugin table and welcome total when the count
    moves, and a **minor** bump of that plugin's version in
-   `.claude-plugin/plugin.json`. The root README lists plugins, not skills. The
-   release workflow owns the patch field; never pre-apply it.
+   `.claude-plugin/plugin.json`. Complete skill lists live on plugin pages; the
+   root README names only a few picks. The release workflow owns the patch
+   field; never pre-apply it.
 3. **If your change touches a check or a guard, prove it can fail** before
    trusting it: break the thing on purpose, watch it go red, restore. This
    repo ships a skill for exactly that discipline, and applies it to itself.

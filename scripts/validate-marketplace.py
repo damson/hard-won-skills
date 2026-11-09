@@ -146,13 +146,24 @@ def check_readme():
         page = plugin / "README.md"
         if not page.is_file():
             continue  # reported by check_manifests
-        linked = set(re.findall(r"\]\(skills/([a-z0-9-]+)/", page.read_text()))
+        linked = set(re.findall(r"\]\(skills/([a-z0-9-]+)/", rendered(page.read_text())))
         rel = page.relative_to(ROOT)
         for skill in skills:
             if skill not in linked:
                 problem(f"{rel}: does not link skill '{skill}'")
         for stale in sorted(linked - set(skills)):
             problem(f"{rel}: links '{stale}', which is not in the tree")
+
+
+def rendered(text):
+    """Markdown with the parts a reader never sees as links removed.
+
+    Fenced code, inline code and HTML comments show example links, not live
+    ones.
+    """
+    text = re.sub(r"```.*?```", "", text, flags=re.DOTALL)
+    text = re.sub(r"`[^`\n]*`", "", text)
+    return re.sub(r"<!--.*?-->", "", text, flags=re.DOTALL)
 
 
 MD_LINK = re.compile(r"!?\[[^\]]*\]\(([^)\s]+)(?:\s+\"[^\"]*\")?\)")
@@ -172,11 +183,7 @@ def check_links():
         if any(part.startswith(".") and part != ".github" for part in rel.parts):
             continue
         text = md.read_text()
-        # Fenced code, inline code and HTML comments show example links, not
-        # live ones.
-        text = re.sub(r"```.*?```", "", text, flags=re.DOTALL)
-        text = re.sub(r"`[^`\n]*`", "", text)
-        text = re.sub(r"<!--.*?-->", "", text, flags=re.DOTALL)
+        text = rendered(text)
         for target in MD_LINK.findall(text):
             if target.startswith(("http://", "https://", "mailto:", "#")):
                 continue

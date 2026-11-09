@@ -11,8 +11,9 @@ directives below are agent-only.
   `python3 scripts/validate-shell-blocks.py`.
 - A skill added, removed or materially changed updates its plugin page's skill
   table (and the root README's counts when they move) and minor-bumps its
-  plugin's version, **in the same PR**. The root README lists plugins, never
-  skills. The release workflow adds the patch bump; never pre-apply it.
+  plugin's version, **in the same PR**. Complete skill lists live on plugin
+  pages; the root README names only a few picks. The release workflow adds the
+  patch bump; never pre-apply it.
 - A `SKILL.md` edit checks the sibling `README.md` for claims it falsifies:
   the README narrates the procedure, and a changed step reads as documented
   behaviour until someone notices.

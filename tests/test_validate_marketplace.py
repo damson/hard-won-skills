@@ -44,6 +44,23 @@ def test_skill_missing_from_its_plugin_page_fails(validator):
     assert problems == ["plugins/alpha/README.md: does not link skill 'skill-two'"]
 
 
+def test_skill_linked_only_where_readers_cannot_see_it_fails(validator, tmp_path):
+    root = broken_copy(tmp_path)
+    page = root / "plugins" / "alpha" / "README.md"
+    text = page.read_text()
+    row = "| [`skill-two`](skills/skill-two/SKILL.md) | Placeholder |\n"
+    assert row in text
+    page.write_text(
+        text.replace(row, "")
+        + "\n<!-- [`skill-two`](skills/skill-two/SKILL.md) -->\n"
+        + "\n```\n[skill-two](skills/skill-two/SKILL.md)\n```\n"
+        + "\nInline: `[skill-two](skills/skill-two/SKILL.md)`\n"
+    )
+    code, problems = run(validator, root)
+    assert code == 1
+    assert problems == ["plugins/alpha/README.md: does not link skill 'skill-two'"]
+
+
 def test_root_readme_needs_no_per_plugin_section(validator, tmp_path):
     # The root README stops at the table: skill lists live on plugin pages,
     # so a root README naming no skill at all is complete.
