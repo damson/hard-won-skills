@@ -48,7 +48,7 @@ the review reply exists, then merges the first in whichever method those rules
 leave standing, bound to the SHA recorded for *that* pull request:
 
 ```bash
-head=$(awk -v n=12 '$1 == n { print $2 }' authorised.tsv)
+head=$(awk -v n=12 '$(1) == n { print $(2) }' authorised.tsv)
 gh pr merge 12 --squash --match-head-commit "$head"
 ```
 

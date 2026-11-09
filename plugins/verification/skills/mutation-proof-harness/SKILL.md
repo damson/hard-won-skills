@@ -45,9 +45,9 @@ pass=0; bad=0
 # Use the repo's own pinned test command. A bare `npx <runner>` resolves from
 # the registry when no local binary exists, which downloads and executes a
 # package this script never chose.
-run_filter () { (cd "$W/scripts" && npm test --silent -- -t "$1" 2>&1); }
-#   pytest:  (cd "$W" && python -m pytest -q -k "$1" 2>&1)
-#   go:      (cd "$W" && go test ./... -run "$1" 2>&1)
+run_filter () { (cd "$W/scripts" && npm test --silent -- -t "${1}" 2>&1); }
+#   pytest:  (cd "$W" && python -m pytest -q -k "${1}" 2>&1)
+#   go:      (cd "$W" && go test ./... -run "${1}" 2>&1)
 
 # One row per guard: the file to mutate, the substitution, the test name that
 # must go red, and a label for the log.
@@ -81,25 +81,25 @@ is the one string this depends on.
 mutate () {                      # <file> <perl-expr> <filter> <label>
   # An interrupt between the edit and the restore leaves the guard mutated in
   # the working tree, and the tally never prints, so nothing points at it.
-  trap 'git checkout -- "$1"; trap - INT TERM; return 130' INT TERM
+  trap 'git checkout -- "${1}"; trap - INT TERM; return 130' INT TERM
   # `-pi` is line-at-a-time. Use `-0pi` when the anchor spans lines, and then
   # read the warning about first-match below, which only bites in that mode.
-  perl -pi -e "$2" "$1"
-  if git diff --quiet -- "$1"; then echo "STALE $4"; bad=$((bad+1)); return; fi
-  git diff --unified=0 -- "$1" | tail -4        # ← read this, every time
-  local out code; out=$(run_filter "$3"); code=$?
-  git checkout -- "$1" || { echo "RESTORE-FAILED $4"; bad=$((bad+1)); return 1; }
+  perl -pi -e "${2}" "${1}"
+  if git diff --quiet -- "${1}"; then echo "STALE ${4}"; bad=$((bad+1)); return; fi
+  git diff --unified=0 -- "${1}" | tail -4        # ← read this, every time
+  local out code; out=$(run_filter "${3}"); code=$?
+  git checkout -- "${1}" || { echo "RESTORE-FAILED ${4}"; bad=$((bad+1)); return 1; }
   # Red is not proof on its own. A compile error, a missing import or a
   # collapsed fixture also exits non-zero, and counting one as proof is how an
   # inert guard gets reported as proved. Require the failure to name the test
   # the filter selected.
-  if [ $code -ne 0 ] && printf '%s' "$out" | grep -qF "$3"; then
-    echo "OK    $4"; pass=$((pass+1))
+  if [ $code -ne 0 ] && printf '%s' "$out" | grep -qF "${3}"; then
+    echo "OK    ${4}"; pass=$((pass+1))
   elif [ $code -ne 0 ]; then
-    echo "WRONG-RED $4 (failed, but not in $3)"; printf '%s\n' "$out" | tail -6
+    echo "WRONG-RED ${4} (failed, but not in ${3})"; printf '%s\n' "$out" | tail -6
     bad=$((bad+1))
   else
-    echo "GREEN $4"; printf '%s\n' "$out" | tail -4; bad=$((bad+1))
+    echo "GREEN ${4}"; printf '%s\n' "$out" | tail -4; bad=$((bad+1))
   fi
 }
 ```

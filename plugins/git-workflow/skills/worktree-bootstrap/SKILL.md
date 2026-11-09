@@ -74,7 +74,7 @@ Any existing worktree of the same repo has the machine-local config (it's per-ma
 
 ```bash
 SOURCE=$(git worktree list --porcelain \
-  | awk '/^worktree / {print $2}' \
+  | awk '/^worktree / {print $(2)}' \
   | grep -v "^$(pwd)$" \
   | head -1)
 echo "Donor: ${SOURCE:-<none. This is the only worktree>}"
