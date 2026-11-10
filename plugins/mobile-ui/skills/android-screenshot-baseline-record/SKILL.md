@@ -64,10 +64,11 @@ Note the count. Without a before-number, "it recorded" is unfalsifiable.
 ### 3. Record, scoped to the test you mean
 
 ```bash
-# set record_task to the record task from step 1, test_class to the test's
-# fully qualified class name; GRADLE_MODULE is from step 2
+# set record_task to the record task from step 1, filter to the --tests
+# pattern, widened per the table below (e.g. '*FooScreenshot*');
+# GRADLE_MODULE is from step 2
 ./gradlew "${GRADLE_MODULE:?}":clean "${GRADLE_MODULE:?}":"${record_task:?}" \
-  --tests "${test_class:?}*"
+  --tests "${filter:?}"
 ```
 
 `:clean` first. Screenshot plugins copy from an intermediates directory into the baseline directory, and a stale render left there by an earlier run is copied over the fresh one. `--rerun-tasks` and `--no-build-cache` do **not** clear intermediates; only cleaning does.

@@ -165,14 +165,15 @@ merge style the repo forbids, or while a review sits unanswered.
    merging and read the head back from the ref the host keeps:
 
    ```bash
+   # set pr to the pull request number
    # set base to the base branch
    # set branch to the branch name
    # before the merge
    git diff --name-only origin/"${base:?}"...origin/"${branch:?}" > paths.txt
 
    # after it, against the authorised head rather than a branch that may not exist
-   git fetch origin "refs/pull/<n>/head:refs/pr/<n>"
-   git diff --stat origin/"${base:?}" "refs/pr/<n>" -- $(cat paths.txt)
+   git fetch origin "refs/pull/${pr:?}/head:refs/pr/${pr:?}"
+   git diff --stat origin/"${base:?}" "refs/pr/${pr:?}" -- $(cat paths.txt)
    ```
 
    Empty output means those paths are identical on the base. Read it the same

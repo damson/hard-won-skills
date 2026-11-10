@@ -131,10 +131,11 @@ helping.
    is deleted. Get it by counting your own commits back from the tip:
 
    ```bash
+   # set branch to the branch name
    # set child to the stacked child pull request number
    n=$(gh pr view "${child:?}" --json commits -q '.commits | length')
-   parent_tip=$(git -C "$wt" rev-parse "<branch>~$n")
-   git -C "$wt" log --oneline "$parent_tip..<branch>"   # exactly the child's own commits?
+   parent_tip=$(git -C "$wt" rev-parse "${branch:?}~$n")
+   git -C "$wt" log --oneline "$parent_tip..${branch:?}"   # exactly the child's own commits?
    ```
 
    The count equals commits-since-fork only while the child's history is
@@ -190,17 +191,18 @@ helping.
    Then prune the branch itself. A merged PR leaves both copies behind. Delete a
    listed branch only when it has no open PR and no surviving worktree:
    ```bash
+   # set base to the base branch
    # set branch to the branch name
    def=$(git symbolic-ref --quiet --short refs/remotes/origin/HEAD | cut -d/ -f2-)
    # Enumerate from PR STATE, not `git branch --merged`: first sharp edge.
    list=$(mktemp)
    for b in $(git for-each-ref --format='%(refname:short)' refs/heads |
-              grep -vxE "<base-branch>|$def"); do
+              grep -vxE "${base:?}|$def"); do
      st=$(gh pr list --state all --head "$b" \
             --json state -q '.[0].state' 2>/dev/null)
      [ "$st" = "MERGED" ] && echo "$b" >> "$list"   # MERGED only, never CLOSED
    done
-   grep -qxE "<base-branch>|$def" "$list" && { echo "ABORT"; exit 1; }
+   grep -qxE "${base:?}|$def" "$list" && { echo "ABORT"; exit 1; }
    xargs -a "$list" -n1 git branch -D     # -d refuses a squash-merged branch
    git push origin --delete "${branch:?}"      # skip if the merge already deleted it
    ```
@@ -235,8 +237,9 @@ helping.
    Close each by hand, citing the merge commit so the trail survives:
 
    ```bash
-   # set pr to the pull request number
-   gh issue close "${pr:?}" --comment "Fixed in #<pr>, merged to <branch> as <sha>."
+   # set issue to the issue number, pr to the pull request that fixed it,
+   # branch to the base it merged into, sha to the merge commit
+   gh issue close "${issue:?}" --comment "Fixed in #${pr:?}, merged to ${branch:?} as ${sha:?}."
    ```
 
    Skip this where the PR's base *is* the default branch: there the keywords

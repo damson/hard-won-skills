@@ -165,10 +165,11 @@ current repo if no explicit list:
    rather than editing in place.
 
    ```bash
+   # set repo to owner/name of the repository
    # set pr to the pull request number
    case "$(jq length <<<"$mine")" in
      0) gh pr comment "${pr:?}" --body-file reply.md ;;
-     1) gh api -X PATCH "repos/<owner/repo>/issues/comments/$(jq -r '.[0].id' <<<"$mine")" -F body=@reply.md ;;
+     1) gh api -X PATCH "repos/${repo:?}/issues/comments/$(jq -r '.[0].id' <<<"$mine")" -F body=@reply.md ;;
      *) echo "more than one sticky match: refusing to patch" >&2; exit 1;;
    esac
    ```

@@ -141,7 +141,7 @@ def bare_placeholders(code: str) -> list[str]:
                 continue
         elif c == "\n" and pending:
             for terminator in pending:
-                j = i + 1
+                j, end = i + 1, n
                 while j < n:
                     end = code.find("\n", j)
                     end = n if end < 0 else end

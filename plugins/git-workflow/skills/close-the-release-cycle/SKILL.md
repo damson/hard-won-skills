@@ -76,8 +76,9 @@ refuses to call it done on a signal that has not been checked.
    workflow gated on a push to the release branch never runs. Nothing goes red.
 
    ```bash
+   # set version_tag to the release tag, e.g. v1.4.2
    # set url to the repository URL
-   git ls-remote --tags "${url:?}" "refs/tags/<vX.Y.Z>"   # the tag itself
+   git ls-remote --tags "${url:?}" "refs/tags/${version_tag:?}"   # the tag itself
    gh release list --limit 3                        # the Release object, where the repo publishes one
    ```
 

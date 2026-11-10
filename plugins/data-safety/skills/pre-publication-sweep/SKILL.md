@@ -61,11 +61,13 @@ deletion. The deliverable is the list of commands run and their empty result
 
    ```bash
    # set remote to the remote name, e.g. origin
-   git fetch "${remote:?}" '+refs/heads/*:refs/remotes/sweep/*' --prune
-   git rev-list --remotes=sweep | while read -r c; do
-     git grep -iIlE '<terms>' "$c"
-   done | sort -u
-   git log --remotes=sweep --format='%ae %ce %s' | grep -iE '<terms>'
+   # sweep only what this fetch brought: stale or absent sweep refs read as clean
+   git fetch "${remote:?}" '+refs/heads/*:refs/remotes/sweep/*' --prune && {
+     git rev-list --remotes=sweep | while read -r c; do
+       git grep -iIlE '<terms>' "$c"
+     done | sort -u
+     git log --remotes=sweep --format='%ae %ce %s' | grep -iE '<terms>'
+   } || echo "fetch failed: the remote was NOT swept"
    ```
 
    A separate namespace rather than the usual remote-tracking refs, so this

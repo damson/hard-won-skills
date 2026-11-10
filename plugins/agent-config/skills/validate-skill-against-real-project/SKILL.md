@@ -125,9 +125,10 @@ this work goes wrong.
 One issue per skill, in the repo that owns it:
 
 ```bash
+# set name to the skill's name, breaks to what breaks in a few words
 # set repo to owner/name of the repository
 # set report to the file holding the issue body
-gh issue create --repo "${repo:?}" --title "skill: <name> (<what breaks>)" \
+gh issue create --repo "${repo:?}" --title "skill: ${name:?} (${breaks:?})" \
   --body-file "${report:?}"
 ```
 

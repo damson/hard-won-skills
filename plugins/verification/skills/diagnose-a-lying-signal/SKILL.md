@@ -43,6 +43,7 @@ class of problem is spent fixing something that was never broken.
    ```bash
    # set repo to owner/name of the repository
    # set id to the run id
+   # set badge_url to the badge image's URL
    # A run that failed with no jobs is a startup failure, not your code
    gh api repos/"${repo:?}"/actions/runs/"${id:?}"/jobs --jq .total_count
 
@@ -54,7 +55,7 @@ class of problem is spent fixing something that was never broken.
    # An image is not data: parse the text node, never grep the markup
    # -x, not ^: unanchored at the end this returns "100%</text", and twice over,
    # because a badge draws its text once as a shadow and once as the fill
-   curl -s "<badge-url>" | tr '<>' '\n\n' | grep -xE 'unknown|[0-9]+%' | head -1
+   curl -s "${badge_url:?}" | tr '<>' '\n\n' | grep -xE 'unknown|[0-9]+%' | head -1
    ```
 
    The commands are one host's; the move is not. Anywhere else, find the endpoint

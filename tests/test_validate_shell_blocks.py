@@ -73,6 +73,10 @@ BARE = {
 }
 
 
+def test_a_heredoc_opened_on_the_last_line_does_not_crash():
+    assert vsb.bare_placeholders("cat <<EOF\n") == []
+
+
 @pytest.mark.parametrize("label", sorted(BARE))
 def test_bare_placeholders_are_found(label):
     code, expected = BARE[label]

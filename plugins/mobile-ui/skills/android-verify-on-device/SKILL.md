@@ -38,7 +38,7 @@ frame changed since the action.
    adb shell am force-stop "${pkg:?}"
    adb logcat -c                       # BEFORE the launch, or see below
    adb shell monkey -p "${pkg:?}" 1 >/dev/null 2>&1
-   until adb logcat -d | grep -q "Displayed ${pkg:?}/.*MainActivity"; do sleep 1; done
+   : "${pkg:?}"; until adb logcat -d | grep -q "Displayed $pkg/.*MainActivity"; do sleep 1; done
    ```
 
    **Clear the buffer first, or the wait is not a wait.** `logcat -d` dumps the

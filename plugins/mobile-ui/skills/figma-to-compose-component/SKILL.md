@@ -36,10 +36,12 @@ Find the module the theme lives in, that is the design system, whatever it is
 called:
 
 ```bash
+# set component to the component's name, e.g. PrimaryButton
+# set similar to a likely existing name for the same thing, e.g. Button
 # set module_dir to the module's directory
 grep -rln "MaterialTheme\|ProvideTextStyle\|lightColorScheme" --include="*.kt" . \
   | sed 's|/src/.*||' | sort -u
-grep -rn "<ComponentName>\|<SimilarConcept>" --include="*.kt" "${module_dir:?}"/
+grep -rn "${component:?}\|${similar:?}" --include="*.kt" "${module_dir:?}"/
 ```
 
 Take that output as the answer rather than pre-judging it:
