@@ -63,7 +63,8 @@ used by the files there.
 ### 3. Start the dev server
 
 ```bash
-export <BYPASS_VAR>=true          # export, not inline: an inline var may not reach the child
+# set bypass_var to the auth-bypass variable name
+export "${bypass_var:?}"=true          # export, not inline: an inline var may not reach the child
 nohup npm run dev > /tmp/dev.log 2>&1 &
 DEV_PID=$!                        # keep it: step 6 kills this, not whatever holds the port
 disown

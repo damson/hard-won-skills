@@ -172,8 +172,9 @@ which is the destructive answer, on the exact case this check was added to catch
 characters a regex would read as syntax.
 
 ```bash
-stat -f '%Sm %N' <paths>   # BSD/macOS
-stat -c '%y %n' <paths>    # GNU
+# the AHEAD paths step 1 listed, NUL-delimited
+cat "$TRACKED" "$UNTRACKED" | xargs -0 stat -f '%Sm %N'   # BSD/macOS
+cat "$TRACKED" "$UNTRACKED" | xargs -0 stat -c '%y %n'    # GNU
 date
 ```
 
@@ -186,7 +187,8 @@ advisory, say in the pull request which of them you ran, and where a writer can
 be asked, ask instead. For a second opinion, ask who holds the files open:
 
 ```bash
-lsof +D <dir> 2>/dev/null | awk 'NR>1 {print $(1), $NF}' | sort -u
+# set watch_dir to the directory the writer works in
+lsof +D "${watch_dir:?}" 2>/dev/null | awk 'NR>1 {print $(1), $NF}' | sort -u
 ```
 
 Cluster the timestamps too: a group of files sharing one timestamp to the
@@ -211,7 +213,8 @@ a deletion, a rename, a mode bit. `git apply` reproduces all of them, and
 `--binary` keeps a changed image or fixture intact:
 
 ```bash
-git worktree add "$DEST" -b <branch> "$REMOTE/$BASE"
+# set branch to the branch name
+git worktree add "$DEST" -b "${branch:?}" "$REMOTE/$BASE"
 xargs -0 git diff --binary "$REMOTE/$BASE" -- < "$TRACKED" |
   git -C "$DEST" apply --binary --index
 ```
@@ -243,7 +246,9 @@ done < "$UNTRACKED"
 ### 4. Prove the copy is faithful
 
 ```bash
-diff -q <source> <copy> || echo "MISMATCH"
+# set source to the original file
+# set copy to the copied file
+diff -q "${source:?}" "${copy:?}" || echo "MISMATCH"
 ```
 
 Cheap, and it catches an editor that reflowed on save or a copy that silently
@@ -355,10 +360,11 @@ request describing work that never left the machine, and give `commit` its
 message rather than letting it open an editor nothing is watching:
 
 ```bash
+# set branch to the branch name
 git -C "$DEST" add -A &&
   git -C "$DEST" commit -m "Rescue uncommitted work from the shared checkout" &&
   git -C "$DEST" push -u "$REMOTE" HEAD &&
-  gh pr create --base "$BASE" --head <branch>
+  gh pr create --base "$BASE" --head "${branch:?}"
 ```
 
 ### 8. Attribute honestly, and mark what you cannot verify

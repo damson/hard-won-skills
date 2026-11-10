@@ -49,9 +49,10 @@ current repo if no explicit list:
 
 1. **Snapshot state**:
    ```bash
+   # set pr to the pull request number
    # reviews as well as comments: `--json` returns only what it is asked for,
    # and step 3 reads `.reviews[].body`, where a review's own findings live
-   gh pr view <n> --json mergeable,mergeStateStatus,statusCheckRollup,comments,reviews,baseRefName
+   gh pr view "${pr:?}" --json mergeable,mergeStateStatus,statusCheckRollup,comments,reviews,baseRefName
    ```
 
 2. **Identify NEW comments** since your last reply on that PR. Your last reply
@@ -144,8 +145,9 @@ current repo if no explicit list:
    change: the reply in step 6 still goes out, with its `Pushed as` line
    replaced by "No code change this round"):
    ```bash
+   # set pr to the pull request number
    git push
-   gh pr view <n> --json mergeable,mergeStateStatus
+   gh pr view "${pr:?}" --json mergeable,mergeStateStatus
    # confirm CLEAN before reporting back
    ```
 
@@ -163,9 +165,10 @@ current repo if no explicit list:
    rather than editing in place.
 
    ```bash
+   # set pr to the pull request number
    case "$(jq length <<<"$mine")" in
-     0) gh pr comment <n> --body-file reply.md ;;
-     1) gh api -X PATCH "repos/<owner>/<repo>/issues/comments/$(jq -r '.[0].id' <<<"$mine")" -F body=@reply.md ;;
+     0) gh pr comment "${pr:?}" --body-file reply.md ;;
+     1) gh api -X PATCH "repos/<owner/repo>/issues/comments/$(jq -r '.[0].id' <<<"$mine")" -F body=@reply.md ;;
      *) echo "more than one sticky match: refusing to patch" >&2; exit 1;;
    esac
    ```

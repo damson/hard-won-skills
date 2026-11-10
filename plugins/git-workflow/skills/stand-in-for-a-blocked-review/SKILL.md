@@ -48,19 +48,20 @@ stays in the report; the stand-in is what stops the work stalling meanwhile.
    actually wrote:
 
    ```bash
-   pr=<n>; repo=<owner>/<repo>; reviewer=<reviewer-login>
-   head=$(gh pr view "$pr" --json headRefOid --jq .headRefOid)
+   # set pr to the pull request number, repo to owner/name, reviewer to the
+   # reviewer's login
+   head=$(gh pr view "${pr:?}" --json headRefOid --jq .headRefOid)
 
    # The gate can be a commit status OR a check run, and one API does not
    # show the other. A reviewer absent from check-runs may still be reporting
    # green as a status, which is what gates the merge.
-   gh api "repos/$repo/commits/$head/status"     --jq '.statuses[]   | [.context, .state] | @tsv'
-   gh api "repos/$repo/commits/$head/check-runs" --jq '.check_runs[] | [.name, .conclusion] | @tsv'
+   gh api "repos/${repo:?}/commits/$head/status"     --jq '.statuses[]   | [.context, .state] | @tsv'
+   gh api "repos/${repo:?}/commits/$head/check-runs" --jq '.check_runs[] | [.name, .conclusion] | @tsv'
 
    # What it said. Reviewers keep ONE comment and edit it in place, so this is
    # its current body, not a history to scroll.
-   gh api "repos/$repo/issues/$pr/comments" --paginate \
-     --jq "[.[] | select(.user.login == \"$reviewer\")] | last | .body" > review-body.md
+   gh api "repos/${repo:?}/issues/${pr:?}/comments" --paginate \
+     --jq "[.[] | select(.user.login == \"${reviewer:?}\")] | last | .body" > review-body.md
    grep -icE 'review limit reached|rate limit|quota|try again' review-body.md
    ```
 
@@ -92,7 +93,7 @@ stays in the report; the stand-in is what stops the work stalling meanwhile.
      so nowhere.
 
      ```bash
-     gh pr view "$pr" --json author --jq '.author | [.login, .is_bot] | @tsv'
+     gh pr view "${pr:?}" --json author --jq '.author | [.login, .is_bot] | @tsv'
      ```
 
      That is a configuration fix (open automated pull requests with a token
@@ -134,7 +135,7 @@ stays in the report; the stand-in is what stops the work stalling meanwhile.
    withhold.**
 
    ```bash
-   gh pr diff "$pr" > review-input.diff
+   gh pr diff "${pr:?}" > review-input.diff
    wc -l review-input.diff        # an empty or truncated input reviews clean
    ```
 

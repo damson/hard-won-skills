@@ -28,24 +28,28 @@ earned it: a test count or a tree identity, cited in the commit.
    checkout: the same one the next commands run from:
 
    ```bash
-   git fetch <url> <branch>
-   git log --oneline <old>..<new>
+   # set url to the upstream repository URL
+   # set branch to the branch name
+   # set old_sha to the currently pinned SHA
+   # set new_sha to the SHA being pinned
+   git fetch "${url:?}" "${branch:?}"
+   git log --oneline "${old_sha:?}".."${new_sha:?}"
    ```
 
    If that range errors *after a successful fetch* because the old SHA no
    longer exists, the upstream history was rewritten: go to step 3, because
    "what changed" has a different answer than the log. (Before a fetch, the
    same error means only that the objects are not local yet.) A surviving local
-   copy of `<old>` can also let the range *succeed* against a rewritten
+   copy of the old SHA can also let the range *succeed* against a rewritten
    upstream, so confirm ancestry rather than trusting the absence of an error:
-   `git merge-base --is-ancestor <old> <new>`: a non-zero exit is the rewrite
+   `git merge-base --is-ancestor "$old_sha" "$new_sha"`: a non-zero exit is the rewrite
    case, step 3.
 
 3. **After an upstream rewrite, prove what survived**: `git rev-parse
-   <old>^{tree} <new>^{tree}`. Identical trees mean the rewrite changed commit
+   "$old_sha^{tree}" "$new_sha^{tree}"`. Identical trees mean the rewrite changed commit
    identity only: cite the tree hash as the review evidence. Different trees
    mean the rewrite smuggled in content; diff it before trusting it. When no
-   copy of `<old>` survives anywhere, the tree proof is unavailable. State that
+   copy of the old SHA survives anywhere, the tree proof is unavailable. State that
    in the commit ("range not diffable: the old commit no longer exists
    upstream") and let step 5's suite run carry the whole review burden.
 
