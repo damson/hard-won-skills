@@ -36,15 +36,16 @@ Find the module the theme lives in, that is the design system, whatever it is
 called:
 
 ```bash
+# set module_dir to the module's directory
 grep -rln "MaterialTheme\|ProvideTextStyle\|lightColorScheme" --include="*.kt" . \
   | sed 's|/src/.*||' | sort -u
-grep -rn "<ComponentName>\|<SimilarConcept>" --include="*.kt" <that-module>/
+grep -rn "<ComponentName>\|<SimilarConcept>" --include="*.kt" "${module_dir:?}"/
 ```
 
 Take that output as the answer rather than pre-judging it:
 
 - **Several lines** → the design system is the shared UI module among them, not a feature module.
-- **One line** → the project is single-module. The theme lives in the app, so the app *is* the design system; read `<that-module>/` as the app module for the rest of this skill.
+- **One line** → the project is single-module. The theme lives in the app, so the app *is* the design system; set `module_dir` to the app module's directory for the rest of this skill.
 
 There is no "this project has no design system" outcome, only a smaller one.
 
@@ -63,10 +64,11 @@ Walk the node's properties and resolve each to a theme accessor: spacing,
 colour, typography, shape, elevation:
 
 ```bash
+# set module_dir to the module's directory
 grep -rn "val spacing\|val colors\|val typography\|val shapes" \
-  --include="*.kt" <that-module>/ | head -40          # a custom token scale?
-grep -rnE "(object|fun) [A-Za-z]*Theme" --include="*.kt" <that-module>/ | head
-grep -rn "MaterialTheme\." --include="*.kt" <that-module>/ | head
+  --include="*.kt" "${module_dir:?}"/ | head -40          # a custom token scale?
+grep -rnE "(object|fun) [A-Za-z]*Theme" --include="*.kt" "${module_dir:?}"/ | head
+grep -rn "MaterialTheme\." --include="*.kt" "${module_dir:?}"/ | head
 ```
 
 A theme is as often a `@Composable fun <Name>Theme` as it is an `object`, so
