@@ -60,7 +60,8 @@ deletion. The deliverable is the list of commands run and their empty result
    own, then re-run those two sweeps against it:
 
    ```bash
-   git fetch <remote> '+refs/heads/*:refs/remotes/sweep/*' --prune
+   # set remote to the remote name, e.g. origin
+   git fetch "${remote:?}" '+refs/heads/*:refs/remotes/sweep/*' --prune
    git rev-list --remotes=sweep | while read -r c; do
      git grep -iIlE '<terms>' "$c"
    done | sort -u
