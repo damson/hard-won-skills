@@ -34,7 +34,10 @@ commits after a parent landed); that is mechanical cleanup and belongs to
 4. Rewrites with the smallest-blast-radius command; for a mid-branch drop:
 
    ```bash
-   git rebase --onto <base> <commit-to-drop> <branch>
+   # set base to the base branch
+   # set drop to the commit to drop
+   # set branch to the branch name
+   git rebase --onto "${base:?}" "${drop:?}" "${branch:?}"
    ```
 
    Reordering has no terminal to run `git rebase -i` in, so the todo-list edit

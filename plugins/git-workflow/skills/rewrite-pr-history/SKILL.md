@@ -18,7 +18,8 @@ show the plan before rewriting. Every step is recoverable if interrupted.
 ### 1. Read PR state
 
 ```bash
-gh pr view <N> --json baseRefName,headRefName,mergeable,mergeStateStatus,reviewDecision,commits
+# set pr to the pull request number
+gh pr view "${pr:?}" --json baseRefName,headRefName,mergeable,mergeStateStatus,reviewDecision,commits
 ```
 
 Confirm:
@@ -34,8 +35,9 @@ Confirm:
 ### 2. Sync working tree
 
 ```bash
+# set head_branch to the pull request's head branch
 git fetch origin --prune
-git checkout <head-branch>
+git checkout "${head_branch:?}"
 ```
 
 Verify clean working tree (`git status -s` returns empty). If dirty, stop and
@@ -73,9 +75,11 @@ ids in the todo file, so a literal `<sha>` matches nothing and the rebase
 replays the branch unchanged, which looks like success.
 
 ```bash
-export DROP=$(git rev-parse --short=7 <commit-to-drop>)
+# set drop to the commit to drop
+# set base to the base branch
+export DROP=$(git rev-parse --short=7 "${drop:?}")
 GIT_SEQUENCE_EDITOR='f() { sed "s/^pick $DROP/drop $DROP/" "${1}" > "${1}.todo" && mv "${1}.todo" "${1}"; }; f' \
-  git rebase -i <base>
+  git rebase -i "${base:?}"
 ```
 
 Seven characters on purpose: git abbreviates the todo's ids to whatever the
@@ -107,7 +111,8 @@ locally first.
 ### 6. Force-push with lease
 
 ```bash
-git push --force-with-lease origin <branch>
+# set branch to the branch name
+git push --force-with-lease origin "${branch:?}"
 ```
 
 **Never** plain `--force`. `--force-with-lease` refuses to clobber if the
@@ -117,7 +122,8 @@ between expected and actual remote state.
 ### 7. Verify on the platform
 
 ```bash
-gh pr view <N> --json mergeable,mergeStateStatus,commits -q \
+# set pr to the pull request number
+gh pr view "${pr:?}" --json mergeable,mergeStateStatus,commits -q \
   '{state:.mergeStateStatus,mergeable:.mergeable,commits:[.commits[].messageHeadline]}'
 ```
 

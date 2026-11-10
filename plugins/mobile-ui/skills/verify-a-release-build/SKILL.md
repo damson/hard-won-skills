@@ -39,10 +39,11 @@ emulator for form's sake.
 ### 2. Build both APKs and compare them, not just yours
 
 ```bash
+# set integration to the integration branch, e.g. develop
 module=:app            # the application module; `./gradlew -q projects` lists them
 out=${module#:}; out=${out//://}                    # :app -> app, :a:b -> a/b
 
-git worktree add ../baseline <integration-branch>   # its own checkout, not a stash
+git worktree add ../baseline "${integration:?}"   # its own checkout, not a stash
 
 for d in . ../baseline; do
   ( cd "$d" && ./gradlew "$module:assembleRelease" )   # with the project's own
@@ -112,9 +113,10 @@ filled-request path was not covered.
 ### 5. Install it and drive the app, not the launcher
 
 ```bash
+# set pkg to the application package name
 adb install -r app/build/outputs/apk/release/app-release.apk
 adb logcat -c
-adb shell monkey -p <pkg> -c android.intent.category.LAUNCHER 1
+adb shell monkey -p "${pkg:?}" -c android.intent.category.LAUNCHER 1
 ```
 
 `am start` cannot reach an activity that is not exported, and a bare `monkey -p <pkg> 1`
@@ -161,10 +163,11 @@ there, which looks like nothing happening.
 ### 7. Restore the device, and say what you did not cover
 
 ```bash
+# set pkg to the application package name
 adb shell svc data enable && adb shell svc wifi enable
 adb shell settings put system accelerometer_rotation 1
 adb unroot
-adb uninstall <pkg>          # so a later debug install is not blocked by the signature
+adb uninstall "${pkg:?}"          # so a later debug install is not blocked by the signature
 ```
 
 Delete anything pushed to `/sdcard` as well.

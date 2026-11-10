@@ -7,11 +7,14 @@ and one shipped green because nothing here read the shell it publishes.
 
 `bash -n` parses without executing, so this never runs a skill's commands.
 
-Placeholders are not errors. `git fetch <url> <branch>` is how these skills tell
-a reader what to substitute, and bash reads `<url>` as a redirect, so every such
-block would fail an unmodified parse. Each `<name>` token is replaced with a
-plain word first; what survives is a real syntax error -- an unbalanced quote,
-an unterminated loop, a `case` with no `esac`.
+A placeholder outside quotes is an error, though bash parses it happily: in
+`gh pr view <n>`, `<n>` is a redirect from a file named `n`, so the pasted line
+runs a different command or fails on a missing file. Blocks name the value
+instead (`"${pr:?}"`, with a comment saying what to set), and a placeholder
+left inside quotes, a comment or a heredoc body is text, not syntax. Those
+quoted ones are replaced with a plain word before the parse, so what the parse
+reports is a real syntax error -- an unbalanced quote, an unterminated loop, a
+`case` with no `esac`.
 
 Usage:
   python3 scripts/validate-shell-blocks.py              # every plugin here
@@ -47,6 +50,10 @@ CLOSING = re.compile(r"^\s*(`{3,}|~{3,})[ \t]*$")
 PLACEHOLDER = re.compile(r"<[A-Za-z][^<>\n]*>")
 
 SHELL_LANGS = {"bash", "sh", "shell"}
+
+# `<<EOF`, `<<-'EOF'`, `<< "EOF"`: the body that follows is text until the
+# terminator line, so a placeholder there is not a redirect.
+HEREDOC = re.compile(r"<<-?[ \t]*(['\"]?)([A-Za-z_]\w*)\1")
 
 
 def closes(marker: str, line: str) -> bool:
@@ -96,6 +103,58 @@ def iter_blocks(text: str):
         i = j + 1
 
 
+def bare_placeholders(code: str) -> list[str]:
+    """Each `<name>` bash would read as a redirect: outside quotes, comments and
+    heredoc bodies."""
+    found: list[str] = []
+    pending: list[str] = []
+    quote = None
+    i, n = 0, len(code)
+    while i < n:
+        c = code[i]
+        if quote == "'":
+            if c == "'":
+                quote = None
+        elif quote == '"':
+            if c == "\\":
+                i += 1
+            elif c == '"':
+                quote = None
+        elif c == "\\":
+            i += 1
+        elif c in "'\"":
+            quote = c
+        elif c == "#" and (i == 0 or code[i - 1] in " \t\n;(|&"):
+            end = code.find("\n", i)
+            i = n if end < 0 else end
+            continue
+        elif c == "<" and code[i - 1 : i] != "<":
+            heredoc = HEREDOC.match(code, i)
+            if heredoc:
+                pending.append(heredoc.group(2))
+                i = heredoc.end()
+                continue
+            placeholder = PLACEHOLDER.match(code, i)
+            if placeholder:
+                found.append(placeholder.group(0))
+                i = placeholder.end()
+                continue
+        elif c == "\n" and pending:
+            for terminator in pending:
+                j, end = i + 1, n
+                while j < n:
+                    end = code.find("\n", j)
+                    end = n if end < 0 else end
+                    if code[j:end].strip() == terminator:
+                        break
+                    j = end + 1
+                i = min(end, n)
+            pending = []
+            continue
+        i += 1
+    return found
+
+
 def parse_error(code: str) -> str | None:
     """Return bash's complaint about `code`, or None when it parses."""
     with tempfile.NamedTemporaryFile("w", suffix=".sh", delete=False) as handle:
@@ -126,6 +185,14 @@ def check(root: Path) -> int:
                 print(f"✘ {rel}:{block.line} — unterminated {opened}", file=sys.stderr)
                 continue
             blocks += 1
+            bare = bare_placeholders(block.code)
+            if bare:
+                failures += 1
+                print(
+                    f"✘ {rel}:{block.line} — bash reads {', '.join(bare)} as a redirect;"
+                    " quote it or name the value, e.g. \"${pr:?}\"",
+                    file=sys.stderr,
+                )
             complaint = parse_error(block.code)
             if complaint is None:
                 continue
@@ -136,7 +203,7 @@ def check(root: Path) -> int:
         checked = f"{blocks} shell block(s) checked" if blocks else "no shell block reached"
         print(f"\n✘ {failures} problem(s); {checked}", file=sys.stderr)
         return 1
-    print(f"✔ {blocks} shell block(s) parse under bash -n")
+    print(f"✔ {blocks} shell block(s) parse under bash -n, no bare placeholder")
     return 0
 
 

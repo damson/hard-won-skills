@@ -48,9 +48,10 @@ Ask what each box *asserts*, and what the map does not mention at all.
    that exists, then grep the diagram file for each name:
 
    ```bash
+   # set diagram to the diagram file
    ls -d */ ; ls .github/workflows/*.yml     # dirs, then scheduled jobs
    # else: the package/module manifest, or the README's structure section
-   grep -i '<name>' <diagram-file>
+   grep -i '<name>' "${diagram:?}"
    ```
 
    **Any name with zero hits is a reportable gap.** This is the strongest signal
@@ -71,6 +72,7 @@ Ask what each box *asserts*, and what the map does not mention at all.
    node repo:
 
    ```bash
+   # set diagram to the diagram file
    npm install --no-save --no-package-lock mermaid jsdom   # an audit, not a
    # dependency: --no-save spares package.json, --no-package-lock the lockfile
    node --input-type=module -e '
@@ -86,7 +88,7 @@ Ask what each box *asserts*, and what the map does not mention at all.
        try { await m.parse(b); console.log(`block ${i+1}: OK`); }
        catch (e) { bad++; console.error(`block ${i+1}: ${String(e.message).split("\n")[0]}`); }
      process.exit(bad ? 1 : 0);
-   ' <diagram-file>
+   ' "${diagram:?}"
    ```
 
    Then break it on purpose and confirm exit 1: `flowchart TB` → `flowchart

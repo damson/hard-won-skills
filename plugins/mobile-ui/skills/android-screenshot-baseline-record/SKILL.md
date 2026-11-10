@@ -43,7 +43,7 @@ is the quiet no-op this skill exists to catch.
 
 Do not guess it from the table: find where the PNGs actually are:
 
-`<module>` is a Gradle path (`:app`, `:library:ui`); its directory is that path with
+`GRADLE_MODULE` is a Gradle path (`:app`, `:library:ui`); its directory is that path with
 the colons turned into slashes. Resolve both once and reuse them:
 
 ```bash
@@ -64,8 +64,11 @@ Note the count. Without a before-number, "it recorded" is unfalsifiable.
 ### 3. Record, scoped to the test you mean
 
 ```bash
-./gradlew :<module>:clean :<module>:<record-task-from-step-1> \
-  --tests "<fully.qualified.TestClass>*"
+# set record_task to the record task from step 1, filter to the --tests
+# pattern, widened per the table below (e.g. '*FooScreenshot*');
+# GRADLE_MODULE is from step 2
+./gradlew "${GRADLE_MODULE:?}":clean "${GRADLE_MODULE:?}":"${record_task:?}" \
+  --tests "${filter:?}"
 ```
 
 `:clean` first. Screenshot plugins copy from an intermediates directory into the baseline directory, and a stale render left there by an earlier run is copied over the fresh one. `--rerun-tasks` and `--no-build-cache` do **not** clear intermediates; only cleaning does.
@@ -89,7 +92,7 @@ looked at:
 
 ```bash
 grep -rnE '^[[:space:]]*[a-z ]*class .*Screenshot' \
-  "<module>/src/test" --include='*.kt'
+  "${MODULE_DIR:?}/src/test" --include='*.kt'
 ```
 
 Match any modifiers rather than a bare `class`: an anchored `^class` misses a

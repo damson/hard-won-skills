@@ -61,8 +61,10 @@ survives.
 Two checks are runnable without a second account:
 
 ```bash
+# set sha to the commit SHA
+# set image to the path to the image
 n=$(gh pr view --json number -q .number)     # from the PR branch
-git cat-file -e <sha>:<path-to-image>        # the blob exists at the pinned SHA
+git cat-file -e "${sha:?}":"${image:?}"        # the blob exists at the pinned SHA
 gh pr view "$n" --json body -q .body | grep -c raw.githubusercontent.com   # must be 0
 ```
 

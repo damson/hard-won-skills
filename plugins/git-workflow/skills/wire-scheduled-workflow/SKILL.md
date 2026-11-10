@@ -29,17 +29,19 @@ until it reaches the default branch.
 2. **Check registration, don't assume it:**
 
    ```bash
+   # set workflow to the workflow file name, without .yml
    gh workflow list --all          # registered workflows, from the default branch
-   gh workflow run <file>.yml      # a 404 here IS the diagnosis
+   gh workflow run "${workflow:?}".yml      # a 404 here IS the diagnosis
    ```
 
 3. **Trace the path to the default branch.** Establish both ends first:
 
    ```bash
+   # set workflow to the workflow file name, without .yml
    def=$(gh repo view --json defaultBranchRef -q .defaultBranchRef.name)
    git fetch origin "+refs/heads/$def:refs/remotes/origin/$def"  # a stale or
    # single-branch clone otherwise answers from a tree that isn't there
-   git ls-tree "origin/$def" -- .github/workflows/<file>.yml   # empty = not there yet
+   git ls-tree "origin/$def" -- .github/workflows/"${workflow:?}".yml   # empty = not there yet
    ```
 
    A failed fetch stops the trace: the emptiness of `ls-tree` means nothing
@@ -63,8 +65,9 @@ until it reaches the default branch.
 4. **After it lands, verify registration and the first firing:**
 
    ```bash
+   # set workflow to the workflow file name, without .yml
    gh workflow list --all                        # now it appears
-   gh workflow run <file>.yml && gh run list --workflow=<file>.yml --limit 1
+   gh workflow run "${workflow:?}".yml && gh run list --workflow="${workflow:?}".yml --limit 1
    ```
 
    A dispatch that starts a run is the proof. For the cron itself, check the

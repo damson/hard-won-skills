@@ -46,7 +46,8 @@ trusts its own output ships a diff that "fixes" files that were already correct.
    that does not exist on a platform the project supports.
 
    ```bash
-   for f in <family glob>; do
+   # set family to the file-name glob for the family, e.g. '*Button*.md'
+   find . -type f -name "${family:?}" | while IFS= read -r f; do
      grep -q '^## Example' "$f" || echo "  candidate: $f"
    done
    ```

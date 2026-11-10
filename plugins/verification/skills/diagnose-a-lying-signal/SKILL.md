@@ -37,22 +37,25 @@ class of problem is spent fixing something that was never broken.
    | "No matches" | whether the command ran at all |
 
 3. **Read the source, not a rendering of it.** Fetch the record and quote what
-   it says. Three renderings that routinely mislead, where `<o>/<r>` is the owner and
-   repository, `<id>` the run id the surface itself names:
+   it says. Three renderings that routinely mislead, where `repo` is the owner and
+   repository and `id` the run id the surface itself names:
 
    ```bash
+   # set repo to owner/name of the repository
+   # set id to the run id
+   # set badge_url to the badge image's URL
    # A run that failed with no jobs is a startup failure, not your code
-   gh api repos/<o>/<r>/actions/runs/<id>/jobs --jq .total_count
+   gh api repos/"${repo:?}"/actions/runs/"${id:?}"/jobs --jq .total_count
 
    # A step's own conclusion, which a "do not fail the build" setting hides from
    # the job's rolled-up status; read it before reading the log for a reason why
-   gh api repos/<o>/<r>/actions/runs/<id>/jobs \
+   gh api repos/"${repo:?}"/actions/runs/"${id:?}"/jobs \
      --jq '.jobs[].steps[] | select(.conclusion != "success") | {name, conclusion}'
 
    # An image is not data: parse the text node, never grep the markup
    # -x, not ^: unanchored at the end this returns "100%</text", and twice over,
    # because a badge draws its text once as a shadow and once as the fill
-   curl -s "<badge-url>" | tr '<>' '\n\n' | grep -xE 'unknown|[0-9]+%' | head -1
+   curl -s "${badge_url:?}" | tr '<>' '\n\n' | grep -xE 'unknown|[0-9]+%' | head -1
    ```
 
    The commands are one host's; the move is not. Anywhere else, find the endpoint

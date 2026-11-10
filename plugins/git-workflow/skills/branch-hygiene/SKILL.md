@@ -24,8 +24,11 @@ helping.
 1. **Find the children, and retarget them FIRST**:
 
    ```bash
-   gh pr list --base <branch-about-to-merge> --json number,headRefName
-   gh pr edit <n> --base <the parent's own base>      # BEFORE the merge
+   # set merging to the branch about to merge
+   # set pr to the pull request number
+   # set parent_base to the parent's own base branch
+   gh pr list --base "${merging:?}" --json number,headRefName
+   gh pr edit "${pr:?}" --base "${parent_base:?}"      # BEFORE the merge
    ```
 
    Merging the parent does **not** retarget a child. It leaves it running its
@@ -41,7 +44,9 @@ helping.
    the branch still there, which is the state that leaves a child stranded.
 
    ```bash
-   git worktree remove <path> && gh pr merge <parent> --squash --delete-branch
+   # set worktree to the worktree's path
+   # set parent to the parent pull request number
+   git worktree remove "${worktree:?}" && gh pr merge "${parent:?}" --squash --delete-branch
    ```
 
 3. **Then rebase each child** onto the new base, per the procedure below.
@@ -69,7 +74,8 @@ helping.
    rollup carries all of them:
 
    ```bash
-   gh pr view <n> --json statusCheckRollup \
+   # set pr to the pull request number
+   gh pr view "${pr:?}" --json statusCheckRollup \
      --jq '.statusCheckRollup[] | [.__typename, (.name // .context), (.conclusion // .state)] | @tsv'
    ```
 
@@ -82,12 +88,15 @@ helping.
 
    a. Pick the worktree to work in: call it `$wt`:
    ```bash
+   # set worktree to the worktree's path
    git worktree list                  # find any path already on <branch>
-   git -C <path> status --porcelain   # empty → reuse it as $wt
+   git -C "${worktree:?}" status --porcelain   # empty → reuse it as $wt
    ```
    No worktree holds the branch → add a temp one, which step 4 removes again:
    ```bash
-   git worktree add /tmp/rebase-pr-<n> <branch>
+   # set pr to the pull request number
+   # set branch to the branch name
+   git worktree add /tmp/rebase-pr-"${pr:?}" "${branch:?}"
    ```
    A worktree holds it but is **dirty** → skip this PR and say so; `git worktree
    add` refuses a branch already checked out, and forcing it races two worktrees
@@ -99,28 +108,34 @@ helping.
    the parent landed**:
 
    ```bash
+   # set base to the base branch
    # Parent was MERGED (a merge commit): its commits are ancestors of the base,
    # so a plain rebase recognises and skips the duplicates.
-   git -C "$wt" rebase origin/<base-branch>
+   git -C "$wt" rebase origin/"${base:?}"
    ```
    Git auto-skips commits whose patches are already on the base (the duplicate
    ones). Watch the `warning: skipped previously applied commit <sha>` lines:
    those confirm the cleanup.
 
    ```bash
+   # set base to the base branch
+   # set parent_tip to the parent branch's tip SHA
+   # set branch to the branch name
    # Parent was SQUASH-merged: its commits are NOT ancestors of anything, so the
    # plain form replays this PR's work onto changes it already contains and
    # conflicts on every hunk. Replay only this PR's own commits instead.
-   git -C "$wt" rebase --onto origin/<base-branch> <parent-branch-tip-sha> <branch>
+   git -C "$wt" rebase --onto origin/"${base:?}" "${parent_tip:?}" "${branch:?}"
    ```
-   `<parent-branch-tip-sha>` is where this PR forked: the parent's last commit,
-   which `git log --oneline <branch>` still shows even after the parent branch
+   `parent_tip` is where this PR forked: the parent's last commit, which
+   `git log --oneline "$branch"` still shows even after the parent branch
    is deleted. Get it by counting your own commits back from the tip:
 
    ```bash
-   n=$(gh pr view <child> --json commits -q '.commits | length')
-   parent_tip=$(git -C "$wt" rev-parse "<branch>~$n")
-   git -C "$wt" log --oneline "$parent_tip..<branch>"   # exactly the child's own commits?
+   # set branch to the branch name
+   # set child to the stacked child pull request number
+   n=$(gh pr view "${child:?}" --json commits -q '.commits | length')
+   parent_tip=$(git -C "$wt" rev-parse "${branch:?}~$n")
+   git -C "$wt" log --oneline "$parent_tip..${branch:?}"   # exactly the child's own commits?
    ```
 
    The count equals commits-since-fork only while the child's history is
@@ -133,13 +148,15 @@ helping.
    for why the API cannot answer this:
 
    ```bash
-   git -C "$wt" merge-base --is-ancestor "$parent_tip" origin/<base-branch> \
+   # set base to the base branch
+   git -C "$wt" merge-base --is-ancestor "$parent_tip" origin/"${base:?}" \
      && echo "plain rebase" || echo "rebase --onto"
    ```
 
    c. **Inspect the result**:
    ```bash
-   git -C "$wt" log --oneline origin/<base-branch>..HEAD
+   # set base to the base branch
+   git -C "$wt" log --oneline origin/"${base:?}"..HEAD
    ```
    Every commit here should be this PR's own work. An unexplainable one (a
    cherry-pick from another worktree, a stray amend) is a STOP: see below.
@@ -166,25 +183,28 @@ helping.
    temporaries step 3a added: those outlive their branch and step 4 is the only
    thing that collects them:
    ```bash
-   git worktree remove <path>          # refuses on untracked files; inspect,
+   # set worktree to the worktree's path
+   git worktree remove "${worktree:?}"          # refuses on untracked files; inspect,
                                        # then --force once you know what they are
    ```
 
    Then prune the branch itself. A merged PR leaves both copies behind. Delete a
    listed branch only when it has no open PR and no surviving worktree:
    ```bash
+   # set base to the base branch
+   # set branch to the branch name
    def=$(git symbolic-ref --quiet --short refs/remotes/origin/HEAD | cut -d/ -f2-)
    # Enumerate from PR STATE, not `git branch --merged`: first sharp edge.
    list=$(mktemp)
    for b in $(git for-each-ref --format='%(refname:short)' refs/heads |
-              grep -vxE "<base-branch>|$def"); do
+              grep -vxE "${base:?}|$def"); do
      st=$(gh pr list --state all --head "$b" \
             --json state -q '.[0].state' 2>/dev/null)
      [ "$st" = "MERGED" ] && echo "$b" >> "$list"   # MERGED only, never CLOSED
    done
-   grep -qxE "<base-branch>|$def" "$list" && { echo "ABORT"; exit 1; }
+   grep -qxE "${base:?}|$def" "$list" && { echo "ABORT"; exit 1; }
    xargs -a "$list" -n1 git branch -D     # -d refuses a squash-merged branch
-   git push origin --delete <branch>      # skip if the merge already deleted it
+   git push origin --delete "${branch:?}"      # skip if the merge already deleted it
    ```
 
 5. **Close the issues the merge did not**: this one is about the PR that just
@@ -198,14 +218,16 @@ helping.
    what actually closed before closing anything by hand:
 
    ```bash
-   gh pr view <n> --json closingIssuesReferences -q '.closingIssuesReferences[].number'
+   # set pr to the pull request number
+   gh pr view "${pr:?}" --json closingIssuesReferences -q '.closingIssuesReferences[].number'
    ```
 
    Empty output means nothing has closed *yet*. Read the intent off the body,
    which is where the keywords were written:
 
    ```bash
-   gh pr view <n> --json body -q .body |
+   # set pr to the pull request number
+   gh pr view "${pr:?}" --json body -q .body |
      grep -oiE '(close[sd]?|fix(e[sd])?|resolve[sd]?) #[0-9]+' |
      grep -oE '[0-9]+' | sort -u
    ```
@@ -215,7 +237,9 @@ helping.
    Close each by hand, citing the merge commit so the trail survives:
 
    ```bash
-   gh issue close <n> --comment "Fixed in #<pr>, merged to <branch> as <sha>."
+   # set issue to the issue number, pr to the pull request that fixed it,
+   # branch to the base it merged into, sha to the merge commit
+   gh issue close "${issue:?}" --comment "Fixed in #${pr:?}, merged to ${branch:?} as ${sha:?}."
    ```
 
    Skip this where the PR's base *is* the default branch: there the keywords

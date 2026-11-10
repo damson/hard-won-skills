@@ -29,10 +29,11 @@ merge style the repo forbids, or while a review sits unanswered.
    were named, then pin each head:
 
    ```bash
-   gh pr view <n> --json number,headRefOid,baseRefName,isDraft,mergeable,mergeStateStatus
+   # set pr to the pull request number
+   gh pr view "${pr:?}" --json number,headRefOid,baseRefName,isDraft,mergeable,mergeStateStatus
    # one line per authorised PR, kept for step 6; a single `head` variable is
    # overwritten by the next PR and then matches the wrong one
-   gh pr view <n> --json number,headRefOid --jq '[.number, .headRefOid] | @tsv' >> authorised.tsv
+   gh pr view "${pr:?}" --json number,headRefOid --jq '[.number, .headRefOid] | @tsv' >> authorised.tsv
    ```
 
    An authorisation is per pull request and per head. It does not roll forward
@@ -44,9 +45,11 @@ merge style the repo forbids, or while a review sits unanswered.
    required contexts rather than eyeballing a checks list:
 
    ```bash
-   gh api repos/<owner>/<repo>/branches/<base>/protection \
+   # set repo to owner/name of the repository
+   # set base to the base branch
+   gh api repos/"${repo:?}"/branches/"${base:?}"/protection \
      --jq '.required_status_checks.contexts'
-   gh api repos/<owner>/<repo>/rules/branches/<base>          # rules in force here
+   gh api repos/"${repo:?}"/rules/branches/"${base:?}"          # rules in force here
    ```
 
    Two sources, because either can be empty while the other gates. A branch
@@ -71,8 +74,10 @@ merge style the repo forbids, or while a review sits unanswered.
 4. **Look the merge method up. Do not carry it between repos.**
 
    ```bash
-   gh api repos/<owner>/<repo> --jq '{squash: .allow_squash_merge, merge: .allow_merge_commit, rebase: .allow_rebase_merge}'
-   gh api repos/<owner>/<repo>/rules/branches/<base> > rules.json
+   # set repo to owner/name of the repository
+   # set base to the base branch
+   gh api repos/"${repo:?}" --jq '{squash: .allow_squash_merge, merge: .allow_merge_commit, rebase: .allow_rebase_merge}'
+   gh api repos/"${repo:?}"/rules/branches/"${base:?}" > rules.json
    # every rule that narrows the choice, not just the first one
    jq '[.[] | select(.type == "pull_request") | .parameters.allowed_merge_methods] | add' rules.json
    jq 'any(.[]; .type == "required_linear_history")' rules.json    # true rules out --merge
@@ -108,9 +113,10 @@ merge style the repo forbids, or while a review sits unanswered.
    ran.
 
    ```bash
-   head=$(awk -v n=<n> '$(1) == n { h = $(2) } END { print h }' authorised.tsv)   # this PR's latest pin
-   [ -n "$head" ] || { echo "no pin recorded for #<n>"; exit 1; }
-   gh pr merge <n> --squash --match-head-commit "$head"        # --merge or --rebase, per step 4
+   # set pr to the pull request number
+   head=$(awk -v n="${pr:?}" '$(1) == n { h = $(2) } END { print h }' authorised.tsv)   # this PR's latest pin
+   [ -n "$head" ] || { echo "no pin recorded for #${pr:?}"; exit 1; }
+   gh pr merge "${pr:?}" --squash --match-head-commit "$head"        # --merge or --rebase, per step 4
    ```
 
    `--match-head-commit` is step 1's pin made mechanical: if anything was
@@ -128,8 +134,9 @@ merge style the repo forbids, or while a review sits unanswered.
    string, which is also not `UNKNOWN`, so the loop exits on the error:
 
    ```bash
+   # set child to the stacked child pull request number
    for _ in $(seq 1 24); do
-     state=$(gh pr view <child> --json mergeable --jq .mergeable) || state=
+     state=$(gh pr view "${child:?}" --json mergeable --jq .mergeable) || state=
      [ -n "$state" ] && [ "$state" != "UNKNOWN" ] && break
      sleep 5
    done
@@ -146,9 +153,11 @@ merge style the repo forbids, or while a review sits unanswered.
    about that one:
 
    ```bash
+   # set pr to the pull request number
+   # set base to the base branch
    git fetch --prune
-   mc=$(gh pr view <n> --json mergeCommit --jq .mergeCommit.oid)
-   git merge-base --is-ancestor "$mc" origin/<base> && echo landed
+   mc=$(gh pr view "${pr:?}" --json mergeCommit --jq .mergeCommit.oid)
+   git merge-base --is-ancestor "$mc" origin/"${base:?}" && echo landed
    ```
 
    Where no merge commit is recorded (a PR closed and applied by hand), fall
@@ -156,12 +165,15 @@ merge style the repo forbids, or while a review sits unanswered.
    merging and read the head back from the ref the host keeps:
 
    ```bash
+   # set pr to the pull request number
+   # set base to the base branch
+   # set branch to the branch name
    # before the merge
-   git diff --name-only origin/<base>...origin/<branch> > paths.txt
+   git diff --name-only origin/"${base:?}"...origin/"${branch:?}" > paths.txt
 
    # after it, against the authorised head rather than a branch that may not exist
-   git fetch origin "refs/pull/<n>/head:refs/pr/<n>"
-   git diff --stat origin/<base> "refs/pr/<n>" -- $(cat paths.txt)
+   git fetch origin "refs/pull/${pr:?}/head:refs/pr/${pr:?}"
+   git diff --stat origin/"${base:?}" "refs/pr/${pr:?}" -- $(cat paths.txt)
    ```
 
    Empty output means those paths are identical on the base. Read it the same

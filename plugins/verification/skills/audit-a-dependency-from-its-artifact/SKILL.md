@@ -69,7 +69,8 @@ report; "27 checked" is not.
 A tool that enforces a floor carries that floor inside itself:
 
 ```bash
-unzip -p <plugin>.jar | strings          # or unzip -o to a temp dir, then javap
+# set plugin to the plugin name
+unzip -p "${plugin:?}".jar | strings          # or unzip -o to a temp dir, then javap
 ```
 
 Find the class that does the enforcing and read its constants. This answers the
