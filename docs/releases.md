@@ -222,7 +222,10 @@ ships and no other.
 fenced shell block in every skill with `bash -n`, which never executes them.
 The blocks are what a reader pastes into a terminal, and nothing else here
 reads them: an unbalanced quote or an unterminated loop ships green and is
-found by whoever tries to follow the step. Angle-bracket placeholders are
-substituted before parsing, because `git fetch <url> <branch>` is how these
-skills say what to fill in and bash reads `<url>` as a redirect. So it catches
-malformed shell, not a badly chosen placeholder.
+found by whoever tries to follow the step. It also rejects a placeholder
+outside quotes, which parses fine and is the worse bug: in `gh pr view <n>`
+bash reads `<n>` as a redirect from a file named `n`, so the pasted line runs
+another command. Blocks name the value instead, `"${pr:?}"` under a comment
+saying what to set, which aborts that one command with the variable's name
+when it is empty. A placeholder inside quotes, a comment or a heredoc body is
+text, and is swapped for a plain word before the parse.

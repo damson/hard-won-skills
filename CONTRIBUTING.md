@@ -63,7 +63,7 @@ Run the same three checks CI runs (no token, no network):
 ```bash
 ./scripts/validate-skills.sh                 # structure of every skill, and no bare $N in its body
 python3 scripts/validate-marketplace.py      # manifests, README, plugin pages and relative links vs the tree
-python3 scripts/validate-shell-blocks.py     # every shell block parses under bash -n
+python3 scripts/validate-shell-blocks.py     # every shell block parses under bash -n, no bare <placeholder>
 ```
 
 Then the conventions the validators cannot see:

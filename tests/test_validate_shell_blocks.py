@@ -61,6 +61,53 @@ def test_documentation_shapes_are_not_errors(label):
     assert vsb.parse_error(VALID[label]) is None, label
 
 
+# ── placeholders bash would read as redirects ───────────────────────────────
+
+BARE = {
+    "bare argument": ("gh pr view <n> --json author\n", ["<n>"]),
+    "inside a path": ("gh api repos/<owner>/<repo>/pulls\n", ["<owner>", "<repo>"]),
+    "after a colon": ("./gradlew :<module>:tasks\n", ["<module>"]),
+    "holding a space": ("cp <somewhere durable>/x .\n", ["<somewhere durable>"]),
+    "after a heredoc ends": ("cat <<'EOF'\n<fine>\nEOF\ngit push <remote>\n", ["<remote>"]),
+    "after a closed quote": ('echo "x" <file>\n', ["<file>"]),
+}
+
+
+@pytest.mark.parametrize("label", sorted(BARE))
+def test_bare_placeholders_are_found(label):
+    code, expected = BARE[label]
+    assert vsb.bare_placeholders(code) == expected, label
+
+
+NOT_BARE = {
+    "double-quoted": 'gh issue create --title "skill: <name> (<what breaks>)"\n',
+    "single-quoted": "gh api x --jq '.[] | select(.name == \"<check>\")'\n",
+    "comment": "git worktree list   # find any path already on <branch>\n",
+    "whole-line comment": "# <owner>/<repo>\n",
+    "heredoc body": "cat <<EOF\nliteral <not-a-redirect> text\nEOF\n",
+    "dashed quoted heredoc": "cat <<-'MSG'\n\t<still text>\n\tMSG\n",
+    "process substitution": 'comm -13 <(echo "$a") <(echo "$b")\n',
+    "here-string": 'jq -r length <<<"$s"\n',
+    "redirect from a real file": "wc -l < input.txt\n",
+    "named value": 'gh pr view "${pr:?}" --json author\n',
+    "multi-line single quote": "node -e '\n  const d = \"<!doctype html><body>\";\n'\n",
+    "escaped angle bracket": "echo \\<n\\>\n",
+}
+
+
+@pytest.mark.parametrize("label", sorted(NOT_BARE))
+def test_text_that_only_looks_like_a_placeholder_is_not_flagged(label):
+    assert vsb.bare_placeholders(NOT_BARE[label]) == [], label
+
+
+def test_check_fails_on_a_bare_placeholder_that_parses(tmp_path, capsys):
+    # The whole point: `bash -n` accepts a redirect, so the parse alone is green.
+    assert vsb.parse_error("gh pr view <n> --json author") is None
+    (tmp_path / "SKILL.md").write_text(md("gh pr view <n> --json author"))
+    assert vsb.main([str(tmp_path)]) == 1
+    assert "bash reads <n> as a redirect" in capsys.readouterr().err
+
+
 # ── extraction ───────────────────────────────────────────────────────────────
 
 
@@ -148,7 +195,7 @@ def test_check_reports_and_fails_on_a_broken_block(tmp_path, capsys):
 def test_check_passes_a_clean_tree(tmp_path, capsys):
     skill = tmp_path / "plugins" / "p" / "skills" / "s"
     skill.mkdir(parents=True)
-    (skill / "SKILL.md").write_text(md("git fetch <url> <branch>"))
+    (skill / "SKILL.md").write_text(md('git fetch "${url:?}" "${branch:?}"  # <url> is fine here'))
     assert vsb.check(tmp_path) == 0
     assert "1 shell block(s) parse" in capsys.readouterr().out
 
@@ -166,7 +213,7 @@ def test_main_accepts_a_directory_argument(tmp_path, capsys):
 
 def test_the_script_runs_as_a_command(tmp_path):
     script = Path(__file__).parent.parent / "scripts" / "validate-shell-blocks.py"
-    (tmp_path / "SKILL.md").write_text(md("echo fine <placeholder>"))
+    (tmp_path / "SKILL.md").write_text(md('echo "fine <placeholder>"'))
     done = subprocess.run(
         [sys.executable, str(script), str(tmp_path)], capture_output=True, text=True
     )
