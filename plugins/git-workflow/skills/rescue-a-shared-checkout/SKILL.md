@@ -32,6 +32,10 @@ shows already-merged work as new.
 REMOTE=${REMOTE:-origin}
 BASE=${BASE:-develop}   # the branch this tree's work would land on
 
+# Porcelain paths are relative to the top level, and every test below opens them
+# from the current directory. Run from a subdirectory, each one names the wrong file.
+cd "$(git rev-parse --show-toplevel)" || exit 1
+
 # A failed fetch leaves a stale ref that still resolves, so the loop would
 # answer confidently against the wrong commit. Stop instead.
 git fetch "$REMOTE" --quiet || { echo "fetch failed; not classifying against a stale ref"; exit 1; }

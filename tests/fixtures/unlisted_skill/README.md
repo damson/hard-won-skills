@@ -7,14 +7,4 @@ tree the test suite points the validator at.
 |---|---|---|
 | **alpha** | 2 | Exercising the validator |
 
-## Plugins
-
-### alpha
-
-One placeholder skill: `skill-one`. The second is deliberately not mentioned.
-
-See [the plugin page](plugins/alpha/README.md).
-
-## Notes
-
-This heading exists so the plugin section above has a boundary to stop at.
+The plugin page lists its skills: [alpha](plugins/alpha/README.md).

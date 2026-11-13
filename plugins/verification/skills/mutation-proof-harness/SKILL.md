@@ -81,14 +81,17 @@ is the one string this depends on.
 mutate () {                      # <file> <perl-expr> <filter> <label>
   # An interrupt between the edit and the restore leaves the guard mutated in
   # the working tree, and the tally never prints, so nothing points at it.
+  # The trap outlives the function, so every exit past the restore clears it:
+  # left set, a later Ctrl-C runs it against the caller's arguments and is swallowed.
   trap 'git checkout -- "${1}"; trap - INT TERM; return 130' INT TERM
   # `-pi` is line-at-a-time. Use `-0pi` when the anchor spans lines, and then
   # read the warning about first-match below, which only bites in that mode.
   perl -pi -e "${2}" "${1}"
-  if git diff --quiet -- "${1}"; then echo "STALE ${4}"; bad=$((bad+1)); return; fi
+  if git diff --quiet -- "${1}"; then trap - INT TERM; echo "STALE ${4}"; bad=$((bad+1)); return; fi
   git diff --unified=0 -- "${1}" | tail -4        # ← read this, every time
   local out code; out=$(run_filter "${3}"); code=$?
-  git checkout -- "${1}" || { echo "RESTORE-FAILED ${4}"; bad=$((bad+1)); return 1; }
+  git checkout -- "${1}" || { trap - INT TERM; echo "RESTORE-FAILED ${4}"; bad=$((bad+1)); return 1; }
+  trap - INT TERM
   # Red is not proof on its own. A compile error, a missing import or a
   # collapsed fixture also exits non-zero, and counting one as proof is how an
   # inert guard gets reported as proved. Require the failure to name the test

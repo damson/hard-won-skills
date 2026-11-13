@@ -24,10 +24,7 @@ the scars: each skill knows not just what to do, but when to stop and ask.
 
 **Jump to:**
 [Quick start](#-quick-start) ·
-[Pick your themes](#-pick-your-themes)
-([git-workflow](#git-workflow) · [agent-config](#agent-config) ·
-[verification](#verification) · [data-safety](#data-safety) ·
-[mobile-ui](#mobile-ui) · [design-ethics](#design-ethics)) ·
+[Pick your themes](#-pick-your-themes) ·
 [What a skill looks like](#-what-a-skill-here-looks-like) ·
 [The harness](#-the-harness-behind-these-skills) ·
 [Contributing](#-contributing) ·
@@ -50,9 +47,9 @@ just the plugins whose version moved.
 **Then… do nothing.** You don't invoke a skill so much as walk into it: each
 one declares the situations and phrases it fires on, and the agent picks it up
 when your task matches: "rebase the open PRs", "do the baselines still pass",
-a push to a branch with an open PR. Curious what you just installed? Every
-skill has a README beside its procedure with its triggers and a worked
-example; start with any link below.
+a push to a branch with an open PR. Curious what you just installed? Each
+plugin's page in the table below lists its skills, and every skill has a README
+beside its procedure with its triggers and a worked example.
 
 ## 🗂 Pick your themes
 
@@ -65,104 +62,17 @@ example; start with any link below.
 | **[mobile-ui](plugins/mobile-ui/README.md)** | 8 | Android / Compose screenshots, Figma components, on-device checks |
 | **[design-ethics](plugins/design-ethics/README.md)** | 1 | Whether a money or consent flow persuades or deceives |
 
-Not sure where to begin? **[verification](#verification)** takes a minute to
-read and changes how you look at every green checkmark you'll ever see again.
-If you only ever install one plugin, that's the one we'd hand you.
+Not sure where to begin? These three pay for themselves first:
 
-### git-workflow
-
-Branches, worktrees, pull requests and releases, where the forge's own summary
-is the thing that misleads: a green check with nothing behind it, a release that
-merged and never tagged, a branch that reads as merged because it never had a
-pull request.
-
-[`unblock-a-pull-request-with-no-checks`](plugins/git-workflow/skills/unblock-a-pull-request-with-no-checks/README.md) ·
-[`branch-hygiene`](plugins/git-workflow/skills/branch-hygiene/README.md) ·
-[`pr-comment-loop`](plugins/git-workflow/skills/pr-comment-loop/README.md) ·
-[`rewrite-pr-history`](plugins/git-workflow/skills/rewrite-pr-history/README.md) ·
-[`worktree-bootstrap`](plugins/git-workflow/skills/worktree-bootstrap/README.md) ·
-[`capture-pr-screenshots`](plugins/git-workflow/skills/capture-pr-screenshots/README.md) ·
-[`github-pr-screenshot-embed`](plugins/git-workflow/skills/github-pr-screenshot-embed/README.md) ·
-[`audit-diagram-claims`](plugins/git-workflow/skills/audit-diagram-claims/README.md) ·
-[`coverage-pr-comment`](plugins/git-workflow/skills/coverage-pr-comment/README.md) ·
-[`await-pr-checks`](plugins/git-workflow/skills/await-pr-checks/README.md) ·
-[`parallel-pr-fanout`](plugins/git-workflow/skills/parallel-pr-fanout/README.md) ·
-[`bump-vendored-pin`](plugins/git-workflow/skills/bump-vendored-pin/README.md) ·
-[`wire-scheduled-workflow`](plugins/git-workflow/skills/wire-scheduled-workflow/README.md) ·
-[`close-the-release-cycle`](plugins/git-workflow/skills/close-the-release-cycle/README.md) ·
-[`merge-on-go-ahead`](plugins/git-workflow/skills/merge-on-go-ahead/README.md) ·
-[`watch-what-the-merge-triggered`](plugins/git-workflow/skills/watch-what-the-merge-triggered/README.md) ·
-[`rescue-a-shared-checkout`](plugins/git-workflow/skills/rescue-a-shared-checkout/README.md) ·
-[`build-every-open-branch-at-once`](plugins/git-workflow/skills/build-every-open-branch-at-once/README.md) ·
-[`stand-in-for-a-blocked-review`](plugins/git-workflow/skills/stand-in-for-a-blocked-review/README.md)
-
-### agent-config
-
-Instruction files decay quietly. Two of them disagree, a pointer turns into a
-copy, and a rule nobody reads gets longer every session. These keep the stack
-honest, and prove a skill works on a real project before you trust it.
-
-[`agent-config-audit`](plugins/agent-config/skills/agent-config-audit/README.md) ·
-[`compress-a-doc-set`](plugins/agent-config/skills/compress-a-doc-set/README.md) ·
-[`claude-md-pointer-check`](plugins/agent-config/skills/claude-md-pointer-check/README.md) ·
-[`redundancy-check-before-ship`](plugins/agent-config/skills/redundancy-check-before-ship/README.md) ·
-[`skill-opportunity-finder`](plugins/agent-config/skills/skill-opportunity-finder/README.md) ·
-[`validate-skill-against-real-project`](plugins/agent-config/skills/validate-skill-against-real-project/README.md) ·
-[`prompt-coach`](plugins/agent-config/skills/prompt-coach/README.md) ·
-[`save-before-compact`](plugins/agent-config/skills/save-before-compact/README.md) ·
-[`session-retro`](plugins/agent-config/skills/session-retro/README.md) ·
-[`sweep-the-siblings`](plugins/agent-config/skills/sweep-the-siblings/README.md)
-
-### verification
-
-One failure wearing every disguise: believing a signal nobody has checked. The
-discipline is to break the thing on purpose and watch the check go red, while
-that is still cheap.
-
-[`prove-the-check-can-fail`](plugins/verification/skills/prove-the-check-can-fail/README.md) ·
-[`verify-dependency-behaviour`](plugins/verification/skills/verify-dependency-behaviour/README.md) ·
-[`diagnose-a-lying-signal`](plugins/verification/skills/diagnose-a-lying-signal/README.md) ·
-[`mutation-proof-harness`](plugins/verification/skills/mutation-proof-harness/README.md) ·
-[`prove-a-procedure-on-a-fixture`](plugins/verification/skills/prove-a-procedure-on-a-fixture/README.md) ·
-[`render-the-candidates`](plugins/verification/skills/render-the-candidates/README.md) ·
-[`audit-a-dependency-from-its-artifact`](plugins/verification/skills/audit-a-dependency-from-its-artifact/README.md) ·
-[`reproduce-a-reported-defect`](plugins/verification/skills/reproduce-a-reported-defect/README.md)
-
-### data-safety
-
-Operations with no undo: a migration, a bulk write, a repository about to go
-public. Each one gets rehearsed inside a transaction, made reversible, or swept
-before it runs.
-
-[`probe-migration-in-transaction`](plugins/data-safety/skills/probe-migration-in-transaction/README.md) ·
-[`read-only-db-probe`](plugins/data-safety/skills/read-only-db-probe/README.md) ·
-[`verify-db-posture-at-the-target`](plugins/data-safety/skills/verify-db-posture-at-the-target/README.md) ·
-[`reversible-bulk-write`](plugins/data-safety/skills/reversible-bulk-write/README.md) ·
-[`supabase-ci-migration-guards`](plugins/data-safety/skills/supabase-ci-migration-guards/README.md) ·
-[`pre-publication-sweep`](plugins/data-safety/skills/pre-publication-sweep/README.md)
-
-### mobile-ui
-
-Android and Compose, where a screenshot test reports `PASSED` having compared no
-pixels and a device frame can be a second stale. Ground the claim in something
-that was actually rendered.
-
-[`android-screenshot-baseline-record`](plugins/mobile-ui/skills/android-screenshot-baseline-record/README.md) ·
-[`android-screenshot-baseline-verify`](plugins/mobile-ui/skills/android-screenshot-baseline-verify/README.md) ·
-[`figma-to-compose-component`](plugins/mobile-ui/skills/figma-to-compose-component/README.md) ·
-[`android-verify-on-device`](plugins/mobile-ui/skills/android-verify-on-device/README.md) ·
-[`ship-a-fix-round`](plugins/mobile-ui/skills/ship-a-fix-round/README.md) ·
-[`verify-a-release-build`](plugins/mobile-ui/skills/verify-a-release-build/README.md) ·
-[`hand-over-a-test-build`](plugins/mobile-ui/skills/hand-over-a-test-build/README.md) ·
-[`render-android-ui-candidates`](plugins/mobile-ui/skills/render-android-ui-candidates/README.md)
-
-### design-ethics
-
-Persuasion and deception use the same contrast, defaults and sequence, so the
-technique never settles which one a flow is doing. What settles it is whether
-what the user thinks they agreed to matches what happens.
-
-[`separate-persuasion-from-deception`](plugins/design-ethics/skills/separate-persuasion-from-deception/README.md)
+- **[`prove-the-check-can-fail`](plugins/verification/skills/prove-the-check-can-fail/README.md)**
+  (verification): breaks the thing on purpose and watches the check go red, so
+  a green check means it was actually looking.
+- **[`await-pr-checks`](plugins/git-workflow/skills/await-pr-checks/README.md)**
+  (git-workflow): waits out a PR's CI at a pinned commit and names every check,
+  so one that never ran cannot read as passed.
+- **[`pre-publication-sweep`](plugins/data-safety/skills/pre-publication-sweep/README.md)**
+  (data-safety): sweeps the tree, every commit and the remote for secrets and
+  names before a repo goes public, where nothing can be taken back.
 
 ## 🧬 What a skill here looks like
 

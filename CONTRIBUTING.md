@@ -61,7 +61,7 @@ and duplicate leaf names would shadow each other.
 Run the same three checks CI runs (no token, no network):
 
 ```bash
-./scripts/validate-skills.sh                 # structure of every skill
+./scripts/validate-skills.sh                 # structure of every skill, and no bare $N in its body
 python3 scripts/validate-marketplace.py      # manifests, README, plugin pages and relative links vs the tree
 python3 scripts/validate-shell-blocks.py     # every shell block parses under bash -n
 ```
@@ -73,10 +73,12 @@ Then the conventions the validators cannot see:
    only what you actually verified: one aspirational tick makes every other
    tick unreliable.
 2. **Bookkeeping travels with the change.** A skill added, removed or
-   materially changed updates, in the same PR: the root README's theme table
-   and skill list, the plugin folder's README table, and a **minor** bump of
-   that plugin's version in `.claude-plugin/plugin.json`. The release workflow
-   owns the patch field; never pre-apply it.
+   materially changed updates, in the same PR: the plugin folder's README
+   table, the root README's plugin table and welcome total when the count
+   moves, and a **minor** bump of that plugin's version in
+   `.claude-plugin/plugin.json`. Complete skill lists live on plugin pages; the
+   root README names only a few picks. The release workflow owns the patch
+   field; never pre-apply it.
 3. **If your change touches a check or a guard, prove it can fail** before
    trusting it: break the thing on purpose, watch it go red, restore. This
    repo ships a skill for exactly that discipline, and applies it to itself.

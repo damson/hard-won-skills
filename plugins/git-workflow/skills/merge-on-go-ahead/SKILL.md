@@ -108,13 +108,18 @@ merge style the repo forbids, or while a review sits unanswered.
    ran.
 
    ```bash
-   head=$(awk -v n=<n> '$(1) == n { print $(2) }' authorised.tsv)   # this PR's pin, not the last one read
+   head=$(awk -v n=<n> '$(1) == n { h = $(2) } END { print h }' authorised.tsv)   # this PR's latest pin
+   [ -n "$head" ] || { echo "no pin recorded for #<n>"; exit 1; }
    gh pr merge <n> --squash --match-head-commit "$head"        # --merge or --rebase, per step 4
    ```
 
    `--match-head-commit` is step 1's pin made mechanical: if anything was
    pushed between the go-ahead and this command, the merge is refused instead
-   of quietly landing a commit nobody authorised.
+   of quietly landing a commit nobody authorised. An empty value is not a pin:
+   `gh` drops the flag when it is blank, so a PR with no row in the file would
+   merge whatever head it has now, and the guard stops there instead. A PR
+   authorised again after a push has two rows, and the latest is the go-ahead
+   that counts.
 
 7. **Between dependent merges, wait for the recomputation, and do not read a
    failure as an answer.** After a parent lands, a child's `mergeable` reads
