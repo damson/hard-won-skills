@@ -5,8 +5,9 @@ description: >
   "12 and 13 are ready", "land 21 and 22", or a bare "go ahead" in a thread
   about one identified PR. Owns only the merge itself: it confirms the authorisation covers
   this PR at its current head, checks the gates the repo actually enforces,
-  merges in the repo's own convention, orders a set that shares a file, and
-  waits out the recomputation before touching a dependent PR. Do NOT fire without an authorisation
+  merges in the repo's own convention, orders a set that shares a file and
+  stops after each of its merges for a refresh, and waits out the
+  recomputation before touching a dependent PR. Do NOT fire without an authorisation
   naming the PRs, on a promotion to the branch people install from (that is
   a release), or to decide WHETHER something should merge.
 ---
@@ -55,19 +56,23 @@ merge style the repo forbids, or while a review sits unanswered.
    overlap. Order the whole set by dependency whatever the output: a PR whose
    branch contains another's commits lands after that one. Where there is
    output, among PRs free to go in either order, land the widest edit to the
-   shared files first, so each later PR meets a base that already says the
-   most.
+   shared files first (most lines changed there, per
+   `gh pr view <n> --json files`), so each later PR meets a base that already
+   says the most.
 
    Where there is output, every merge changes the base under the PRs still
    open, and a go-ahead covers a head, not what it becomes on a new base. So
-   **after each merge, stop**: name the authorised PRs still open and say each
-   needs refreshing against the new base, and a new go-ahead, before it
-   merges. The refresh is not this skill's job; whoever does it keeps both
-   sides' lines wherever both PRs only added to the shared files, and reads
+   **after each merge, stop**: name each authorised PR still open with its
+   current head SHA, and say it needs refreshing against the new base, and a
+   new go-ahead, before it merges. Such a PR merges only once its head has
+   moved past that SHA, on a go-ahead given after the user has seen the new
+   head. The refresh is not this skill's job; whoever does it keeps both
+   sides' lines wherever both PRs only added to the shared files, keeping one
+   copy of a line both added identically, and reads
    those files against what both meant, since two edits can merge cleanly and
    still be wrong together (two PRs that each raised a count from 10 to 11
    merge to 11, where 12 may have been meant). A refreshed PR comes back
-   through step 1 like any other. After the last merge, read the shared files
+   through steps 1 and 2 like any other. After the last merge, read the shared files
    against what landed: a count or list every PR edited is where the result
    goes wrong, and a statement that stays true beats a maintained tally.
 
@@ -153,8 +158,9 @@ merge style the repo forbids, or while a review sits unanswered.
    that counts.
 
 8. **Between dependent merges, wait for the recomputation, and do not read a
-   failure as an answer.** After a parent lands, a child's `mergeable` reads
-   `UNKNOWN` until the host recomputes it, and `UNKNOWN` is not `false`. A bare
+   failure as an answer.** Where step 2 stopped the set, it stays stopped;
+   otherwise, after a parent lands, a child's `mergeable` reads `UNKNOWN`
+   until the host recomputes it, and `UNKNOWN` is not `false`. A bare
    command substitution in the loop test turns a failed API call into an empty
    string, which is also not `UNKNOWN`, so the loop exits on the error:
 
