@@ -70,6 +70,11 @@ BARE = {
     "holding a space": ("cp <somewhere durable>/x .\n", ["<somewhere durable>"]),
     "after a heredoc ends": ("cat <<'EOF'\n<fine>\nEOF\ngit push <remote>\n", ["<remote>"]),
     "after a closed quote": ('echo "x" <file>\n', ["<file>"]),
+    "inside a quoted substitution": ('x="$(gh pr view <n> --json title)"\n', ["<n>"]),
+    "inside quoted backticks": ('x="`gh pr view <n>`"\n', ["<n>"]),
+    "after an ANSI-C string": ("echo $'it\\'s' <n>\n", ["<n>"]),
+    "after an arithmetic shift": ("y=$(( 1<<shift ))\ngh pr view <n>\n", ["<n>"]),
+    "in a nested substitution": ("a=$(echo $(cat <f>))\n", ["<f>"]),
 }
 
 
@@ -96,12 +101,30 @@ NOT_BARE = {
     "named value": 'gh pr view "${pr:?}" --json author\n',
     "multi-line single quote": "node -e '\n  const d = \"<!doctype html><body>\";\n'\n",
     "escaped angle bracket": "echo \\<n\\>\n",
+    "comment after a subshell": "(true)#<n>\n",
+    "default inside an expansion": "echo ${x:-<n>}\n",
+    "arithmetic command": "(( a << 2 ))\n",
+    "terminator with trailing spaces does not end the body": "cat <<EOF\nEOF  \n<still-body>\nEOF\n",
+    "indented terminator does not end a plain heredoc": "cat <<EOF\n  EOF\n<still-body>\nEOF\n",
+    "backslash-quoted terminator": "cat <<\\EOF\n<text>\nEOF\n",
+    "terminator holding a dash": "cat <<'END-MSG'\n<text>\nEND-MSG\n",
+    "two heredocs on one line": "paste <<A <<B\n<one>\nA\n<two>\nB\n",
 }
 
 
 @pytest.mark.parametrize("label", sorted(NOT_BARE))
 def test_text_that_only_looks_like_a_placeholder_is_not_flagged(label):
     assert vsb.bare_placeholders(NOT_BARE[label]) == [], label
+
+
+def test_console_blocks_check_only_their_commands(tmp_path, capsys):
+    # A recorded run: the `$ ` line and its continuation are pasteable, the
+    # output below them is not, and none of it goes through bash -n.
+    run = "$ gh pr view <n> --json title \\\n    -q .title\n<output that looks like a placeholder>\n"
+    (tmp_path / "SKILL.md").write_text(md(run, lang="console"))
+    assert vsb.main([str(tmp_path)]) == 1
+    err = capsys.readouterr().err
+    assert "bash reads <n> as a redirect" in err and "<output" not in err
 
 
 def test_check_fails_on_a_bare_placeholder_that_parses(tmp_path, capsys):
