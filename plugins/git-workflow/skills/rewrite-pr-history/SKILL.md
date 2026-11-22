@@ -70,12 +70,14 @@ skill.
 
 Resolve the commit to a real object id first, and export it: git writes object
 ids in the todo file, so a literal `<sha>` matches nothing and the rebase
-replays the branch unchanged, which looks like success.
+replays the branch unchanged, which looks like success. Chain the rebase on a
+non-empty id: an empty `DROP` turns the edit into `s/^pick /drop /`, which
+drops every commit on the branch.
 
 ```bash
-export DROP=$(git rev-parse --short=7 <commit-to-drop>)
-GIT_SEQUENCE_EDITOR='f() { sed "s/^pick $DROP/drop $DROP/" "${1}" > "${1}.todo" && mv "${1}.todo" "${1}"; }; f' \
-  git rebase -i <base>
+DROP=$(git rev-parse --short=7 "<commit-to-drop>") && [ -n "$DROP" ] && export DROP &&
+  GIT_SEQUENCE_EDITOR='f() { sed "s/^pick $DROP/drop $DROP/" "${1}" > "${1}.todo" && mv "${1}.todo" "${1}"; }; f' \
+  git rebase -i "<base>"
 ```
 
 Seven characters on purpose: git abbreviates the todo's ids to whatever the
