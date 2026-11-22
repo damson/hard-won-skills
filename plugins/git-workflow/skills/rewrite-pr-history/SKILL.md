@@ -44,8 +44,8 @@ ask the user. Never auto-stash without consent.
 ### 3. Show the plan
 
 Run `git log --oneline origin/<base>..HEAD` and `git diff origin/<base> --stat`.
-State the intended action in plain words (e.g. "I'll drop commit X by rebasing
---onto origin/main starting after it"). **Wait for explicit user "go"** before
+State the intended action in plain words (e.g. "I'll drop commit X by replaying
+the commits after it onto its parent"). **Wait for explicit user "go"** before
 rewriting.
 
 ### 4. Rewrite
@@ -55,7 +55,7 @@ Use the smallest-blast-radius command for the job:
 | Goal | Command |
 |---|---|
 | Resolve conflicts with new main | `git rebase origin/main` |
-| Drop one commit in the middle | `git rebase --onto <base> <commit-to-drop> <branch>` |
+| Drop one commit in the middle | `git rebase --onto "<commit-to-drop>^" "<commit-to-drop>" "<branch>"`: onto the dropped commit's parent, or the commits before it go too |
 | Reorder / squash | non-interactive sequence edit, below: `git rebase -i` needs a terminal this environment does not have |
 | Reword last commit only | `git commit --amend` (verify HEAD is the right commit first) |
 | Split last commit | `git reset --soft HEAD~` then re-stage in parts |
