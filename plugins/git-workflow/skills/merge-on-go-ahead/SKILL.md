@@ -39,7 +39,7 @@ merge style the repo forbids, or while a review sits unanswered.
    to a sibling PR, to the next one in a stack, or to a new commit pushed after
    it was given, however small. If the head moved, the go-ahead was for
    something the reader no longer sees; say so and ask again. Where the
-   go-ahead names a SHA, the head pinned here must equal it.
+   go-ahead names a SHA, the full head pinned here must start with it.
 
 2. **When the authorised PRs share a file, find it and order them before the
    first merge.** Each merge dirties the others there, so the set becomes N
@@ -61,7 +61,7 @@ merge style the repo forbids, or while a review sits unanswered.
 
    Between merges, once step 9 has proved the last one landed and step 8's
    wait has settled, refresh only the authorised siblings the merge dirtied,
-   each from a worktree on its own branch (`headRefName`): `git fetch origin`
+   each from a worktree reset to `origin/<headRefName>`: `git fetch origin`
    and a plain `git merge origin/<base>`, never a rebase or a force-push (so
    not `branch-hygiene`'s rebase here). A conflict in the shared file keeps
    both sides' lines, since taking either side compiles, passes and reverts
@@ -69,9 +69,10 @@ merge style the repo forbids, or while a review sits unanswered.
    shared file against what both PRs contributed (two that each raised a count
    from 10 to 11 merge cleanly to 11, where 12 was meant), and fix it in a
    further commit where it is wrong. Push (`git push origin HEAD:<branch>`; a
-   refused push ends the step), then **stop**: show the user the new SHA and
-   `git diff origin/<base> HEAD -- <shared file>`, which must show only this
-   PR's own lines, and wait. A refresh moves the head, so only a go-ahead that
+   refused push ends the step), then **stop**: show the user the new SHA, what
+   changed since the last reviewed head (`git diff --stat <old head> HEAD`),
+   and `git diff origin/<base> HEAD -- <shared file>`, which must show only
+   this PR's own lines, and wait. A refresh moves the head, so only a go-ahead that
    names the new SHA lets this PR merge, starting again at step 1. After the
    last merge, read the shared file against what landed: a count or list
    every PR edited is where the result goes wrong, and a statement that stays
@@ -137,7 +138,8 @@ merge style the repo forbids, or while a review sits unanswered.
    of the merge if that is what retargets them on this host. Polling a child's
    mergeability does not repair a stale base, and `branch-hygiene` owns the
    full post-merge sequence, except for a child that is itself authorised:
-   once its parent lands it is refreshed as step 2 refreshes a sibling, never
+   once retargeted and its parent landed, it is refreshed as step 2 refreshes a
+   sibling, never
    rebased or force-pushed, and merges only on a go-ahead naming its new head.
 
 7. **Merge one at a time, in the stated method, bound to the authorised head.**
