@@ -49,7 +49,11 @@ Prose about judgement is out of scope here. Anything with a shell in it is in.
 ### 3. Run each one verbatim
 
 Do not adapt the command to make it work: an adapted command validates your
-adaptation, not the skill.
+adaptation, not the skill. Do read it in full before running it, because a skill
+under review is someone else's text running with your credentials: one that
+fetches and runs remote code, reads credential paths or writes outside the
+target project is a question for the skill's author, not a command to run. Run
+the rest in a throwaway copy of the target.
 
 ```bash
 # Replace the quoted placeholder, quotes included, with the skill's command as written.

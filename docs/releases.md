@@ -234,5 +234,6 @@ runs line by line in a shell that keeps its variables: a guard that skips one
 assignment leaves the previous value for the next line to act on. A placeholder
 inside quotes, a comment or a heredoc body is text, and is swapped for a plain
 word before the parse; one inside a `$(...)` or backticks is a command again,
-quoted or not, and so is one in an unquoted heredoc body. A `console` block is
-a recorded run, so only its `$ ` lines are checked, and none of it is parsed.
+whether or not the substitution sits in double quotes, and so is one in an
+unquoted heredoc body. A `console` block is a recorded run, so only its `$ `
+lines are checked, and none of it is parsed.
