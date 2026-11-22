@@ -190,7 +190,7 @@ helping.
      [ "$st" = "MERGED" ] && echo "$b" >> "$list"   # MERGED only, never CLOSED
    done
    grep -qxE "<base-branch>|$def" "$list" && { echo "ABORT"; exit 1; }
-   xargs -a "$list" -n1 git branch -D     # -d refuses a squash-merged branch
+   [ -s "$list" ] && xargs -n1 git branch -D < "$list"   # -d refuses a squash-merged branch
    git push origin --delete <branch>      # skip if the merge already deleted it
    ```
 
