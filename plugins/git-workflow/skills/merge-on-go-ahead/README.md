@@ -75,8 +75,10 @@ exit on it looking satisfied.
 When the authorised set shares a file, the skill finds the shared files before
 the first merge and orders the set around them. Each merge then changes the base
 under the pull requests still open, and a go-ahead covers a head rather than what
-it becomes on a new base, so after each merge it stops and names the ones that
-need a refresh and a new go-ahead. It never refreshes or pushes a branch itself.
+it becomes on a new base, so after each merge it stops, records the head of each
+one that touches a shared file, and takes a new go-ahead for it only once that
+head has moved and the user has seen what changed. It never refreshes or pushes
+a branch itself.
 
 Landing is confirmed with the merge commit, not the branch tip. A squash is not
 the commits it squashed, so asking whether the head is an ancestor of the base
