@@ -3,7 +3,8 @@ name: merge-on-go-ahead
 description: >
   Use when the user authorises merging pull requests they name: "merge #4",
   "12 and 13 are ready", "land 21 and 22", or a bare "go ahead" in a thread
-  about one identified PR. Owns only the merge itself: it confirms the authorisation covers
+  about one identified PR. Owns the merge, and the refresh a shared file forces
+  between merges: it confirms the authorisation covers
   this PR at its current head, checks the gates the repo actually enforces,
   merges in the repo's own convention, orders a set that shares a file, and
   waits out the recomputation before touching a dependent PR. Do NOT fire without an authorisation
@@ -56,8 +57,9 @@ merge style the repo forbids, or while a review sits unanswered.
    ```
 
    A failed read stops the procedure, since a missing list compares as no
-   overlap. Order the whole set by dependency whatever the output (a PR whose
-   branch contains another's commits lands after that one). Where there is
+   overlap. Order the whole set by dependency whatever the output: a PR whose
+   branch contains another's commits (`git merge-base --is-ancestor` on the
+   two heads) lands after that one. Where there is
    output, among PRs free to go in either order, land the widest edit to the
    shared files first (most lines changed there, per
    `gh pr view <n> --json files`), so each refresh resolves against a base
@@ -65,24 +67,35 @@ merge style the repo forbids, or while a review sits unanswered.
    before the first merge.
 
    After each merge, once steps 8 and 9 have settled and proved it, refresh
-   the siblings it touched, one at a time:
+   the PRs still open, one at a time:
 
-   a. **Pick them.** Every authorised sibling that shares a file with what
-      just landed, whatever its `mergeStateStatus`: one that would merge
-      cleanly still combines with content its go-ahead never covered.
+   a. **Pick them: every authorised PR still open in the set**, after every
+      merge, whatever its `mergeStateStatus` or its own file list. One that
+      would merge cleanly still combines with content its go-ahead never
+      covered, and one picked by a narrower test is missed as soon as a third
+      PR lands between. A PR owed a refresh does not reach step 7 until
+      sub-step f has run for it.
    b. **Refuse what is not yours to push.** A fork's branch
-      (`isCrossRepository`), or a head that is an integration or install
-      branch (a back-merge or release PR), is not refreshed here: say so and
-      stop. Check that `origin` is the PR's repository, comparing owner and
-      name only, so no URL or token is printed:
+      (`isCrossRepository`) is the contributor's to refresh. Run this per PR,
+      with its number in place of `<n>`; it compares host, owner and name, and
+      prints no URL, since a remote URL can carry a token:
 
       ```bash
-      want=$(gh pr view <n> --json headRepositoryOwner,headRepository \
-        --jq '.headRepositoryOwner.login + "/" + .headRepository.name')
-      have=$(git remote get-url origin | sed -E 's#\.git$##; s#^.*[:/]([^/]+/[^/]+)$#\1#')
-      [ -n "$want" ] && [ "$want" = "$have" ] || echo "origin is not the PR's repository: stop"
+      head=$(gh pr view <n> --json headRefName --jq .headRefName)
+      printf '%s' "$head" | grep -qE '^[A-Za-z0-9._/-]+$' \
+        || { echo "branch name not safe to pass to git: stop"; exit 1; }
+      default=$(gh repo view --json defaultBranchRef --jq .defaultBranchRef.name)
+      [ "$head" != "$default" ] \
+        || { echo "head is the default branch: stop"; exit 1; }
+      want=$(gh pr view <n> --json url --jq .url | sed -E 's#^https://##; s#/pull/[0-9]+$##')
+      have=$(git remote get-url origin | sed -E 's#\.git$##; s#^[a-z+]+://##; s#^[^@]*@##; s#:#/#')
+      [ -n "$want" ] && [ "$want" = "$have" ] \
+        || { echo "origin is not the PR's repository: stop"; exit 1; }
       ```
 
+      A head that is any authorised PR's `baseRefName` from step 1, such as a
+      back-merge or a release PR, is refused the same way. Use the checked
+      `"$head"`, quoted, wherever the commands below say `<headRefName>`.
    c. **Merge, never rebase.** `git fetch origin`, a new worktree from
       `origin/<headRefName>`, and a plain `git merge origin/<base>` in it; no
       rebase and no force-push, so not `branch-hygiene`'s rebase here. If the
@@ -169,9 +182,9 @@ merge style the repo forbids, or while a review sits unanswered.
    of the merge if that is what retargets them on this host. Polling a child's
    mergeability does not repair a stale base, and `branch-hygiene` owns the
    full post-merge sequence, except for a child that is itself authorised:
-   once retargeted and its parent landed, it is refreshed as step 2 refreshes a
-   sibling, never
-   rebased or force-pushed, and merges only on a go-ahead naming its new head.
+   once retargeted and its parent has landed, it is refreshed by step 2's
+   sub-steps whatever its file overlap, never rebased or force-pushed, and
+   merges only on a go-ahead given after its new head was shown.
 
 7. **Merge one at a time, in the stated method, bound to the authorised head.**
    Let the merge command own the line it runs on: some tool wrappers classify a
