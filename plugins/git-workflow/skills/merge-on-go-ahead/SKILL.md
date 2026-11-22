@@ -6,8 +6,8 @@ description: >
   about one identified PR. Owns only the merge itself: it confirms the authorisation covers
   this PR at its current head, checks the gates the repo actually enforces,
   merges in the repo's own convention, orders a set that shares a file and
-  stops after each of its merges for a refresh, and waits out the
-  recomputation before touching a dependent PR. Do NOT fire without an authorisation
+  ends the run once one of its merges lands, and waits out the recomputation
+  before touching a dependent PR. Do NOT fire without an authorisation
   naming the PRs, on a promotion to the branch people install from (that is
   a release), or to decide WHETHER something should merge.
 ---
@@ -39,17 +39,13 @@ merge style the repo forbids, or while a review sits unanswered.
    An authorisation is per pull request and per head. It does not roll forward
    to a sibling PR, to the next one in a stack, or to a new commit pushed after
    it was given, however small. If the head moved, the go-ahead was for
-   something the reader no longer sees; say so and ask again. A PR with a row
-   in `stopped.tsv` (step 2) is pinned only when its head differs from that
-   row's latest SHA, and only after the user has seen the change since it
-   (`gh api repos/<owner>/<repo>/compare/<stopped sha>...<head sha>`); a head
-   that still equals it was never refreshed, so refuse.
+   something the reader no longer sees; say so and ask again.
 
 2. **When the authorised PRs share a file, find it and order them before the
    first merge.** With the authorised numbers in place of these:
 
    ```bash
-   d=$(mktemp -d); ok=1
+   d=$(mktemp -d) || exit 1; ok=1
    for n in 12 13 14; do
      gh pr diff "$n" --name-only > "$d/$n" || { echo "cannot read #$n"; ok=0; }
    done
@@ -65,26 +61,22 @@ merge style the repo forbids, or while a review sits unanswered.
    PR meets a base that already says the most. The set and its shared files
    are fixed here and this step does not run again.
 
-   Where there is output, every merge changes the base under the PRs still
-   open that touch a shared file, and a go-ahead covers a head, not what it
-   becomes on a new base. So **after each merge, once step 10 has reported
-   it, stop**: for each authorised PR still open that touches a shared file,
-   record its head and name it:
-
-   ```bash
-   gh pr view <n> --json number,headRefOid --jq '[.number, .headRefOid] | @tsv' >> stopped.tsv
-   ```
-
-   Say each needs refreshing against the new base, a review at the refreshed
-   head, and a new go-ahead before it merges; step 1 enforces it. The refresh
-   is not this skill's job; whoever does it keeps both sides' lines wherever
-   both PRs only added to the shared files, keeping one copy of a line both
-   added identically, and reads those files against what both meant, since two
-   edits can merge cleanly and still be wrong together (two PRs that each
-   raised a count from 10 to 11 merge to 11, where 12 may have been meant).
-   Once the set's last PR has merged, read the shared files against what
-   landed: a count or list that several PRs each edit is where the result goes
-   wrong, and a statement that stays true beats a maintained tally.
+   Where there is output, a merge changes the base under every PR still open
+   that touches a shared file, and a go-ahead covers a head, not what it
+   becomes on a new base. So **once a PR touching a shared file has merged and
+   step 10 has reported it, the run ends for the others that touch one**: their
+   go-ahead lapses, and none of them merges in this run. Name each, with its
+   head SHA, as needing a refresh against the new base, a review at the
+   refreshed head, and a fresh go-ahead, which starts this skill again from
+   step 1. The refresh is not this skill's job; whoever does it keeps both
+   sides' lines wherever both PRs only added to the shared files, keeping one
+   copy of a line both added identically, and reads those files against what
+   both meant, since two edits can merge cleanly and still be wrong together
+   (two PRs that each raised a count from 10 to 11 merge to 11, where 12 may
+   have been meant). Once the set's last PR has merged, read the shared files
+   against what landed: a count or list that several PRs each edit is where
+   the result goes wrong, and a statement that stays true beats a maintained
+   tally.
 
 3. **Confirm the gates the repo enforces, not the ones you remember.** Read the
    required contexts rather than eyeballing a checks list:
@@ -168,8 +160,9 @@ merge style the repo forbids, or while a review sits unanswered.
    that counts.
 
 8. **Between dependent merges, wait for the recomputation, and do not read a
-   failure as an answer.** Where step 2 stopped the set, it stays stopped;
-   otherwise, after a parent lands, a child's `mergeable` reads `UNKNOWN`
+   failure as an answer.** Where step 2 has ended the run there is nothing
+   left to wait for; otherwise, after a parent lands, a child's `mergeable`
+   reads `UNKNOWN`
    until the host recomputes it, and `UNKNOWN` is not `false`. A bare
    command substitution in the loop test turns a failed API call into an empty
    string, which is also not `UNKNOWN`, so the loop exits on the error:
@@ -231,8 +224,9 @@ merge style the repo forbids, or while a review sits unanswered.
   identical in a summary and are opposites; treat missing as pending.
 - **A review posted findings that have no reply.** Answer them first, or hand
   back; merging closes the thread by force.
-- **The authorised PRs share a file and one has just merged.** The rest wait
-  for a refresh and a new go-ahead, as step 2 says.
+- **A PR touching a shared file has just merged.** The go-ahead for the others
+  that touch one lapses: they need a refresh and a fresh go-ahead, as step 2
+  says.
 - **The repo allows several merge methods and states no preference.** Ask which
   one. Guessing here is the one mistake in this procedure that rewrites history
   for everybody.

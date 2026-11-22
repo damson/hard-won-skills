@@ -73,12 +73,12 @@ error into an empty string, which is also not `UNKNOWN`, and the loop would
 exit on it looking satisfied.
 
 When the authorised set shares a file, the skill finds the shared files before
-the first merge and orders the set around them. Each merge then changes the base
-under the pull requests still open, and a go-ahead covers a head rather than what
-it becomes on a new base, so after each merge it stops, records the head of each
-one that touches a shared file, and takes a new go-ahead for it only once that
-head has moved and the user has seen what changed. It never refreshes or pushes
-a branch itself.
+the first merge and orders the set around them. A merge then changes the base
+under the others that touch those files, and a go-ahead covers a head rather
+than what it becomes on a new base, so once one such pull request has merged the
+run ends for the rest: their go-ahead lapses, and each needs a refresh and a
+fresh go-ahead, which starts the skill again. It never refreshes or pushes a
+branch itself.
 
 Landing is confirmed with the merge commit, not the branch tip. A squash is not
 the commits it squashed, so asking whether the head is an ancestor of the base
