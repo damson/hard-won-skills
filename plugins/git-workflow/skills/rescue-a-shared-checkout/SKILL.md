@@ -208,12 +208,18 @@ git log --oneline "$REMOTE/$BASE..HEAD"    # empty, or stop and handle these fir
 Then carry the tracked changes as a **patch**, not as copies. `cp` moves file
 contents, and the classification above emits paths whose change is not content:
 a deletion, a rename, a mode bit. `git apply` reproduces all of them, and
-`--binary` keeps a changed image or fixture intact:
+`--binary` keeps a changed image or fixture intact. The worktree goes in a new
+directory under step 1's `$WORK`, and the chain stops when that is unset or the
+directory already exists, which is what a `DEST` left over from an earlier
+rescue looks like:
 
 ```bash
-git worktree add "$DEST" -b "<branch>" "$REMOTE/$BASE"
-xargs -0 git diff --binary "$REMOTE/$BASE" -- < "$TRACKED" |
-  git -C "$DEST" apply --binary --index
+DEST=$WORK/rescue    # new, outside the shared tree
+[ -n "$WORK" ] && [ ! -e "$DEST" ] &&
+  git worktree add "$DEST" -b "<branch>" "$REMOTE/$BASE" &&
+  xargs -0 git diff --binary "$REMOTE/$BASE" -- < "$TRACKED" |
+  git -C "$DEST" apply --binary --index ||
+  echo "STOP: no clean rescue worktree; run step 1 in this shell, or inspect $DEST (git worktree list) and remove it, or pick a new DEST"
 ```
 
 Untracked paths are in no diff, so they are copied, with their directories
@@ -350,12 +356,27 @@ in the pull request rather than being assumed.
 
 ### 7. Land the rescue branch from the worktree, never from the shared tree
 
-Chain it, so a failed stage or a rejected push cannot be followed by a pull
-request describing work that never left the machine, and give `commit` its
-message rather than letting it open an editor nothing is watching:
+Step 3 copied untracked files nobody chose to commit, and some of those are
+credentials a `.gitignore` missed. Screen the names before anything is staged,
+and read every hit; a name is only the cheapest signal, and `pre-publication-sweep`
+(data-safety plugin) is the full check before a push others can read:
 
 ```bash
-git -C "$DEST" add -A &&
+git -C "$DEST" status --short --untracked-files=all |
+  grep -iE '\.env|\.pem$|\.key$|\.p12$|id_[rd]sa|credential|secret|token' &&
+  echo "STOP: read these before landing anything"
+```
+
+Chain it, so a failed stage or a rejected push cannot be followed by a pull
+request describing work that never left the machine, and give `commit` its
+message rather than letting it open an editor nothing is watching. The chain
+opens by checking that `$DEST` is the rescue branch's worktree: `git -C ""`
+runs in the current directory, which step 1 made the shared tree, so an empty
+`DEST` would commit and push the other writer's half-finished work.
+
+```bash
+[ "$(git -C "$DEST" branch --show-current)" = "<branch>" ] &&
+  git -C "$DEST" add -A &&
   git -C "$DEST" commit -m "Rescue uncommitted work from the shared checkout" &&
   git -C "$DEST" push -u "$REMOTE" HEAD &&
   gh pr create --base "$BASE" --head "<branch>"

@@ -80,20 +80,26 @@ helping.
    while a review bot's `StatusContext` sat pending, and the check-runs endpoint
    listed three entries where the rollup listed four.
 
-   a. Pick the worktree to work in: call it `$wt`:
+   a. Pick the worktree to work in, and set `wt` to it:
    ```bash
-   git worktree list                  # find any path already on <branch>
-   git -C "<path>" status --porcelain   # empty → reuse it as $wt
+   git worktree list                    # find any path already on <branch>
+   git -C "<path>" status --porcelain   # empty → reuse it: wt="<path>"
    ```
    No worktree holds the branch → add a temp one, which step 4 removes again:
    ```bash
-   git worktree add "/tmp/rebase-pr-<n>" "<branch>"
+   wt="$(mktemp -d)/rebase-pr-<n>" && git worktree add "$wt" "<branch>"   # private, not a guessable /tmp path
    ```
    A worktree holds it but is **dirty** → skip this PR and say so; `git worktree
    add` refuses a branch already checked out, and forcing it races two worktrees
    over a branch you are about to force-push.
 
-   Every command in the rest of step 3 runs against `$wt`.
+   Every command in the rest of step 3 runs against `$wt`, and a `wt` left over
+   from an earlier PR in the same shell points them at that PR instead. So the
+   rebase and the push below each open with a check that `$wt` is on this PR's
+   branch:
+   ```bash
+   git -C "$wt" branch --show-current   # must print <branch>
+   ```
 
    b. Rebase onto the PR's new base, **which of the two forms depends on how
    the parent landed**:
@@ -101,7 +107,8 @@ helping.
    ```bash
    # Parent was MERGED (a merge commit): its commits are ancestors of the base,
    # so a plain rebase recognises and skips the duplicates.
-   git -C "$wt" rebase "origin/<base-branch>"
+   [ "$(git -C "$wt" branch --show-current)" = "<branch>" ] &&
+     git -C "$wt" rebase "origin/<base-branch>"
    ```
    Git auto-skips commits whose patches are already on the base (the duplicate
    ones). Watch the `warning: skipped previously applied commit <sha>` lines:
@@ -111,7 +118,8 @@ helping.
    # Parent was SQUASH-merged: its commits are NOT ancestors of anything, so the
    # plain form replays this PR's work onto changes it already contains and
    # conflicts on every hunk. Replay only this PR's own commits instead.
-   git -C "$wt" rebase --onto "origin/<base-branch>" "<parent-branch-tip-sha>" "<branch>"
+   [ "$(git -C "$wt" branch --show-current)" = "<branch>" ] &&
+     git -C "$wt" rebase --onto "origin/<base-branch>" "<parent-branch-tip-sha>" "<branch>"
    ```
    `<parent-branch-tip-sha>` is where this PR forked: the parent's last commit,
    which `git log --oneline <branch>` still shows even after the parent branch
@@ -151,9 +159,11 @@ helping.
    test`, `go test ./...`). If none of these resolves, ask rather than guess: a
    skipped test suite reads exactly like a green one.
 
-   e. Force-push with lease (refuses to clobber if upstream moved):
+   e. Force-push with lease (refuses to clobber if upstream moved), only from
+   this PR's branch:
    ```bash
-   git -C "$wt" push --force-with-lease
+   [ "$(git -C "$wt" branch --show-current)" = "<branch>" ] &&
+     git -C "$wt" push --force-with-lease
    ```
 
 4. **Worktree cleanup**:
@@ -162,7 +172,7 @@ helping.
    ```
    Remove a worktree with no uncommitted changes (`git -C <path> status
    --porcelain` empty) when **either** its branch no longer exists on origin
-   (it was deleted post-merge), **or** it is one of the `/tmp/rebase-pr-*`
+   (it was deleted post-merge), **or** it is one of the `rebase-pr-*`
    temporaries step 3a added: those outlive their branch and step 4 is the only
    thing that collects them:
    ```bash
@@ -178,12 +188,14 @@ helping.
    list=$(mktemp)
    for b in $(git for-each-ref --format='%(refname:short)' refs/heads |
               grep -vxE "<base-branch>|$def"); do
-     st=$(gh pr list --state all --head "$b" \
-            --json state -q '.[0].state' 2>/dev/null)
-     [ "$st" = "MERGED" ] && echo "$b" >> "$list"   # MERGED only, never CLOSED
+     info=$(gh pr list --state all --head "$b" \
+              --json state,headRefOid -q '.[0] | .state + " " + .headRefOid' 2>/dev/null)
+     # MERGED only, never CLOSED, and only at the head that merged: a branch
+     # that took commits after its PR merged keeps them
+     [ "$info" = "MERGED $(git rev-parse "$b")" ] && echo "$b" >> "$list"
    done
    grep -qxE "<base-branch>|$def" "$list" && { echo "ABORT"; exit 1; }
-   xargs -a "$list" -n1 git branch -D     # -d refuses a squash-merged branch
+   [ -s "$list" ] && xargs -n1 git branch -D < "$list"   # -d refuses a squash-merged branch
    git push origin --delete "<branch>"      # skip if the merge already deleted it
    ```
 

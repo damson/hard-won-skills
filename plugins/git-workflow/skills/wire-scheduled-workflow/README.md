@@ -32,8 +32,8 @@ skill:
 1. Names the triggers, then checks registration instead of assuming it:
 
    ```bash
-   gh workflow list --all       # only default-branch workflows appear
-   gh workflow run release.yml  # a 404 here IS the diagnosis
+   gh workflow list --all        # only default-branch workflows appear
+   gh workflow view release.yml  # a 404 here IS the diagnosis, and nothing runs
    ```
 
 2. Traces the path to the default branch: the next release. Here it hits the
@@ -45,7 +45,8 @@ skill:
    and only then tag or publish from the merged commit, and every run after
    that is automatic.
 3. Once the file lands, verifies registration and fires a dispatch, since a
-   run that starts is the proof; the cron alone would leave the steps
+   run that starts is the proof (for a release workflow that run is the
+   release, so only with the go-ahead of whoever owns releases); the cron alone would leave the steps
    unexercised until its first window.
 4. Writes the trap down where the next rename will find it: a comment at the
    top of the workflow, or a line in the release doc.

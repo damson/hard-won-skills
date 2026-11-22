@@ -130,13 +130,17 @@ Run the cheapest command that exercises real config + deps, not just a lockfile 
   change is runtime-facing, start the dev server bounded and never leave it
   running. Take the URL from the dev script's own output or the port in the
   project's config, never a guessed 3000: a probe against the wrong port fails
-  the same way a broken server does. `timeout` is GNU coreutils and a stock
+  the same way a broken server does. Check nothing answers that URL yet: a
+  server left running elsewhere answers the probe while this one fails to bind,
+  and the check passes for a server that is not running. `timeout` is GNU coreutils and a stock
   macOS does not have it, so the bound is the shell's:
 
   ```bash
+  curl -s -o /dev/null --max-time 2 "$url" && { echo "something already answers $url: stop it first"; exit 1; }
   "<pm>" run dev & pid=$!
   ready=
   for _ in $(seq 1 30); do
+    kill -0 "$pid" 2>/dev/null || break                             # the server exited: nothing left to wait for
     curl -sf --max-time 2 "$url" >/dev/null && { ready=1; break; }   # --max-time, or one hung request outlasts the loop
     sleep 1
   done

@@ -44,6 +44,11 @@ you cannot release nothing.
 - Patch-bumps `plugin.json` for **only** the plugins with changes under
   `plugins/<name>/**`, and commits that to `develop`. Untouched plugins keep
   their version, so `claude plugin update` re-fetches only what moved.
+  That commit conflicts with any open PR that minor-bumped the same plugin.
+  Keep the PR's `"version"` line and `develop`'s side of anything else in the
+  file, since the minor bump already supersedes the patch and the next release
+  patch-bumps from it. `git checkout --ours` takes the whole file from the PR,
+  which silently drops any other `develop` edit to it.
 - Opens the `develop → main` pull request with the inventory: which versions
   moved, which PRs are in the batch, the diffstat, the commits.
 - Runs the CI suite and enables auto-merge.
