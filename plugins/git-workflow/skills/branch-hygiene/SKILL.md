@@ -188,9 +188,11 @@ helping.
    list=$(mktemp)
    for b in $(git for-each-ref --format='%(refname:short)' refs/heads |
               grep -vxE "<base-branch>|$def"); do
-     st=$(gh pr list --state all --head "$b" \
-            --json state -q '.[0].state' 2>/dev/null)
-     [ "$st" = "MERGED" ] && echo "$b" >> "$list"   # MERGED only, never CLOSED
+     info=$(gh pr list --state all --head "$b" \
+              --json state,headRefOid -q '.[0] | .state + " " + .headRefOid' 2>/dev/null)
+     # MERGED only, never CLOSED, and only at the head that merged: a branch
+     # that took commits after its PR merged keeps them
+     [ "$info" = "MERGED $(git rev-parse "$b")" ] && echo "$b" >> "$list"
    done
    grep -qxE "<base-branch>|$def" "$list" && { echo "ABORT"; exit 1; }
    [ -s "$list" ] && xargs -n1 git branch -D < "$list"   # -d refuses a squash-merged branch
