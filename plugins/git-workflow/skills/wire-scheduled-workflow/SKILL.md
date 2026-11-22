@@ -68,10 +68,14 @@ until it reaches the default branch.
 
    ```bash
    gh workflow list --all                        # now it appears
-   gh workflow run <file>.yml && gh run list --workflow=<file>.yml --limit 1
+   # a real run: for a release or deploy workflow, this IS the release
+   gh workflow run "<file>.yml" && gh run list --workflow="<file>.yml" --limit 1
    ```
 
-   A dispatch that starts a run is the proof. For the cron itself, check the
+   A dispatch that starts a run is the proof, and it is a real run: for a
+   release or deploy workflow it is the release, so it needs the go-ahead of
+   whoever owns releases, and without one the proof is `gh workflow view` plus
+   the first scheduled window. For the cron itself, check the
    run list after the first window passes, and know that a workflow whose
    *only* value was the schedule has still never had its steps exercised until
    then; a `workflow_dispatch` trigger alongside the cron exists precisely so

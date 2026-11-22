@@ -45,7 +45,8 @@ skill:
    and only then tag or publish from the merged commit, and every run after
    that is automatic.
 3. Once the file lands, verifies registration and fires a dispatch, since a
-   run that starts is the proof; the cron alone would leave the steps
+   run that starts is the proof (for a release workflow that run is the
+   release, so only with the go-ahead of whoever owns releases); the cron alone would leave the steps
    unexercised until its first window.
 4. Writes the trap down where the next rename will find it: a comment at the
    top of the workflow, or a line in the release doc.
