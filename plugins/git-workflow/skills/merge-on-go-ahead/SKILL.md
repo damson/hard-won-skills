@@ -57,35 +57,40 @@ merge style the repo forbids, or while a review sits unanswered.
 
    A failed read stops the procedure, since a missing list compares as no
    overlap. Order the whole set by dependency whatever the output (a PR whose
-   branch contains another's commits lands after that one). No output then
-   means no refreshes are needed; otherwise, among PRs free to go in either
-   order, land the widest edit to the shared files first, by lines changed
-   there, so each refresh resolves against a base that already says the
-   most.
+   branch contains another's commits lands after that one). Where there is
+   output, among PRs free to go in either order, land the widest edit to the
+   shared files first, by lines changed there, so each refresh resolves
+   against a base that already says the most.
 
    Between merges, once step 9 has proved the last one landed and step 8's
-   wait has settled, refresh only the authorised siblings the merge dirtied,
-   and only those whose head is on this repository: a fork's branch
+   wait has settled, refresh each authorised sibling the merge left `DIRTY` or
+   `BEHIND`, and only those whose head is on this repository: a fork's branch
    (`isCrossRepository`) is the contributor's to refresh, so say so and stop.
-   For each, where `origin` is the PR's own repository: `git fetch origin`,
-   then a new worktree from `origin/<headRefName>` and a plain
+   Check `git remote get-url origin` names the PR's repository, or stop. Then
+   `git fetch origin`, a new worktree from `origin/<headRefName>`, and a plain
    `git merge origin/<base>` in it, never a rebase or a force-push (so not
-   `branch-hygiene`'s rebase here). A failed fetch or push, or a merge that
-   fails for any reason but a conflict, ends the step. A conflict in the shared file keeps both sides' lines, since taking
-   either side compiles, passes and reverts the other PR's work; commit the
-   resolution. Conflict or not, read the shared file against what both PRs
-   meant: where the two disagree (two that each raised a count from 10 to 11
-   merge cleanly to 11, where 12 may have been meant), that is the STOP below
-   for a shared file that cannot keep both sides. Push
-   (`git push origin HEAD:<headRefName>`), then **stop** for that sibling: show
-   the user the new SHA, everything that changed since the last reviewed head
-   (`git diff <old head> HEAD`), and
+   `branch-hygiene`'s rebase here). A failed fetch or push ends the step, and
+   so does a merge whose unmerged paths
+   (`git diff --name-only --diff-filter=U`) are not all shared files: a
+   conflict anywhere else is not this step's to resolve, so stop and ask.
+
+   A conflict in a shared file keeps both sides' lines, since taking either
+   side compiles, passes and reverts the other PR's work; commit the
+   resolution, and read the shared file against what both PRs meant: where the
+   two disagree (two that each raised a count from 10 to 11 merge cleanly to
+   11, where 12 may have been meant), that is the STOP below for a shared file
+   that cannot keep both sides. Then **stop** for that sibling and show the
+   user what would land on it: the new SHA, everything that changed since the
+   head they last authorised (`git diff <authorised head> HEAD`), and
    `git diff origin/<base> HEAD -- <shared file>`, which must show only this
-   PR's own lines, and wait. A refresh moves the head, so the PR merges only on
-   a go-ahead given after the user has seen that SHA, starting again at step
-   1. After the last merge, read the shared files against what landed: a count
-   or list every PR edited is where the result goes wrong, and a statement
-   that stays true beats a maintained tally.
+   PR's own lines. A clean refresh is pushed first
+   (`git push origin HEAD:<headRefName>`), so its checks start; a refresh that
+   resolved a conflict is pushed only once the user has read it. Either way the
+   head moves, so the PR merges only on a go-ahead given after the user has
+   seen that SHA, starting again at step 1. After the last merge, read the
+   shared files against what landed: a count or list every PR edited is where
+   the result goes wrong, and a statement that stays true beats a maintained
+   tally.
 
 3. **Confirm the gates the repo enforces, not the ones you remember.** Read the
    required contexts rather than eyeballing a checks list:
