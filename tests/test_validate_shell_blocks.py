@@ -53,6 +53,7 @@ VALID = {
     "arrow in a string": 'echo "HEAD MOVED $a -> $b"\n',
     "heredoc": "cat <<'MSG'\nliteral <not-a-redirect> text\nMSG\n",
     "arithmetic comparison": '[ "$n" -lt 3 ] && echo few\n',
+    "C-style loop with a later redirect": "for (( i=0; i<n; i++ )); do echo $i >> log; done\n",
 }
 
 
@@ -75,6 +76,9 @@ BARE = {
     "after an ANSI-C string": ("echo $'it\\'s' <n>\n", ["<n>"]),
     "after an arithmetic shift": ("y=$(( 1<<shift ))\ngh pr view <n>\n", ["<n>"]),
     "in a nested substitution": ("a=$(echo $(cat <f>))\n", ["<f>"]),
+    "in a substitution inside an expansion": ("t=${t:-$(gh pr view <n> --json title)}\n", ["<n>"]),
+    "in a substitution inside a quoted expansion": ('t="${t:-$(gh pr view <n>)}"\n', ["<n>"]),
+    "in backticks inside an expansion": ("t=${t:-`gh pr view <n>`}\n", ["<n>"]),
 }
 
 
@@ -109,6 +113,13 @@ NOT_BARE = {
     "backslash-quoted terminator": "cat <<\\EOF\n<text>\nEOF\n",
     "terminator holding a dash": "cat <<'END-MSG'\n<text>\nEND-MSG\n",
     "two heredocs on one line": "paste <<A <<B\n<one>\nA\n<two>\nB\n",
+    "input and output redirects": "sort <in.txt >out.txt\n",
+    "input redirect and a numbered one": "sort <in.txt 2>err.txt\n",
+    "C-style for loop": "for (( i=0; i<n; i++ )); do echo $i >> log; done\n",
+    "C-style for loop with an unspaced redirect": "for (( i=0; i<n; i++ )); do echo $i>log; done\n",
+    "while arithmetic": "while (( i<n )); do echo $i>log; i=$((i+1)); done\n",
+    "if arithmetic": "if (( a<b )); then echo $a>log; fi\n",
+    "text inside an expansion": 'echo "${x:-<n>}"\n',
 }
 
 

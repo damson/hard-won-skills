@@ -47,8 +47,10 @@ CLOSING = re.compile(r"^\s*(`{3,}|~{3,})[ \t]*$")
 # `<name>`, `<owner>/<repo>`, `<commit-to-drop>`. Anchored to a letter so that
 # process substitution `<(...)`, here-strings `<<<`, and `<!doctype` are left
 # alone, and confined to one line so a `->` further down cannot close a match
-# that a `<` opened above it.
-PLACEHOLDER = re.compile(r"<[A-Za-z][^<>\n]*>")
+# that a `<` opened above it. The name never ends in whitespace, optionally
+# followed by digits: `sort <in.txt >out.txt` and `<in.txt 2>err` are two
+# redirects, not one placeholder.
+PLACEHOLDER = re.compile(r"<[A-Za-z](?![^<>\n]*\s\d*>)[^<>\n]*>")
 
 SHELL_LANGS = {"bash", "sh", "shell"}
 
@@ -110,7 +112,7 @@ def iter_blocks(text: str):
 def bare_placeholders(code: str) -> list[str]:
     """Each `<name>` bash would read as a redirect: in command position, outside
     quotes, comments, heredoc bodies, `${...}` and arithmetic. Commands inside
-    `$(...)` and backticks are scanned too, quoted or not."""
+    `$(...)` and backticks are scanned too, wherever they sit."""
     return [code[start:end] for start, end in bare_spans(code)]
 
 
@@ -168,7 +170,7 @@ def _scan(code: str, i: int, stop: str | None, found: list[tuple[int, int]]) -> 
         elif code.startswith("$(", i):
             i = _scan(code, i + 2, ")", found)
         elif code.startswith("${", i):
-            i = _skip_balanced(code, i + 2, "{", "}")
+            i = _scan_brace(code, i + 2, found)
         elif c == "`":
             i = _scan(code, i + 1, "`", found)
         elif c == "#" and (i == 0 or code[i - 1] in " \t\n;&|()"):
@@ -196,10 +198,48 @@ def _scan(code: str, i: int, stop: str | None, found: list[tuple[int, int]]) -> 
     return i
 
 
+# A keyword after which `((` opens an arithmetic command: `for ((`, `if ((`.
+KEYWORD_BEFORE = re.compile(r"(?:^|[\s;&|(])(?:for|if|elif|while|until|do|then|else|!)$")
+
+
 def _command_start(code: str, i: int) -> bool:
-    """True when position i begins a command: line start or after ; & | ( or space-led keyword."""
+    """True when position i begins a command: at a line start, after ; & | (,
+    or after a keyword such as `for`, `if` or `while`."""
     before = code[:i].rstrip(" \t")
-    return not before or before[-1] in "\n;&|("
+    return not before or before[-1] in "\n;&|(" or bool(KEYWORD_BEFORE.search(before))
+
+
+def _scan_brace(code: str, i: int, found: list[tuple[int, int]]) -> int:
+    """Skip a `${...}` from i, just past its `${`. Its own text is a word, not
+    a command, but a `$(...)` or backticks inside it are commands again."""
+    n, depth = len(code), 1
+    while i < n:
+        c = code[i]
+        if c == "\\":
+            i += 2
+        elif c == "'":
+            end = code.find("'", i + 1)
+            i = n if end < 0 else end + 1
+        elif c == '"':
+            i = _scan_double(code, i + 1, found)
+        elif code.startswith("$((", i):
+            i = _skip_balanced(code, i + 3, "(", ")")
+            i = i + 1 if i < n and code[i] == ")" else i
+        elif code.startswith("$(", i):
+            i = _scan(code, i + 2, ")", found)
+        elif c == "`":
+            i = _scan(code, i + 1, "`", found)
+        elif code.startswith("${", i):
+            depth += 1
+            i += 2
+        elif c == "}":
+            depth -= 1
+            i += 1
+            if not depth:
+                return i
+        else:
+            i += 1
+    return i
 
 
 def _scan_double(code: str, i: int, found: list[tuple[int, int]]) -> int:
@@ -217,7 +257,7 @@ def _scan_double(code: str, i: int, found: list[tuple[int, int]]) -> int:
         elif code.startswith("$(", i):
             i = _scan(code, i + 2, ")", found)
         elif code.startswith("${", i):
-            i = _skip_balanced(code, i + 2, "{", "}")
+            i = _scan_brace(code, i + 2, found)
         elif c == "`":
             i = _scan(code, i + 1, "`", found)
         else:
