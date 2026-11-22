@@ -219,7 +219,7 @@ DEST=$WORK/rescue    # new, outside the shared tree
   git worktree add "$DEST" -b <branch> "$REMOTE/$BASE" &&
   xargs -0 git diff --binary "$REMOTE/$BASE" -- < "$TRACKED" |
   git -C "$DEST" apply --binary --index ||
-  echo "STOP: no rescue worktree; run step 1 in this shell, or pick a new DEST"
+  echo "STOP: no clean rescue worktree; run step 1 in this shell, or inspect $DEST (git worktree list) and remove it, or pick a new DEST"
 ```
 
 Untracked paths are in no diff, so they are copied, with their directories
