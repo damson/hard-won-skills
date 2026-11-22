@@ -34,9 +34,9 @@ frame changed since the action.
 2. **Launch and wait for a real frame**, not for the command to return:
 
    ```bash
-   adb shell am force-stop <pkg>
+   adb shell am force-stop "<pkg>"
    adb logcat -c                       # BEFORE the launch, or see below
-   adb shell monkey -p <pkg> 1 >/dev/null 2>&1
+   adb shell monkey -p "<pkg>" 1 >/dev/null 2>&1
    until adb logcat -d | grep -q "Displayed <pkg>/.*MainActivity"; do sleep 1; done
    ```
 
@@ -109,7 +109,7 @@ frame changed since the action.
    about:
 
    ```bash
-   adb shell run-as <pkg> cat /data/data/<pkg>/shared_prefs/<name>.xml
+   adb shell run-as "<pkg>" cat "/data/data/<pkg>/shared_prefs/<name>.xml"
    ```
 
    `run-as` works only on a debuggable build. "package not debuggable" means

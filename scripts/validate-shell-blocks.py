@@ -7,11 +7,16 @@ and one shipped green because nothing here read the shell it publishes.
 
 `bash -n` parses without executing, so this never runs a skill's commands.
 
-Placeholders are not errors. `git fetch <url> <branch>` is how these skills tell
-a reader what to substitute, and bash reads `<url>` as a redirect, so every such
-block would fail an unmodified parse. Each `<name>` token is replaced with a
-plain word first; what survives is a real syntax error -- an unbalanced quote,
-an unterminated loop, a `case` with no `esac`.
+A placeholder outside quotes is an error, though bash parses it happily: in `gh
+pr view <n> --json author`, `<n>` reads from a file named `n` and writes to one
+named `--json`, so the pasted line runs a different command or fails on a
+missing file. Blocks quote it instead (`gh pr view "<n>"`): one literal word,
+never a redirect, and nothing stored for a later line to reuse. A placeholder
+inside quotes, a comment or a heredoc body is text, not syntax, except inside a
+`$(...)` or backticks, which are commands wherever they sit, an unquoted
+heredoc body included. The parse blanks every placeholder before it runs, so
+what it reports is a real syntax error -- an unbalanced quote, an unterminated
+loop, a `case` with no `esac`.
 
 Usage:
   python3 scripts/validate-shell-blocks.py              # every plugin here
@@ -43,10 +48,49 @@ CLOSING = re.compile(r"^\s*(`{3,}|~{3,})[ \t]*$")
 # `<name>`, `<owner>/<repo>`, `<commit-to-drop>`. Anchored to a letter so that
 # process substitution `<(...)`, here-strings `<<<`, and `<!doctype` are left
 # alone, and confined to one line so a `->` further down cannot close a match
-# that a `<` opened above it.
-PLACEHOLDER = re.compile(r"<[A-Za-z][^<>\n]*>")
+# that a `<` opened above it. The name never ends in whitespace, optionally
+# followed by digits: `sort <in.txt >out.txt` and `<in.txt 2>err` are two
+# redirects, not one placeholder.
+PLACEHOLDER = re.compile(r"<[A-Za-z](?![^<>\n]*\s\d*>)[^<>\n]*>")
 
 SHELL_LANGS = {"bash", "sh", "shell"}
+
+# A console block is a recorded run: only its `$ ` lines are commands.
+CONSOLE_LANGS = {"console"}
+
+# Characters that end a shell word outside quotes.
+WORD_END = set(" \t\n;&|<>()")
+
+
+def _heredoc(code: str, i: int) -> tuple[str, bool, bool, int] | None:
+    """Read a heredoc operator at i: `<<EOF`, `<<-'EOF'`, `<< "EOF"`, `<<\\EOF`,
+    `<<E"OF"`. Returns (terminator, dash, quoted, end) or None. Bash takes the
+    whole word, removes its quotes to get the terminator, and treats the body as
+    text when any part of the word was quoted; unquoted, it still expands."""
+    if not code.startswith("<<", i):
+        return None
+    n, j = len(code), i + 2
+    dash = j < n and code[j] == "-"
+    j += dash
+    while j < n and code[j] in " \t":
+        j += 1
+    word: list[str] = []
+    quoted = False
+    while j < n and code[j] not in WORD_END:
+        c = code[j]
+        if c in "'\"":
+            end = code.find(c, j + 1)
+            if end < 0:
+                return None
+            word.append(code[j + 1 : end])
+            quoted, j = True, end + 1
+        elif c == "\\" and j + 1 < n:
+            word.append(code[j + 1])
+            quoted, j = True, j + 2
+        else:
+            word.append(c)
+            j += 1
+    return ("".join(word), dash, quoted, j) if word else None
 
 
 def closes(marker: str, line: str) -> bool:
@@ -85,7 +129,7 @@ def iter_blocks(text: str):
             body.append(lines[j])
             j += 1
         closed = j < len(lines)
-        if lang.lower() in SHELL_LANGS or not closed:
+        if lang.lower() in SHELL_LANGS | CONSOLE_LANGS or not closed:
             strip = len(indent)
             yield Block(
                 i + 1,
@@ -94,6 +138,248 @@ def iter_blocks(text: str):
                 closed,
             )
         i = j + 1
+
+
+def bare_placeholders(code: str) -> list[str]:
+    """Each `<name>` bash would read as a redirect: in command position, outside
+    quotes, comments, heredoc bodies, `${...}` text and arithmetic. Commands
+    inside `$(...)` and backticks are scanned wherever they sit, unquoted
+    heredoc bodies included."""
+    return [code[start:end] for start, end in bare_spans(code)]
+
+
+def bare_spans(code: str) -> list[tuple[int, int]]:
+    """Where each bare placeholder sits in `code`, as (start, end) offsets."""
+    found: list[tuple[int, int]] = []
+    _scan(code, 0, None, found)
+    return found
+
+
+def _scan(code: str, i: int, stop: str | None, found: list[tuple[int, int]]) -> int:
+    """Scan command text from i until `stop` (`)` or a backtick) or the end,
+    collecting bare placeholders; returns the index just past the stop."""
+    n = len(code)
+    pending: list[tuple[str, bool, bool]] = []
+    depth = 0  # subshells opened inside this scan, so `$( (a); b )` ends at the last `)`
+    cases = 0  # open `case` commands, whose pattern `x)` closes nothing
+    while i < n:
+        c = code[i]
+        if c == ")" and (depth or cases):
+            depth -= bool(depth)
+            i += 1
+            continue
+        if code.startswith(("case", "esac"), i) and _command_start(code, i) and (
+            i + 4 >= n or code[i + 4] in WORD_END
+        ):
+            cases += 1 if c == "c" else -bool(cases)
+            i += 4
+            continue
+        if stop and c == stop:
+            return i + 1
+        if c == "\\":
+            i += 2
+        elif c == "'":
+            end = code.find("'", i + 1)
+            i = n if end < 0 else end + 1
+        elif code.startswith("$'", i):
+            i += 2
+            while i < n and code[i] != "'":
+                i += 2 if code[i] == "\\" else 1
+            i += 1
+        elif c == '"':
+            i = _scan_double(code, i + 1, found)
+        elif code.startswith("$((", i) or (code.startswith("((", i) and _command_start(code, i)):
+            i = _skip_double_paren(code, i, found)
+        elif code.startswith("$(", i):
+            i = _scan(code, i + 2, ")", found)
+        elif code.startswith("${", i):
+            i = _scan_brace(code, i + 2, found)
+        elif c == "`":
+            i = _scan(code, i + 1, "`", found)
+        elif c == "(":
+            depth += 1
+            i += 1
+        elif c == "#" and (i == 0 or code[i - 1] in " \t\n;&|()"):
+            end = code.find("\n", i)
+            i = n if end < 0 else end
+        elif code.startswith("<<<", i):
+            i += 3
+        elif c == "<":
+            heredoc = _heredoc(code, i)
+            placeholder = PLACEHOLDER.match(code, i)
+            if heredoc and not placeholder:
+                word, dash, quoted, i = heredoc
+                pending.append((word, dash, quoted))
+            elif placeholder:
+                found.append(placeholder.span())
+                i = placeholder.end()
+            else:
+                i += 1
+        elif c == "\n" and pending:
+            i = _skip_heredoc_bodies(code, i + 1, pending, found)
+            pending = []
+        else:
+            i += 1
+    return i
+
+
+# A keyword after which `((` opens an arithmetic command: `for ((`, `if ((`.
+KEYWORD_BEFORE = re.compile(r"(?:^|[\s;&|(])(?:for|if|elif|while|until|do|then|else|!)$")
+
+
+def _command_start(code: str, i: int) -> bool:
+    """True when position i begins a command: at a line start, after ; & | (,
+    or after a keyword such as `for`, `if` or `while`."""
+    before = code[max(0, i - 64):i].rstrip(" \t")  # a bounded tail: the test needs one keyword
+    return not before or before[-1] in "\n;&|(" or bool(KEYWORD_BEFORE.search(before))
+
+
+def _scan_brace(code: str, i: int, found: list[tuple[int, int]]) -> int:
+    """Skip a `${...}` from i, just past its `${`. Its own text is a word, not
+    a command, but a `$(...)` or backticks inside it are commands again."""
+    n, depth = len(code), 1
+    while i < n:
+        c = code[i]
+        if c == "\\":
+            i += 2
+        elif c == "'":
+            end = code.find("'", i + 1)
+            i = n if end < 0 else end + 1
+        elif c == '"':
+            i = _scan_double(code, i + 1, found)
+        elif code.startswith("$((", i):
+            i = _skip_double_paren(code, i, found)
+        elif code.startswith("$(", i):
+            i = _scan(code, i + 2, ")", found)
+        elif c == "`":
+            i = _scan(code, i + 1, "`", found)
+        elif code.startswith("${", i):
+            depth += 1
+            i += 2
+        elif c == "}":
+            depth -= 1
+            i += 1
+            if not depth:
+                return i
+        else:
+            i += 1
+    return i
+
+
+def _scan_double(code: str, i: int, found: list[tuple[int, int]]) -> int:
+    """Skip a double-quoted string from i, scanning the commands inside it."""
+    n = len(code)
+    while i < n:
+        c = code[i]
+        if c == "\\":
+            i += 2
+        elif c == '"':
+            return i + 1
+        elif code.startswith("$((", i):
+            i = _skip_double_paren(code, i, found)
+        elif code.startswith("$(", i):
+            i = _scan(code, i + 2, ")", found)
+        elif code.startswith("${", i):
+            i = _scan_brace(code, i + 2, found)
+        elif c == "`":
+            i = _scan(code, i + 1, "`", found)
+        else:
+            i += 1
+    return i
+
+
+def _skip_heredoc_bodies(
+    code: str, i: int, pending: list[tuple[str, bool, bool]], found: list[tuple[int, int]]
+) -> int:
+    """Index of the newline ending the last pending heredoc body, starting at
+    the line after the opener. A terminator matches its line exactly; `<<-`
+    allows leading tabs. A body whose terminator is unquoted still expands
+    `$(...)` and backticks, so those are scanned; the rest of it is text."""
+    n = len(code)
+    for word, dash, quoted in pending:
+        while i < n:
+            end = code.find("\n", i)
+            end = n if end < 0 else end
+            line = code[i:end]
+            if (line.lstrip("\t") if dash else line) == word:
+                i = end + 1
+                break
+            if not quoted:
+                reached = _scan_expansions(code, i, end, found)
+                if reached > end:
+                    end = code.find("\n", reached)
+                    end = n if end < 0 else end
+            i = end + 1
+    return max(i - 1, 0) if i <= n else n
+
+
+def _scan_expansions(code: str, i: int, end: int, found: list[tuple[int, int]]) -> int:
+    """Scan the commands in text that only expands, such as an unquoted
+    heredoc body, from i to end; returns where scanning stopped."""
+    n = len(code)
+    while i < end:
+        c = code[i]
+        if c == "\\":
+            i += 2
+        elif code.startswith("$((", i):
+            i = _skip_double_paren(code, i, found)
+        elif code.startswith("$(", i):
+            i = _scan(code, i + 2, ")", found)
+        elif code.startswith("${", i):
+            i = _scan_brace(code, i + 2, found)
+        elif c == "`":
+            i = _scan(code, i + 1, "`", found)
+        else:
+            i += 1
+    return i
+
+
+def _skip_double_paren(code: str, start: int, found: list[tuple[int, int]]) -> int:
+    """Skip a `$((` or `((` construct from start. Bash reads it as arithmetic
+    when it closes with `))`, and otherwise as a subshell opening a
+    substitution or a command, `$((gh pr view <n>); true)`, whose text is
+    commands again and is scanned as such."""
+    n = len(code)
+    dollar = code[start] == "$"
+    inside: list[tuple[int, int]] = []
+    end = _skip_arith(code, start + (3 if dollar else 2), inside)
+    if end >= n or code[end] == ")":
+        found.extend(inside)
+        return min(end + 1, n)
+    return _scan(code, start + (2 if dollar else 1), ")", found)
+
+
+def _skip_arith(code: str, i: int, found: list[tuple[int, int]]) -> int:
+    """Skip arithmetic from i, just past its opening parentheses, to just past
+    the first `)` that closes them. A `<` there is a comparison or a shift, but
+    a `$(...)`, backticks or a `${...}` inside it are scanned."""
+    depth, n = 1, len(code)
+    while i < n and depth:
+        c = code[i]
+        if c == "\\":
+            i += 2
+        elif code.startswith("$(", i) and not code.startswith("$((", i):
+            i = _scan(code, i + 2, ")", found)
+        elif c == "`":
+            i = _scan(code, i + 1, "`", found)
+        elif code.startswith("${", i):
+            i = _scan_brace(code, i + 2, found)
+        else:
+            depth += c == "("
+            depth -= c == ")"
+            i += 1
+    return i
+
+
+def console_commands(code: str) -> str:
+    """The commands of a recorded run: each `$ ` line and its `\\` continuations."""
+    out: list[str] = []
+    cont = False
+    for line in code.splitlines():
+        if cont or line.startswith("$ "):
+            out.append(line[2:] if not cont else line)
+            cont = line.rstrip().endswith("\\")
+    return "\n".join(out)
 
 
 def parse_error(code: str) -> str | None:
@@ -118,7 +404,18 @@ def check(root: Path) -> int:
     sources = sorted(root.glob("plugins/*/skills/*/*.md")) or sorted(root.glob("**/*.md"))
     blocks = failures = 0
     for source in sources:
-        for block in iter_blocks(source.read_text()):
+        if source.is_symlink() or not source.is_file():
+            # A link can point at a FIFO or a device, which a read never finishes.
+            failures += 1
+            print(f"✘ {source} — not a regular file; skills are plain files", file=sys.stderr)
+            continue
+        try:
+            text = source.read_text(encoding="utf-8")
+        except UnicodeDecodeError as error:
+            failures += 1
+            print(f"✘ {source} — not UTF-8 ({error.reason} at byte {error.start})", file=sys.stderr)
+            continue
+        for block in iter_blocks(text):
             rel = source.relative_to(root) if source.is_relative_to(root) else source
             if not block.closed:
                 failures += 1
@@ -126,7 +423,21 @@ def check(root: Path) -> int:
                 print(f"✘ {rel}:{block.line} — unterminated {opened}", file=sys.stderr)
                 continue
             blocks += 1
-            complaint = parse_error(block.code)
+            console = block.lang in CONSOLE_LANGS
+            try:
+                bare = bare_placeholders(console_commands(block.code) if console else block.code)
+            except RecursionError:
+                failures += 1
+                print(f"✘ {rel}:{block.line} — too deeply nested to scan", file=sys.stderr)
+                continue
+            if bare:
+                failures += 1
+                print(
+                    f"✘ {rel}:{block.line} — bash reads {', '.join(bare)} as a redirect;"
+                    " quote it, e.g. gh pr view \"<n>\"",
+                    file=sys.stderr,
+                )
+            complaint = None if console else parse_error(block.code)
             if complaint is None:
                 continue
             failures += 1
@@ -136,7 +447,7 @@ def check(root: Path) -> int:
         checked = f"{blocks} shell block(s) checked" if blocks else "no shell block reached"
         print(f"\n✘ {failures} problem(s); {checked}", file=sys.stderr)
         return 1
-    print(f"✔ {blocks} shell block(s) parse under bash -n")
+    print(f"✔ {blocks} shell block(s) parse under bash -n, no bare placeholder")
     return 0
 
 

@@ -29,8 +29,8 @@ only thing left working.
 ### 1. Get the merge commit, and hold it
 
 ```bash
-mc=$(gh pr view <n> --json mergeCommit --jq .mergeCommit.oid)
-base=$(gh pr view <n> --json baseRefName --jq .baseRefName)
+mc=$(gh pr view "<n>" --json mergeCommit --jq .mergeCommit.oid)
+base=$(gh pr view "<n>" --json baseRefName --jq .baseRefName)
 case "$mc" in [0-9a-f]*[0-9a-f]) [ ${#mc} -eq 40 ] || exit 1;; *) exit 1;; esac
 ```
 
@@ -128,7 +128,7 @@ tries=$(( ( ${mins:-15} + 1 ) * 3 ))            # 20s per try
 # what the merge started. The limit is a window, not a guess: raise it on a
 # busy branch rather than assuming the run is among the first few.
 for _ in $(seq 1 "$tries"); do
-  r=$(gh run list --workflow <file> --event push --limit 50 \
+  r=$(gh run list --workflow "<file>" --event push --limit 50 \
         --json databaseId,headSha,status,conclusion \
         --jq "[.[] | select(.headSha==\"$mc\")] | .[0] // empty")
   [ -n "$r" ] || { sleep 20; continue; }          # not registered yet

@@ -49,10 +49,20 @@ Prose about judgement is out of scope here. Anything with a shell in it is in.
 ### 3. Run each one verbatim
 
 Do not adapt the command to make it work: an adapted command validates your
-adaptation, not the skill.
+adaptation, not the skill. Do read it in full before running it, because a skill
+under review is someone else's text running with your credentials: one that
+fetches and runs remote code, reads credential paths or writes outside the
+target project is a question for the skill's author, not a command to run. Run
+the rest in a throwaway copy of the target, with no tokens in its environment:
+a copy of the tree does not isolate `GH_TOKEN`, `GITHUB_TOKEN` or a cloud key,
+and a command that prints one puts it in the output step 7 quotes. The block
+unsets the common ones inside the substitution only; add any other your
+environment carries.
 
 ```bash
-out=$(<command from the skill> 2>&1); rc=$?
+# Replace the quoted placeholder, quotes included, with the skill's command as written.
+out=$(unset GH_TOKEN GITHUB_TOKEN GITLAB_TOKEN AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN
+      "<command from the skill>" 2>&1); rc=$?
 echo "rc=$rc"; echo "$out" | head
 ```
 
@@ -65,7 +75,7 @@ Before believing any "this tool rejects that" claim, find out which binary you
 have:
 
 ```bash
-command -v <tool>; <tool> --version 2>&1 | head -1
+command -v "<tool>"; "<tool>" --version 2>&1 | head -1
 ```
 
 A friendlier drop-in on `$PATH`, installed years ago and forgotten, accepts
@@ -93,7 +103,7 @@ You rarely have such a project to hand, so make one. These are cheap:
 
 ```bash
 d=$(mktemp -d); (cd "$d" && git init -q)        # empty tree, nothing built
-git clone --depth 1 <repo> "$d/fresh"           # real project, never built
+git clone --depth 1 "<repo>" "$d/fresh"           # real project, never built
 ```
 
 Run the skill's *discovery* steps there (its greps, its `find`s, its "locate the
@@ -122,8 +132,8 @@ this work goes wrong.
 One issue per skill, in the repo that owns it:
 
 ```bash
-gh issue create --repo <owner>/<repo> --title "skill: <name> (<what breaks>)" \
-  --body-file <file>
+gh issue create --repo "<owner>/<repo>" --title "skill: <name> (<what breaks>)" \
+  --body-file "<file>"
 ```
 
 `gh` assumes GitHub: check `git remote get-url origin` first and use the
@@ -135,7 +145,8 @@ user where it is: the report, not the issue, is the deliverable.
 
 Title it `skill: <name> (<what breaks>)` so several reports stay sortable. For
 each defect give, in order: the quoted line from the skill, the command you
-ran, its exit code and output, then what it costs someone following it. Close
+ran, its exit code and output (read for secrets and redacted first: it goes
+into a public issue), then what it costs someone following it. Close
 with what was **not** covered: steps needing credentials or integrations you
 lacked, and the behavioural half from step 6.
 

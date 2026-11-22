@@ -51,7 +51,7 @@ current repo if no explicit list:
    ```bash
    # reviews as well as comments: `--json` returns only what it is asked for,
    # and step 3 reads `.reviews[].body`, where a review's own findings live
-   gh pr view <n> --json mergeable,mergeStateStatus,statusCheckRollup,comments,reviews,baseRefName
+   gh pr view "<n>" --json mergeable,mergeStateStatus,statusCheckRollup,comments,reviews,baseRefName
    ```
 
 2. **Identify NEW comments** since your last reply on that PR. Your last reply
@@ -145,7 +145,7 @@ current repo if no explicit list:
    replaced by "No code change this round"):
    ```bash
    git push
-   gh pr view <n> --json mergeable,mergeStateStatus
+   gh pr view "<n>" --json mergeable,mergeStateStatus
    # confirm CLEAN before reporting back
    ```
 
@@ -164,7 +164,7 @@ current repo if no explicit list:
 
    ```bash
    case "$(jq length <<<"$mine")" in
-     0) gh pr comment <n> --body-file reply.md ;;
+     0) gh pr comment "<n>" --body-file reply.md ;;
      1) gh api -X PATCH "repos/<owner>/<repo>/issues/comments/$(jq -r '.[0].id' <<<"$mine")" -F body=@reply.md ;;
      *) echo "more than one sticky match: refusing to patch" >&2; exit 1;;
    esac

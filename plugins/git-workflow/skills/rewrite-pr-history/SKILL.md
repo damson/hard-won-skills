@@ -18,7 +18,7 @@ show the plan before rewriting. Every step is recoverable if interrupted.
 ### 1. Read PR state
 
 ```bash
-gh pr view <N> --json baseRefName,headRefName,mergeable,mergeStateStatus,reviewDecision,commits
+gh pr view "<N>" --json baseRefName,headRefName,mergeable,mergeStateStatus,reviewDecision,commits
 ```
 
 Confirm:
@@ -35,7 +35,7 @@ Confirm:
 
 ```bash
 git fetch origin --prune
-git checkout <head-branch>
+git checkout "<head-branch>"
 ```
 
 Verify clean working tree (`git status -s` returns empty). If dirty, stop and
@@ -44,8 +44,8 @@ ask the user. Never auto-stash without consent.
 ### 3. Show the plan
 
 Run `git log --oneline origin/<base>..HEAD` and `git diff origin/<base> --stat`.
-State the intended action in plain words (e.g. "I'll drop commit X by rebasing
---onto origin/main starting after it"). **Wait for explicit user "go"** before
+State the intended action in plain words (e.g. "I'll drop commit X by replaying
+the commits after it onto its parent"). **Wait for explicit user "go"** before
 rewriting.
 
 ### 4. Rewrite
@@ -55,7 +55,7 @@ Use the smallest-blast-radius command for the job:
 | Goal | Command |
 |---|---|
 | Resolve conflicts with new main | `git rebase origin/main` |
-| Drop one commit in the middle | `git rebase --onto <base> <commit-to-drop> <branch>` |
+| Drop one commit in the middle | `git rebase --onto "<commit-to-drop>^" "<commit-to-drop>" "<branch>"`: onto the dropped commit's parent, or the commits before it go too |
 | Reorder / squash | non-interactive sequence edit, below: `git rebase -i` needs a terminal this environment does not have |
 | Reword last commit only | `git commit --amend` (verify HEAD is the right commit first) |
 | Split last commit | `git reset --soft HEAD~` then re-stage in parts |
@@ -70,12 +70,16 @@ skill.
 
 Resolve the commit to a real object id first, and export it: git writes object
 ids in the todo file, so a literal `<sha>` matches nothing and the rebase
-replays the branch unchanged, which looks like success.
+replays the branch unchanged, which looks like success. Chain the rebase on a
+non-empty id that is one of this branch's own commits: an empty `DROP` turns
+the edit into `s/^pick /drop /`, which drops every commit on the branch, and
+an id from outside `<base>..HEAD` matches nothing and reports success.
 
 ```bash
-export DROP=$(git rev-parse --short=7 <commit-to-drop>)
-GIT_SEQUENCE_EDITOR='f() { sed "s/^pick $DROP/drop $DROP/" "${1}" > "${1}.todo" && mv "${1}.todo" "${1}"; }; f' \
-  git rebase -i <base>
+DROP=$(git rev-parse --short=7 "<commit-to-drop>") && [ -n "$DROP" ] && export DROP &&
+  git merge-base --is-ancestor "$DROP" HEAD && ! git merge-base --is-ancestor "$DROP" "<base>" &&
+  GIT_SEQUENCE_EDITOR='f() { sed "s/^pick $DROP/drop $DROP/" "${1}" > "${1}.todo" && mv "${1}.todo" "${1}"; }; f' \
+  git rebase -i "<base>"
 ```
 
 Seven characters on purpose: git abbreviates the todo's ids to whatever the
@@ -107,7 +111,7 @@ locally first.
 ### 6. Force-push with lease
 
 ```bash
-git push --force-with-lease origin <branch>
+git push --force-with-lease origin "<branch>"
 ```
 
 **Never** plain `--force`. `--force-with-lease` refuses to clobber if the
@@ -117,7 +121,7 @@ between expected and actual remote state.
 ### 7. Verify on the platform
 
 ```bash
-gh pr view <N> --json mergeable,mergeStateStatus,commits -q \
+gh pr view "<N>" --json mergeable,mergeStateStatus,commits -q \
   '{state:.mergeStateStatus,mergeable:.mergeable,commits:[.commits[].messageHeadline]}'
 ```
 

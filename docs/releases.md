@@ -44,6 +44,11 @@ you cannot release nothing.
 - Patch-bumps `plugin.json` for **only** the plugins with changes under
   `plugins/<name>/**`, and commits that to `develop`. Untouched plugins keep
   their version, so `claude plugin update` re-fetches only what moved.
+  That commit conflicts with any open PR that minor-bumped the same plugin.
+  Keep the PR's `"version"` line and `develop`'s side of anything else in the
+  file, since the minor bump already supersedes the patch and the next release
+  patch-bumps from it. `git checkout --ours` takes the whole file from the PR,
+  which silently drops any other `develop` edit to it.
 - Opens the `develop → main` pull request with the inventory: which versions
   moved, which PRs are in the batch, the diffstat, the commits.
 - Runs the CI suite and enables auto-merge.
@@ -222,7 +227,19 @@ ships and no other.
 fenced shell block in every skill with `bash -n`, which never executes them.
 The blocks are what a reader pastes into a terminal, and nothing else here
 reads them: an unbalanced quote or an unterminated loop ships green and is
-found by whoever tries to follow the step. Angle-bracket placeholders are
-substituted before parsing, because `git fetch <url> <branch>` is how these
-skills say what to fill in and bash reads `<url>` as a redirect. So it catches
-malformed shell, not a badly chosen placeholder.
+found by whoever tries to follow the step. It also rejects a placeholder
+outside quotes, which parses fine and is the worse bug: in `gh pr view <n>
+--json author` bash reads `<n>` as two redirects, input from a file named `n`
+and output to one named `--json`, so the pasted line runs another command or
+fails on a missing file. Blocks quote it instead, `gh pr view "<n>"`: one
+literal word, never a redirect, and nothing stored for a later line to reuse.
+It is still a value to fill in before running: most commands refuse the
+literal, but a search for it finds nothing, which reads as clean. Named
+variables (`"${pr:?}"`) are not the convention, because a pasted block runs
+line by line in a shell that keeps its variables: a guard that skips one
+assignment leaves the previous value for the next line to act on. A placeholder
+inside quotes, a comment or a heredoc body is text, and is swapped for a plain
+word before the parse; one inside a `$(...)` or backticks is a command again,
+whether or not the substitution sits in double quotes, and so is one in an
+unquoted heredoc body. A `console` block is a recorded run, so only its `$ `
+lines are checked, and none of it is parsed.

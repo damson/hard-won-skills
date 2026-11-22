@@ -77,8 +77,8 @@ the first merge and orders the set around them. A merge then changes the base
 under the others that touch those files, and a go-ahead covers a head rather
 than what it becomes on a new base, so once one such pull request has landed,
 the go-ahead of the others that touch those files lapses, and each needs a
-refresh and a fresh go-ahead, which starts the skill again. It never refreshes or pushes a
-branch itself.
+refresh and a fresh go-ahead, which starts the skill again. It never refreshes
+or pushes a branch itself.
 
 Landing is confirmed with the merge commit, not the branch tip. A squash is not
 the commits it squashed, so asking whether the head is an ancestor of the base
