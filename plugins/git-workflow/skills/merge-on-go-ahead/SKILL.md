@@ -59,20 +59,30 @@ merge style the repo forbids, or while a review sits unanswered.
    overlap. Order the whole set by dependency whatever the output (a PR whose
    branch contains another's commits lands after that one). Where there is
    output, among PRs free to go in either order, land the widest edit to the
-   shared files first, by lines changed there, so each refresh resolves
-   against a base that already says the most.
+   shared files first (most lines changed there, per
+   `gh pr view <n> --json files`), so each refresh resolves against a base
+   that already says the most. The set and its shared files are fixed here,
+   before the first merge.
 
-   Between merges, once step 9 has proved the last one landed, refresh the
-   siblings it dirtied, one at a time:
+   After each merge, once steps 8 and 9 have settled and proved it, refresh
+   the siblings it touched, one at a time:
 
-   a. **Pick them.** After step 8's wait, take each authorised sibling that
-      shares a file with what just landed and whose `mergeStateStatus` now
-      reads `DIRTY` or `BEHIND`; read it again while it reads `UNKNOWN`.
+   a. **Pick them.** Every authorised sibling that shares a file with what
+      just landed, whatever its `mergeStateStatus`: one that would merge
+      cleanly still combines with content its go-ahead never covered.
    b. **Refuse what is not yours to push.** A fork's branch
-      (`isCrossRepository`) is the contributor's to refresh: say so and stop.
-      Compare `git remote get-url origin` with the PR's repository without
-      printing it, since a remote URL can carry a token, and stop if they
-      differ.
+      (`isCrossRepository`), or a head that is an integration or install
+      branch (a back-merge or release PR), is not refreshed here: say so and
+      stop. Check that `origin` is the PR's repository, comparing owner and
+      name only, so no URL or token is printed:
+
+      ```bash
+      want=$(gh pr view <n> --json headRepositoryOwner,headRepository \
+        --jq '.headRepositoryOwner.login + "/" + .headRepository.name')
+      have=$(git remote get-url origin | sed -E 's#\.git$##; s#^.*[:/]([^/]+/[^/]+)$#\1#')
+      [ -n "$want" ] && [ "$want" = "$have" ] || echo "origin is not the PR's repository: stop"
+      ```
+
    c. **Merge, never rebase.** `git fetch origin`, a new worktree from
       `origin/<headRefName>`, and a plain `git merge origin/<base>` in it; no
       rebase and no force-push, so not `branch-hygiene`'s rebase here. If the
@@ -80,7 +90,7 @@ merge style the repo forbids, or while a review sits unanswered.
       (`git diff --name-only --diff-filter=U`): where every one is a shared
       file, keep both sides' lines, since taking either side compiles, passes
       and reverts the other PR's work, and commit the resolution; anything
-      else, an empty list included, stops the step.
+      else, an empty list included, stops the procedure.
    d. **Read the shared files, conflict or not.** Two edits can merge cleanly
       and still be wrong together: two PRs that each raised a count from 10 to
       11 merge to 11, where 12 may have been meant. Where the two disagree
@@ -90,10 +100,10 @@ merge style the repo forbids, or while a review sits unanswered.
       `git diff <authorised head> HEAD`, and
       `git diff origin/<base> HEAD -- <shared file>`, which must show only
       this PR's own lines, and wait.
-   f. **On a go-ahead given after they have seen that SHA**, push it
-      (`git push origin HEAD:<headRefName>`), check the PR's head now equals
-      it, wait as step 8 does, and carry on from step 1 for this PR, which
-      pins that SHA.
+   f. **On a go-ahead given after they have seen that SHA**, push exactly it
+      (`git push origin <shown sha>:<headRefName>`), check the PR's head now
+      equals it, wait as step 8 does, and carry on from step 1 for this PR,
+      which pins that SHA.
 
    After the last merge, read the shared files against what landed: a count
    or list every PR edited is where the result goes wrong, and a statement
@@ -247,6 +257,10 @@ merge style the repo forbids, or while a review sits unanswered.
   identical in a summary and are opposites; treat missing as pending.
 - **A review posted findings that have no reply.** Answer them first, or hand
   back; merging closes the thread by force.
+- **A sibling cannot be refreshed here**: a fork's branch, an integration or
+  install branch as its head, an `origin` that is not its repository, or a
+  merge that fails outside the shared files. Report it and stop; the merges
+  already landed stay.
 - **The shared file cannot keep both sides**, because two PRs changed the same
   line's meaning rather than both adding to it. Which one is right is a
   decision, not a resolution: ask.

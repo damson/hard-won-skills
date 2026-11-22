@@ -75,9 +75,9 @@ exit on it looking satisfied.
 When the authorised set shares a file, the skill finds the shared files before the
 first merge and orders the set around it, because each merge leaves the others
 conflicting there. It refreshes each sibling by merging the base in, never by
-rebasing, so nothing is force-pushed. A conflict keeps both sides of the shared
-file, since taking either compiles, passes and reverts the other pull request's
-line. Every refresh stops before anything is pushed: the user sees the new
+rebasing, so nothing is force-pushed. A conflict confined to the shared files
+keeps both sides, since taking either compiles, passes and reverts the other
+pull request's line; a conflict anywhere else stops it. Every refresh stops before anything is pushed: the user sees the new
 commit, its diff and the shared files, and only their go-ahead pushes it and
 lets it merge. After the last merge it reads the shared file against what actually
 landed.
