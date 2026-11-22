@@ -55,11 +55,14 @@ fetches and runs remote code, reads credential paths or writes outside the
 target project is a question for the skill's author, not a command to run. Run
 the rest in a throwaway copy of the target, with no tokens in its environment:
 a copy of the tree does not isolate `GH_TOKEN`, `GITHUB_TOKEN` or a cloud key,
-and a command that prints one puts it in the output step 7 quotes.
+and a command that prints one puts it in the output step 7 quotes. The block
+unsets the common ones inside the substitution only; add any other your
+environment carries.
 
 ```bash
 # Replace the quoted placeholder, quotes included, with the skill's command as written.
-out=$("<command from the skill>" 2>&1); rc=$?
+out=$(unset GH_TOKEN GITHUB_TOKEN GITLAB_TOKEN AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN
+      "<command from the skill>" 2>&1); rc=$?
 echo "rc=$rc"; echo "$out" | head
 ```
 
