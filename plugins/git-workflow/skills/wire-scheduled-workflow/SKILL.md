@@ -43,7 +43,7 @@ until it reaches the default branch.
    def=$(gh repo view --json defaultBranchRef -q .defaultBranchRef.name)
    git fetch origin "+refs/heads/$def:refs/remotes/origin/$def"  # a stale or
    # single-branch clone otherwise answers from a tree that isn't there
-   git ls-tree "origin/$def" -- .github/workflows/<file>.yml   # empty = not there yet
+   git ls-tree "origin/$def" -- ".github/workflows/<file>.yml"   # empty = not there yet
    ```
 
    A failed fetch stops the trace: the emptiness of `ls-tree` means nothing

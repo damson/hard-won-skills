@@ -64,7 +64,7 @@ Note the count. Without a before-number, "it recorded" is unfalsifiable.
 ### 3. Record, scoped to the test you mean
 
 ```bash
-./gradlew :<module>:clean :<module>:<record-task-from-step-1> \
+./gradlew ":<module>:clean" ":<module>:<record-task-from-step-1>" \
   --tests "<fully.qualified.TestClass>*"
 ```
 

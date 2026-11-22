@@ -28,7 +28,7 @@ Each costs one fix commit + one CI cycle. The patterns below avoid all three.
 ### 1. Scan the migration
 
 ```bash
-grep -nE '\b(auth|storage|realtime|supabase_functions)\.' supabase/migrations/<new>.sql
+grep -nE '\b(auth|storage|realtime|supabase_functions)\.' "supabase/migrations/<new>.sql"
 ```
 
 For every match, decide: does the referenced object exist in vanilla Postgres? If no, the migration needs a guard.

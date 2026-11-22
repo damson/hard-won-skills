@@ -137,7 +137,7 @@ Run the cheapest command that exercises real config + deps, not just a lockfile 
 
   ```bash
   curl -s -o /dev/null --max-time 2 "$url" && { echo "something already answers $url: stop it first"; exit 1; }
-  <pm> run dev & pid=$!
+  "<pm>" run dev & pid=$!
   ready=
   for _ in $(seq 1 30); do
     kill -0 "$pid" 2>/dev/null || break                             # the server exited: nothing left to wait for
@@ -155,7 +155,7 @@ Run the cheapest command that exercises real config + deps, not just a lockfile 
 
   ```bash
   ./gradlew -q projects                         # the module paths that exist
-  ./gradlew -q :<module>:tasks --all | grep -E '^assembleDebug( |$)'
+  ./gradlew -q ":<module>:tasks" --all | grep -E '^assembleDebug( |$)'
   ```
 
   Take the module the change touches, or the smallest one that compiles where it

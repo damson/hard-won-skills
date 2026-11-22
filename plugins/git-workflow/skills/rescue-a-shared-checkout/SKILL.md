@@ -172,8 +172,8 @@ which is the destructive answer, on the exact case this check was added to catch
 characters a regex would read as syntax.
 
 ```bash
-stat -f '%Sm %N' <paths>   # BSD/macOS
-stat -c '%y %n' <paths>    # GNU
+stat -f '%Sm %N' "<paths>"   # BSD/macOS
+stat -c '%y %n' "<paths>"    # GNU
 date
 ```
 
@@ -186,7 +186,7 @@ advisory, say in the pull request which of them you ran, and where a writer can
 be asked, ask instead. For a second opinion, ask who holds the files open:
 
 ```bash
-lsof +D <dir> 2>/dev/null | awk 'NR>1 {print $(1), $NF}' | sort -u
+lsof +D "<dir>" 2>/dev/null | awk 'NR>1 {print $(1), $NF}' | sort -u
 ```
 
 Cluster the timestamps too: a group of files sharing one timestamp to the
@@ -216,7 +216,7 @@ rescue looks like:
 ```bash
 DEST=$WORK/rescue    # new, outside the shared tree
 [ -n "$WORK" ] && [ ! -e "$DEST" ] &&
-  git worktree add "$DEST" -b <branch> "$REMOTE/$BASE" &&
+  git worktree add "$DEST" -b "<branch>" "$REMOTE/$BASE" &&
   xargs -0 git diff --binary "$REMOTE/$BASE" -- < "$TRACKED" |
   git -C "$DEST" apply --binary --index ||
   echo "STOP: no clean rescue worktree; run step 1 in this shell, or inspect $DEST (git worktree list) and remove it, or pick a new DEST"
@@ -249,7 +249,7 @@ done < "$UNTRACKED"
 ### 4. Prove the copy is faithful
 
 ```bash
-diff -q <source> <copy> || echo "MISMATCH"
+diff -q "<source>" "<copy>" || echo "MISMATCH"
 ```
 
 Cheap, and it catches an editor that reflowed on save or a copy that silently
@@ -379,7 +379,7 @@ runs in the current directory, which step 1 made the shared tree, so an empty
   git -C "$DEST" add -A &&
   git -C "$DEST" commit -m "Rescue uncommitted work from the shared checkout" &&
   git -C "$DEST" push -u "$REMOTE" HEAD &&
-  gh pr create --base "$BASE" --head <branch>
+  gh pr create --base "$BASE" --head "<branch>"
 ```
 
 ### 8. Attribute honestly, and mark what you cannot verify

@@ -41,7 +41,7 @@ A pull request opened two minutes ago, read the moment the rollup is
 available:
 
 ```console
-$ gh pr view <n> --json statusCheckRollup \
+$ gh pr view 42 --json statusCheckRollup \
     -q '[.statusCheckRollup[] | "\(.name // .context)=\(.conclusion // .state)"]'
 ["validate=", "CodeRabbit=PENDING"]
 ```
@@ -55,7 +55,7 @@ Judged properly, both entries are pending and the wait continues. Four minutes
 later the same command is terminal, and only then is there a verdict to quote:
 
 ```console
-$ gh pr view <n> --json statusCheckRollup \
+$ gh pr view 42 --json statusCheckRollup \
     -q '[.statusCheckRollup[] | "\(.name // .context)=\(.conclusion // .state)"]'
 ["validate=SUCCESS", "CodeRabbit=SUCCESS", "codecov/patch=SUCCESS", "codecov/project=SUCCESS"]
 ```

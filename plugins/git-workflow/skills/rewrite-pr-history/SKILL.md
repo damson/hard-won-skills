@@ -18,7 +18,7 @@ show the plan before rewriting. Every step is recoverable if interrupted.
 ### 1. Read PR state
 
 ```bash
-gh pr view <N> --json baseRefName,headRefName,mergeable,mergeStateStatus,reviewDecision,commits
+gh pr view "<N>" --json baseRefName,headRefName,mergeable,mergeStateStatus,reviewDecision,commits
 ```
 
 Confirm:
@@ -35,7 +35,7 @@ Confirm:
 
 ```bash
 git fetch origin --prune
-git checkout <head-branch>
+git checkout "<head-branch>"
 ```
 
 Verify clean working tree (`git status -s` returns empty). If dirty, stop and
@@ -111,7 +111,7 @@ locally first.
 ### 6. Force-push with lease
 
 ```bash
-git push --force-with-lease origin <branch>
+git push --force-with-lease origin "<branch>"
 ```
 
 **Never** plain `--force`. `--force-with-lease` refuses to clobber if the
@@ -121,7 +121,7 @@ between expected and actual remote state.
 ### 7. Verify on the platform
 
 ```bash
-gh pr view <N> --json mergeable,mergeStateStatus,commits -q \
+gh pr view "<N>" --json mergeable,mergeStateStatus,commits -q \
   '{state:.mergeStateStatus,mergeable:.mergeable,commits:[.commits[].messageHeadline]}'
 ```
 

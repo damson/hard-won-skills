@@ -53,12 +53,113 @@ VALID = {
     "arrow in a string": 'echo "HEAD MOVED $a -> $b"\n',
     "heredoc": "cat <<'MSG'\nliteral <not-a-redirect> text\nMSG\n",
     "arithmetic comparison": '[ "$n" -lt 3 ] && echo few\n',
+    "C-style loop with a later redirect": "for (( i=0; i<n; i++ )); do echo $i >> log; done\n",
 }
 
 
 @pytest.mark.parametrize("label", sorted(VALID))
 def test_documentation_shapes_are_not_errors(label):
     assert vsb.parse_error(VALID[label]) is None, label
+
+
+# ── placeholders bash would read as redirects ───────────────────────────────
+
+BARE = {
+    "bare argument": ("gh pr view <n> --json author\n", ["<n>"]),
+    "inside a path": ("gh api repos/<owner>/<repo>/pulls\n", ["<owner>", "<repo>"]),
+    "after a colon": ("./gradlew :<module>:tasks\n", ["<module>"]),
+    "holding a space": ("cp <somewhere durable>/x .\n", ["<somewhere durable>"]),
+    "after a heredoc ends": ("cat <<'EOF'\n<fine>\nEOF\ngit push <remote>\n", ["<remote>"]),
+    "after a closed quote": ('echo "x" <file>\n', ["<file>"]),
+    "inside a quoted substitution": ('x="$(gh pr view <n> --json title)"\n', ["<n>"]),
+    "inside quoted backticks": ('x="`gh pr view <n>`"\n', ["<n>"]),
+    "after an ANSI-C string": ("echo $'it\\'s' <n>\n", ["<n>"]),
+    "after an arithmetic shift": ("y=$(( 1<<shift ))\ngh pr view <n>\n", ["<n>"]),
+    "in a nested substitution": ("a=$(echo $(cat <f>))\n", ["<f>"]),
+    "in a substitution inside an expansion": ("t=${t:-$(gh pr view <n> --json title)}\n", ["<n>"]),
+    "in a substitution inside a quoted expansion": ('t="${t:-$(gh pr view <n>)}"\n', ["<n>"]),
+    "in backticks inside an expansion": ("t=${t:-`gh pr view <n>`}\n", ["<n>"]),
+    "in a substitution in an unquoted heredoc": ("cat <<EOF\nPR $(gh pr view <n>)\nEOF\n", ["<n>"]),
+    "in backticks in an unquoted heredoc": ("cat <<-EOF\n\t`cat <f>`\n\tEOF\n", ["<f>"]),
+    "after a subshell inside a substitution": ('t="$( (true); gh pr view <n> --json title )"\n', ["<n>"]),
+    "in a substitution inside arithmetic": ('echo "$(( $(gh pr view <n> --json number) + 1 ))"\n', ["<n>"]),
+    "in a substitution inside an arithmetic command": ("(( $(cat <f>) > 1 ))\n", ["<f>"]),
+    "in a subshell that opens a substitution": ("x=$((gh pr view <n>); true)\n", ["<n>"]),
+    "in a subshell that opens a quoted substitution": ('echo "$((echo <pa>) ; echo b)"\n', ["<pa>"]),
+    "in a nested subshell at command start": ("((echo <pa>) ; echo b)\n", ["<pa>"]),
+    "after a case pattern inside a substitution": ('x="$(case x in x) gh pr view <n> ;; esac)"\n', ["<n>"]),
+    "after a heredoc with a partly quoted terminator": ('cat <<E"OF"\ntext\nEOF\ngh pr view <n> --json title\n', ["<n>"]),
+}
+
+
+def test_a_heredoc_opened_on_the_last_line_does_not_crash():
+    assert vsb.bare_placeholders("cat <<EOF\n") == []
+
+
+@pytest.mark.parametrize("label", sorted(BARE))
+def test_bare_placeholders_are_found(label):
+    code, expected = BARE[label]
+    assert vsb.bare_placeholders(code) == expected, label
+
+
+NOT_BARE = {
+    "double-quoted": 'gh issue create --title "skill: <name> (<what breaks>)"\n',
+    "single-quoted": "gh api x --jq '.[] | select(.name == \"<check>\")'\n",
+    "comment": "git worktree list   # find any path already on <branch>\n",
+    "whole-line comment": "# <owner>/<repo>\n",
+    "heredoc body": "cat <<EOF\nliteral <not-a-redirect> text\nEOF\n",
+    "dashed quoted heredoc": "cat <<-'MSG'\n\t<still text>\n\tMSG\n",
+    "process substitution": 'comm -13 <(echo "$a") <(echo "$b")\n',
+    "here-string": 'jq -r length <<<"$s"\n',
+    "redirect from a real file": "wc -l < input.txt\n",
+    "named value": 'gh pr view "${pr:?}" --json author\n',
+    "multi-line single quote": "node -e '\n  const d = \"<!doctype html><body>\";\n'\n",
+    "escaped angle bracket": "echo \\<n\\>\n",
+    "comment after a subshell": "(true)#<n>\n",
+    "default inside an expansion": "echo ${x:-<n>}\n",
+    "arithmetic command": "(( a << 2 ))\n",
+    "terminator with trailing spaces does not end the body": "cat <<EOF\nEOF  \n<still-body>\nEOF\n",
+    "indented terminator does not end a plain heredoc": "cat <<EOF\n  EOF\n<still-body>\nEOF\n",
+    "backslash-quoted terminator": "cat <<\\EOF\n<text>\nEOF\n",
+    "terminator holding a dash": "cat <<'END-MSG'\n<text>\nEND-MSG\n",
+    "two heredocs on one line": "paste <<A <<B\n<one>\nA\n<two>\nB\n",
+    "substitution in a quoted heredoc": "cat <<'EOF'\n$(gh pr view <n>)\nEOF\n",
+    "substitution in a backslash-quoted heredoc": "cat <<\\EOF\n$(gh pr view <n>)\nEOF\n",
+    "substitution in a partly backslash-quoted heredoc": "cat <<E\\OF\n$(gh pr view <n>)\nEOF\n",
+    "substitution in a mixed-quote heredoc": "cat <<'E'OF\n$(gh pr view <n>)\nEOF\n",
+    "a case pattern ends no substitution early": 'x="$(case $y in a) echo "<text>" ;; esac)"\n',
+    "comparison beside a substitution in arithmetic": "echo $(( $(wc -l < f) + a<b && c>d ))\n",
+    "input and output redirects": "sort <in.txt >out.txt\n",
+    "input redirect and a numbered one": "sort <in.txt 2>err.txt\n",
+    "C-style for loop": "for (( i=0; i<n; i++ )); do echo $i >> log; done\n",
+    "C-style for loop with an unspaced redirect": "for (( i=0; i<n; i++ )); do echo $i>log; done\n",
+    "while arithmetic": "while (( i<n )); do echo $i>log; i=$((i+1)); done\n",
+    "if arithmetic": "if (( a<b )); then echo $a>log; fi\n",
+    "text inside an expansion": 'echo "${x:-<n>}"\n',
+}
+
+
+@pytest.mark.parametrize("label", sorted(NOT_BARE))
+def test_text_that_only_looks_like_a_placeholder_is_not_flagged(label):
+    assert vsb.bare_placeholders(NOT_BARE[label]) == [], label
+
+
+def test_console_blocks_check_only_their_commands(tmp_path, capsys):
+    # A recorded run: the `$ ` line and its continuation are pasteable, the
+    # output below them is not, and none of it goes through bash -n.
+    run = "$ gh pr view <n> --json title \\\n    -q .title\n<output that looks like a placeholder>\n"
+    (tmp_path / "SKILL.md").write_text(md(run, lang="console"))
+    assert vsb.main([str(tmp_path)]) == 1
+    err = capsys.readouterr().err
+    assert "bash reads <n> as a redirect" in err and "<output" not in err
+
+
+def test_check_fails_on_a_bare_placeholder_that_parses(tmp_path, capsys):
+    # The whole point: `bash -n` accepts a redirect, so the parse alone is green.
+    assert vsb.parse_error("gh pr view <n> --json author") is None
+    (tmp_path / "SKILL.md").write_text(md("gh pr view <n> --json author"))
+    assert vsb.main([str(tmp_path)]) == 1
+    assert "bash reads <n> as a redirect" in capsys.readouterr().err
 
 
 # ── extraction ───────────────────────────────────────────────────────────────
@@ -148,7 +249,7 @@ def test_check_reports_and_fails_on_a_broken_block(tmp_path, capsys):
 def test_check_passes_a_clean_tree(tmp_path, capsys):
     skill = tmp_path / "plugins" / "p" / "skills" / "s"
     skill.mkdir(parents=True)
-    (skill / "SKILL.md").write_text(md("git fetch <url> <branch>"))
+    (skill / "SKILL.md").write_text(md('git fetch "${url:?}" "${branch:?}"  # <url> is fine here'))
     assert vsb.check(tmp_path) == 0
     assert "1 shell block(s) parse" in capsys.readouterr().out
 
@@ -166,7 +267,7 @@ def test_main_accepts_a_directory_argument(tmp_path, capsys):
 
 def test_the_script_runs_as_a_command(tmp_path):
     script = Path(__file__).parent.parent / "scripts" / "validate-shell-blocks.py"
-    (tmp_path / "SKILL.md").write_text(md("echo fine <placeholder>"))
+    (tmp_path / "SKILL.md").write_text(md('echo "fine <placeholder>"'))
     done = subprocess.run(
         [sys.executable, str(script), str(tmp_path)], capture_output=True, text=True
     )
@@ -204,3 +305,27 @@ def test_a_closed_block_is_marked_closed():
 
 def test_this_marketplace_parses():
     assert vsb.check(Path(__file__).parent.parent) == 0
+
+
+def test_deep_nesting_is_reported_not_raised(tmp_path, capsys):
+    # One recursion frame per nested substitution: past Python's limit the
+    # block is a failure line, not a traceback that hides every other result.
+    deep = "x=" + "$(" * 1200 + "true" + ")" * 1200 + "\n"
+    (tmp_path / "SKILL.md").write_text(md(deep))
+    assert vsb.main([str(tmp_path)]) == 1
+    assert "too deeply nested" in capsys.readouterr().err
+
+
+def test_a_symlinked_skill_file_is_reported_not_read(tmp_path, capsys):
+    # A link to a FIFO would block the read forever; the link is the finding.
+    import os
+    os.mkfifo(tmp_path / "pipe")
+    (tmp_path / "SKILL.md").symlink_to(tmp_path / "pipe")
+    assert vsb.main([str(tmp_path)]) == 1
+    assert "not a regular file" in capsys.readouterr().err
+
+
+def test_a_file_that_is_not_utf8_is_reported_not_raised(tmp_path, capsys):
+    (tmp_path / "SKILL.md").write_bytes(b"```bash\necho \xff\n```\n")
+    assert vsb.main([str(tmp_path)]) == 1
+    assert "not UTF-8" in capsys.readouterr().err

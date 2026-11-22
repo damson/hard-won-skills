@@ -24,8 +24,8 @@ helping.
 1. **Find the children, and retarget them FIRST**:
 
    ```bash
-   gh pr list --base <branch-about-to-merge> --json number,headRefName
-   gh pr edit <n> --base <the parent's own base>      # BEFORE the merge
+   gh pr list --base "<branch-about-to-merge>" --json number,headRefName
+   gh pr edit "<n>" --base "<the parent's own base>"      # BEFORE the merge
    ```
 
    Merging the parent does **not** retarget a child. It leaves it running its
@@ -41,7 +41,7 @@ helping.
    the branch still there, which is the state that leaves a child stranded.
 
    ```bash
-   git worktree remove <path> && gh pr merge <parent> --squash --delete-branch
+   git worktree remove "<path>" && gh pr merge "<parent>" --squash --delete-branch
    ```
 
 3. **Then rebase each child** onto the new base, per the procedure below.
@@ -69,7 +69,7 @@ helping.
    rollup carries all of them:
 
    ```bash
-   gh pr view <n> --json statusCheckRollup \
+   gh pr view "<n>" --json statusCheckRollup \
      --jq '.statusCheckRollup[] | [.__typename, (.name // .context), (.conclusion // .state)] | @tsv'
    ```
 
@@ -126,7 +126,7 @@ helping.
    is deleted. Get it by counting your own commits back from the tip:
 
    ```bash
-   n=$(gh pr view <child> --json commits -q '.commits | length')
+   n=$(gh pr view "<child>" --json commits -q '.commits | length')
    parent_tip=$(git -C "$wt" rev-parse "<branch>~$n")
    git -C "$wt" log --oneline "$parent_tip..<branch>"   # exactly the child's own commits?
    ```
@@ -141,13 +141,13 @@ helping.
    for why the API cannot answer this:
 
    ```bash
-   git -C "$wt" merge-base --is-ancestor "$parent_tip" origin/<base-branch> \
+   git -C "$wt" merge-base --is-ancestor "$parent_tip" "origin/<base-branch>" \
      && echo "plain rebase" || echo "rebase --onto"
    ```
 
    c. **Inspect the result**:
    ```bash
-   git -C "$wt" log --oneline origin/<base-branch>..HEAD
+   git -C "$wt" log --oneline "origin/<base-branch>..HEAD"
    ```
    Every commit here should be this PR's own work. An unexplainable one (a
    cherry-pick from another worktree, a stray amend) is a STOP: see below.
@@ -176,7 +176,7 @@ helping.
    temporaries step 3a added: those outlive their branch and step 4 is the only
    thing that collects them:
    ```bash
-   git worktree remove <path>          # refuses on untracked files; inspect,
+   git worktree remove "<path>"          # refuses on untracked files; inspect,
                                        # then --force once you know what they are
    ```
 
@@ -195,8 +195,18 @@ helping.
      [ "$info" = "MERGED $(git rev-parse "$b")" ] && echo "$b" >> "$list"
    done
    grep -qxE "<base-branch>|$def" "$list" && { echo "ABORT"; exit 1; }
-   [ -s "$list" ] && xargs -n1 git branch -D < "$list"   # -d refuses a squash-merged branch
-   git push origin --delete <branch>      # skip if the merge already deleted it
+   # Remote first, behind a lease on the merged tip, so a remote that moved past
+   # it is refused; the local copy goes only once the remote is gone (by this
+   # push or by the merge), so nothing is left that a later sweep cannot see.
+   while IFS= read -r b; do
+     git worktree list --porcelain | grep -qxF "branch refs/heads/$b" &&
+       { echo "KEPT $b: a worktree holds it"; continue; }
+     tip=$(git rev-parse "$b") || continue
+     git push -q origin --delete --force-with-lease="$b:$tip" "$b" 2>/dev/null
+     git ls-remote --exit-code --heads origin "$b" >/dev/null
+     if [ $? = 2 ]; then git branch -D "$b"   # -d refuses a squash-merged branch
+     else echo "KEPT $b: origin moved past the merged head, or could not be read"; fi
+   done < "$list"
    ```
 
 5. **Close the issues the merge did not**: this one is about the PR that just
@@ -210,14 +220,14 @@ helping.
    what actually closed before closing anything by hand:
 
    ```bash
-   gh pr view <n> --json closingIssuesReferences -q '.closingIssuesReferences[].number'
+   gh pr view "<n>" --json closingIssuesReferences -q '.closingIssuesReferences[].number'
    ```
 
    Empty output means nothing has closed *yet*. Read the intent off the body,
    which is where the keywords were written:
 
    ```bash
-   gh pr view <n> --json body -q .body |
+   gh pr view "<n>" --json body -q .body |
      grep -oiE '(close[sd]?|fix(e[sd])?|resolve[sd]?) #[0-9]+' |
      grep -oE '[0-9]+' | sort -u
    ```
@@ -227,7 +237,7 @@ helping.
    Close each by hand, citing the merge commit so the trail survives:
 
    ```bash
-   gh issue close <n> --comment "Fixed in #<pr>, merged to <branch> as <sha>."
+   gh issue close "<n>" --comment "Fixed in #<pr>, merged to <branch> as <sha>."
    ```
 
    Skip this where the PR's base *is* the default branch: there the keywords
