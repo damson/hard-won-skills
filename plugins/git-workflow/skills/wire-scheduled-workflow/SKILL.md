@@ -29,9 +29,13 @@ until it reaches the default branch.
 2. **Check registration, don't assume it:**
 
    ```bash
-   gh workflow list --all          # registered workflows, from the default branch
-   gh workflow run <file>.yml      # a 404 here IS the diagnosis
+   gh workflow list --all                                # registered workflows, from the default branch
+   gh workflow view "<file>.yml" --yaml | grep -A5 '^on:'  # a 404 here IS the diagnosis
    ```
+
+   Read-only on purpose: `gh workflow run` answers the same question by
+   starting a real run when the workflow is registered, and for a release or
+   deploy workflow that run is a release.
 
 3. **Trace the path to the default branch.** Establish both ends first:
 

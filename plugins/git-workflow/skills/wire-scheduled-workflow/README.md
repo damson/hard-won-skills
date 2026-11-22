@@ -32,8 +32,8 @@ skill:
 1. Names the triggers, then checks registration instead of assuming it:
 
    ```bash
-   gh workflow list --all       # only default-branch workflows appear
-   gh workflow run release.yml  # a 404 here IS the diagnosis
+   gh workflow list --all        # only default-branch workflows appear
+   gh workflow view release.yml  # a 404 here IS the diagnosis, and nothing runs
    ```
 
 2. Traces the path to the default branch: the next release. Here it hits the
