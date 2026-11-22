@@ -72,6 +72,12 @@ treats a failed read as a failed read: a bare command substitution turns an API
 error into an empty string, which is also not `UNKNOWN`, and the loop would
 exit on it looking satisfied.
 
+When the authorised set shares a file, the skill finds that file before the
+first merge and orders the set around it, because each merge leaves the others
+conflicting there. A refresh that takes either side of the shared file compiles,
+passes and reverts the other pull request's line, so it keeps both, and after
+the last merge it reads the shared file against what actually landed.
+
 Landing is confirmed with the merge commit, not the branch tip. A squash is not
 the commits it squashed, so asking whether the head is an ancestor of the base
 reports fully merged work as unmerged: on a real PR here, the head answered

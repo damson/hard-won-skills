@@ -5,8 +5,8 @@ description: >
   "12 and 13 are ready", "land 21 and 22", or a bare "go ahead" in a thread
   about one identified PR. Owns only the merge itself: it confirms the authorisation covers
   this PR at its current head, checks the gates the repo actually enforces,
-  merges in the repo's own convention, and waits out the recomputation
-  before touching a dependent PR. Do NOT fire without an authorisation
+  merges in the repo's own convention, orders a set that shares a file, and
+  waits out the recomputation before touching a dependent PR. Do NOT fire without an authorisation
   naming the PRs, on a promotion to the branch people install from (that is
   a release), or to decide WHETHER something should merge.
 ---
@@ -30,7 +30,7 @@ merge style the repo forbids, or while a review sits unanswered.
 
    ```bash
    gh pr view <n> --json number,headRefOid,baseRefName,isDraft,mergeable,mergeStateStatus
-   # one line per authorised PR, kept for step 6; a single `head` variable is
+   # one line per authorised PR, kept for step 7; a single `head` variable is
    # overwritten by the next PR and then matches the wrong one
    gh pr view <n> --json number,headRefOid --jq '[.number, .headRefOid] | @tsv' >> authorised.tsv
    ```
@@ -40,7 +40,28 @@ merge style the repo forbids, or while a review sits unanswered.
    it was given, however small. If the head moved, the go-ahead was for
    something the reader no longer sees; say so and ask again.
 
-2. **Confirm the gates the repo enforces, not the ones you remember.** Read the
+2. **When the authorised PRs share a file, find it and order them before the
+   first merge.** Each merge then dirties the others, so the set is N merges
+   and N-1 refreshes, each moving a head:
+
+   ```bash
+   for n in 12 13 14; do   # the authorised numbers, nothing else
+     gh pr view "$n" --json files --jq '.files[].path'
+   done | sort | uniq -d
+   ```
+
+   No output means they merge independently. `files` stops at 100 paths per
+   pull request, so a wider one needs `gh pr diff <n> --name-only`. Otherwise
+   land a PR whose branch merged another's after it, then the widest edit to
+   the shared file first, so each refresh resolves against a base that already
+   says the most. Refresh each sibling the merge dirtied (`branch-hygiene`)
+   keeping both sides' lines in the shared file, since taking either side
+   compiles, passes and reverts the other PR's work, and pin its new head as
+   step 1 does. After the last merge, read the shared file against what
+   landed: each diff looked right alone, and a count or list every PR edited
+   is where the result goes wrong.
+
+3. **Confirm the gates the repo enforces, not the ones you remember.** Read the
    required contexts rather than eyeballing a checks list:
 
    ```bash
@@ -62,13 +83,13 @@ merge style the repo forbids, or while a review sits unanswered.
    judging it: job names contain that word on purpose, and a suite whose whole
    point is a must-fail case reports itself as one.
 
-3. **Confirm the review gate is answered, not merely present.** Where the repo
+4. **Confirm the review gate is answered, not merely present.** Where the repo
    requires a review before merge, an automated one that posted findings still
    needs the reply that dispositions them (`pr-comment-loop` owns that loop).
    A merge on top of an unanswered review erases the finding and the record of
    why it was ignored, in one action.
 
-4. **Look the merge method up. Do not carry it between repos.**
+5. **Look the merge method up. Do not carry it between repos.**
 
    ```bash
    gh api repos/<owner>/<repo> --jq '{squash: .allow_squash_merge, merge: .allow_merge_commit, rebase: .allow_rebase_merge}'
@@ -93,7 +114,7 @@ merge style the repo forbids, or while a review sits unanswered.
    is not the commits it squashed and breaks the ancestry the next step relies
    on.
 
-5. **Deal with anything stacked on this PR before merging it.** A child whose
+6. **Deal with anything stacked on this PR before merging it.** A child whose
    base is this branch does not follow the parent through the merge; it is left
    pointing at a branch nobody will push to again, and its checks keep running
    against it. Retarget the children first, or delete the parent branch as part
@@ -101,7 +122,7 @@ merge style the repo forbids, or while a review sits unanswered.
    mergeability does not repair a stale base, and `branch-hygiene` owns the
    full post-merge sequence.
 
-6. **Merge one at a time, in the stated method, bound to the authorised head.**
+7. **Merge one at a time, in the stated method, bound to the authorised head.**
    Let the merge command own the line it runs on: some tool wrappers classify a
    chained merge differently from a bare one, and a merge refused halfway
    through a compound command is harder to reason about than one that simply
@@ -110,7 +131,7 @@ merge style the repo forbids, or while a review sits unanswered.
    ```bash
    head=$(awk -v n=<n> '$(1) == n { h = $(2) } END { print h }' authorised.tsv)   # this PR's latest pin
    [ -n "$head" ] || { echo "no pin recorded for #<n>"; exit 1; }
-   gh pr merge <n> --squash --match-head-commit "$head"        # --merge or --rebase, per step 4
+   gh pr merge <n> --squash --match-head-commit "$head"        # --merge or --rebase, per step 5
    ```
 
    `--match-head-commit` is step 1's pin made mechanical: if anything was
@@ -121,7 +142,7 @@ merge style the repo forbids, or while a review sits unanswered.
    authorised again after a push has two rows, and the latest is the go-ahead
    that counts.
 
-7. **Between dependent merges, wait for the recomputation, and do not read a
+8. **Between dependent merges, wait for the recomputation, and do not read a
    failure as an answer.** After a parent lands, a child's `mergeable` reads
    `UNKNOWN` until the host recomputes it, and `UNKNOWN` is not `false`. A bare
    command substitution in the loop test turns a failed API call into an empty
@@ -139,7 +160,7 @@ merge style the repo forbids, or while a review sits unanswered.
    Acting on the interim value either merges something the host has not
    finished judging, or abandons a PR that was fine two seconds later.
 
-8. **Prove it landed with the merge commit, not the branch tip.** A squash
+9. **Prove it landed with the merge commit, not the branch tip.** A squash
    produces a commit that is not the branch's commits, so asking whether the
    *head* is an ancestor of the base answers "not merged" for work that is
    fully merged. The merge commit the host recorded is on the base, so ask
@@ -168,7 +189,7 @@ merge style the repo forbids, or while a review sits unanswered.
    day: once another PR touches one of them, a difference stops saying anything
    about this one.
 
-9. **Report per PR, naming the method**: `#12 squashed into develop, #13
+10. **Report per PR, naming the method**: `#12 squashed into develop, #13
    squashed, both branches deleted`. Cleaning up the merged branches and their
    worktrees is its own procedure (`branch-hygiene`); a promotion to the branch
    people install from is a release cycle, not a merge, and belongs to
@@ -184,6 +205,9 @@ merge style the repo forbids, or while a review sits unanswered.
   identical in a summary and are opposites; treat missing as pending.
 - **A review posted findings that have no reply.** Answer them first, or hand
   back; merging closes the thread by force.
+- **The shared file cannot keep both sides**, because two PRs changed the same
+  line's meaning rather than both adding to it. Which one is right is a
+  decision, not a resolution: ask.
 - **The repo allows several merge methods and states no preference.** Ask which
   one. Guessing here is the one mistake in this procedure that rewrites history
   for everybody.
