@@ -65,7 +65,7 @@ Note the count. Without a before-number, "it recorded" is unfalsifiable.
 
 ```bash
 # set record_task to the record task from step 1, filter to the --tests
-# pattern, widened per the table below (e.g. '*FooScreenshot*');
+# pattern, widened per the table below (e.g. '*Foo*Screenshot*');
 # GRADLE_MODULE is from step 2
 ./gradlew "${GRADLE_MODULE:?}":clean "${GRADLE_MODULE:?}":"${record_task:?}" \
   --tests "${filter:?}"
