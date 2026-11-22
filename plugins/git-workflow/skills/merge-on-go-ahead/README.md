@@ -72,7 +72,7 @@ treats a failed read as a failed read: a bare command substitution turns an API
 error into an empty string, which is also not `UNKNOWN`, and the loop would
 exit on it looking satisfied.
 
-When the authorised set shares a file, the skill finds that file before the
+When the authorised set shares a file, the skill finds the shared files before the
 first merge and orders the set around it, because each merge leaves the others
 conflicting there. It refreshes each sibling by merging the base in, never by
 rebasing, so nothing is force-pushed. A conflict keeps both sides of the shared

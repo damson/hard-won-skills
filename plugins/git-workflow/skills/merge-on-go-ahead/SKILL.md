@@ -29,7 +29,7 @@ merge style the repo forbids, or while a review sits unanswered.
    were named, then pin each head:
 
    ```bash
-   gh pr view <n> --json number,headRefOid,baseRefName,isDraft,mergeable,mergeStateStatus
+   gh pr view <n> --json number,headRefOid,headRefName,isCrossRepository,baseRefName,isDraft,mergeable,mergeStateStatus
    # one line per authorised PR, kept for step 7; a single `head` variable is
    # overwritten by the next PR and then matches the wrong one
    gh pr view <n> --json number,headRefOid --jq '[.number, .headRefOid] | @tsv' >> authorised.tsv
@@ -39,11 +39,13 @@ merge style the repo forbids, or while a review sits unanswered.
    to a sibling PR, to the next one in a stack, or to a new commit pushed after
    it was given, however small. If the head moved, the go-ahead was for
    something the reader no longer sees; say so and ask again. Where the
-   go-ahead names a SHA, the full head pinned here must start with it.
+   go-ahead names a SHA, or follows a stop that showed the user one, the full
+   head pinned here must start with it.
 
 2. **When the authorised PRs share a file, find it and order them before the
-   first merge.** Each merge dirties the others there, so the set becomes N
-   merges and N-1 refreshes. With the authorised numbers in place of these:
+   first merge.** Each merge dirties every sibling still open, and each of
+   those needs a refresh and a fresh go-ahead before it can merge. With the
+   authorised numbers in place of these:
 
    ```bash
    d=$(mktemp -d); ok=1
@@ -54,29 +56,34 @@ merge style the repo forbids, or while a review sits unanswered.
    ```
 
    A failed read stops the procedure, since a missing list compares as no
-   overlap. No output means they merge independently. Otherwise land a PR
-   whose branch contains another's commits after that one, then the widest
-   edit to the shared file first, so each refresh resolves against a base that
+   overlap. No output means they merge independently. Otherwise order by
+   dependency first (a PR whose branch contains another's commits lands after
+   that one), and among the rest land the widest edit to the shared files
+   first, by lines changed there, so each refresh resolves against a base that
    already says the most.
 
    Between merges, once step 9 has proved the last one landed and step 8's
    wait has settled, refresh only the authorised siblings the merge dirtied,
-   each from a worktree reset to `origin/<headRefName>`: `git fetch origin`
+   and only those whose head is on this repository: a fork's branch
+   (`isCrossRepository`) is the contributor's to refresh, so say so and stop.
+   For each, in a new worktree from `origin/<headRefName>`: `git fetch origin`
    and a plain `git merge origin/<base>`, never a rebase or a force-push (so
-   not `branch-hygiene`'s rebase here). A conflict in the shared file keeps
-   both sides' lines, since taking either side compiles, passes and reverts
-   the other PR's work; commit the resolution. Conflict or not, read the
-   shared file against what both PRs contributed (two that each raised a count
-   from 10 to 11 merge cleanly to 11, where 12 was meant), and fix it in a
-   further commit where it is wrong. Push (`git push origin HEAD:<branch>`; a
-   refused push ends the step), then **stop**: show the user the new SHA, what
-   changed since the last reviewed head (`git diff --stat <old head> HEAD`),
-   and `git diff origin/<base> HEAD -- <shared file>`, which must show only
-   this PR's own lines, and wait. A refresh moves the head, so only a go-ahead that
-   names the new SHA lets this PR merge, starting again at step 1. After the
-   last merge, read the shared file against what landed: a count or list
-   every PR edited is where the result goes wrong, and a statement that stays
-   true beats a maintained tally.
+   not `branch-hygiene`'s rebase here); a failed fetch, merge or push ends the
+   step. A conflict in the shared file keeps both sides' lines, since taking
+   either side compiles, passes and reverts the other PR's work; commit the
+   resolution. Conflict or not, read the shared file against what both PRs
+   meant: where the two disagree (two that each raised a count from 10 to 11
+   merge cleanly to 11, where 12 may have been meant), that is the STOP below
+   for a shared file that cannot keep both sides. Push
+   (`git push origin HEAD:<headRefName>`), then **stop** for that sibling: show
+   the user the new SHA, what changed since the last reviewed head
+   (`git diff --stat <old head> HEAD`), and
+   `git diff origin/<base> HEAD -- <shared file>`, which must show only this
+   PR's own lines, and wait. A refresh moves the head, so the PR merges only on
+   a go-ahead given after the user has seen that SHA, starting again at step
+   1. After the last merge, read the shared files against what landed: a count
+   or list every PR edited is where the result goes wrong, and a statement
+   that stays true beats a maintained tally.
 
 3. **Confirm the gates the repo enforces, not the ones you remember.** Read the
    required contexts rather than eyeballing a checks list:
@@ -163,8 +170,9 @@ merge style the repo forbids, or while a review sits unanswered.
    that counts.
 
 8. **Between dependent merges, wait for the recomputation, and do not read a
-   failure as an answer.** After a parent lands, a child's `mergeable` reads
-   `UNKNOWN` until the host recomputes it, and `UNKNOWN` is not `false`. A bare
+   failure as an answer.** After a parent lands or a refresh is pushed, a
+   child's `mergeable` reads `UNKNOWN` until the host recomputes it, and
+   `UNKNOWN` is not `false`. A bare
    command substitution in the loop test turns a failed API call into an empty
    string, which is also not `UNKNOWN`, so the loop exits on the error:
 
