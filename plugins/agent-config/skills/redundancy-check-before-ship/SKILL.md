@@ -34,7 +34,8 @@ docs a reader already has loaded and reports what is genuinely net-new.
    free-hand" → `template|free.?hand`, not `always start from`.
 
    ```bash
-   grep -rniE '<subject>' --include='*.md' . | grep -v node_modules
+   # set subject to the rule's distinctive words as a regex, e.g. 'template|free.?hand'
+   : "${subject:?}" && grep -rniE "$subject" --include='*.md' . | grep -v node_modules
    ```
 
 3. **For each already-stated rule, pick exactly one home.** Either keep the

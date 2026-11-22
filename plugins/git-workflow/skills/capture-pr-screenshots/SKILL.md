@@ -90,10 +90,11 @@ tail to the STOP list rather than capturing against nothing.
 ### 4. Capture each surface
 
 ```bash
+# set surface to the screenshot's file name without .png, route to the page's URL path
 CHROME=$(command -v google-chrome || command -v chromium \
          || echo "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome")
 "$CHROME" --headless --disable-gpu --hide-scrollbars --window-size=1280,900 \
-  --screenshot="$SHOTS/<surface>.png" "http://localhost:$PORT/<path>"
+  --screenshot="$SHOTS/${surface:?}.png" "http://localhost:$PORT/${route:?}"
 ```
 
 Match the viewport any existing screenshot uses; `1280×900` is only a default.
@@ -117,7 +118,7 @@ someone else's server when the port was already occupied.
 ### 7. Commit, then reference by SHA
 
 ```bash
-git add "$SHOTS" && git commit -m "Add <surface> screenshot" && git push
+: "${surface:?}" && git add "$SHOTS" && git commit -m "Add $surface screenshot" && git push
 SLUG=$(gh repo view --json nameWithOwner -q .nameWithOwner)
 PR=$(gh pr view --json number -q .number)
 SHA=$(git rev-parse --short HEAD)          # after the commit that contains the image
@@ -133,8 +134,9 @@ replacing it:
 gh pr view "$PR" --json body -q .body > /tmp/pr-body.md
 grep -q '^## Screenshots' /tmp/pr-body.md ||
   printf '\n## Screenshots\n\n| Surface | Screenshot |\n|---|---|\n' >> /tmp/pr-body.md
-printf '| `/<surface>` | ![<surface>](https://github.com/%s/raw/%s/<path-in-repo>.png) |\n' \
-  "$SLUG" "$SHA" >> /tmp/pr-body.md
+: "${surface:?}" "${route:?}" &&
+  printf '| `/%s` | ![%s](https://github.com/%s/raw/%s/%s/%s.png) |\n' \
+  "$route" "$surface" "$SLUG" "$SHA" "${SHOTS#./}" "$surface" >> /tmp/pr-body.md
 gh pr edit "$PR" --body-file /tmp/pr-body.md
 ```
 

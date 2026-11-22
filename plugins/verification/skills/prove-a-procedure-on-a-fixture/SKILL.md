@@ -128,7 +128,8 @@ works from one that reads as though it does.
    rather than recalling it:
 
    ```bash
-   git show "origin/<base>:<path>" > old.md     # or HEAD~1, or your pre-edit copy
+   # set base to the base branch, doc to the document's path in the repo
+   git show "origin/${base:?}:${doc:?}" > old.md     # or HEAD~1, or your pre-edit copy
    ```
 
    Extract and run its block by step 4, against the same fixture, and write both

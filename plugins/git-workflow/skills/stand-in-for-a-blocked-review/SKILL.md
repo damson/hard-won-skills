@@ -50,7 +50,7 @@ stays in the report; the stand-in is what stops the work stalling meanwhile.
    ```bash
    # set pr to the pull request number, repo to owner/name, reviewer to the
    # reviewer's login
-   head=$(gh pr view "${pr:?}" --json headRefOid --jq .headRefOid)
+   : "${pr:?}" && head=$(gh pr view "${pr:?}" --json headRefOid --jq .headRefOid)
 
    # The gate can be a commit status OR a check run, and one API does not
    # show the other. A reviewer absent from check-runs may still be reporting
@@ -119,7 +119,8 @@ stays in the report; the stand-in is what stops the work stalling meanwhile.
    often carries content that was reviewed under a different SHA:
 
    ```bash
-   git rev-parse "origin/<branch>^{tree}" "<reviewed-head>^{tree}"
+   # set branch to this PR's branch, reviewed_head to the commit the review read
+   git rev-parse "origin/${branch:?}^{tree}" "${reviewed_head:?}^{tree}"
    ```
 
    Identical hashes retire the question: cite both, name where the review
@@ -128,7 +129,7 @@ stays in the report; the stand-in is what stops the work stalling meanwhile.
    stand-in only has to cover the difference:
 
    ```bash
-   git diff "<reviewed-head>" "origin/<branch>"
+   git diff "${reviewed_head:?}" "origin/${branch:?}"
    ```
 
 4. **Brief the stand-in for independence, which is mostly about what you

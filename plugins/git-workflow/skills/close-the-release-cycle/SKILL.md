@@ -39,7 +39,7 @@ refuses to call it done on a signal that has not been checked.
    it does listen for rather than working around it.
 
    ```bash
-   # set workflow to the workflow file name
+   # set workflow to the workflow file name, e.g. release.yml
    gh workflow view "${workflow:?}" --yaml | sed -n '/^on:/,/^jobs:/p'
    ```
 
@@ -114,7 +114,7 @@ refuses to call it done on a signal that has not been checked.
    # /commits/<ref> resolves a tag to its COMMIT. Reading the ref instead gives
    # the tag object's own sha whenever the release tag is annotated, and the
    # floating tag would then be repointed at a tag object rather than the commit
-   sha=$(gh api repos/"${repo:?}"/commits/"${version_tag:?}" --jq .sha)
+   : "${repo:?}" "${version_tag:?}" && sha=$(gh api repos/"${repo:?}"/commits/"${version_tag:?}" --jq .sha)
    gh api -X PATCH repos/"${repo:?}"/git/refs/tags/"${major_tag:?}" -f sha="$sha" -F force=true
    ```
 

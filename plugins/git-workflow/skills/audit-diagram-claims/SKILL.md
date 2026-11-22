@@ -48,10 +48,10 @@ Ask what each box *asserts*, and what the map does not mention at all.
    that exists, then grep the diagram file for each name:
 
    ```bash
-   # set diagram to the diagram file
+   # set diagram to the diagram file, label to the name a node carries
    ls -d */ ; ls .github/workflows/*.yml     # dirs, then scheduled jobs
    # else: the package/module manifest, or the README's structure section
-   grep -i '<name>' "${diagram:?}"
+   grep -i "${label:?}" "${diagram:?}"
    ```
 
    **Any name with zero hits is a reportable gap.** This is the strongest signal

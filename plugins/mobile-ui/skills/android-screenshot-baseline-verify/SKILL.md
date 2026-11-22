@@ -42,7 +42,7 @@ table is the shape to look for, not the answer.
 
 ```bash
 # set module_dir to the module directory
-BASE=$(find "${module_dir:?}" -type d \( -name screenshots -o -name snapshots -o -name reference \))
+: "${module_dir:?}" && BASE=$(find "${module_dir:?}" -type d \( -name screenshots -o -name snapshots -o -name reference \))
 [ -n "$BASE" ] && echo "$BASE" | xargs -I{} find {} -name '*.png' | wc -l || echo "no baseline directory"
 ```
 

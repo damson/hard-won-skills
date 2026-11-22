@@ -130,16 +130,19 @@ working may have opened a pull request minutes ago, and a rescue then lands a
 staler copy of the same lines, to be closed later as superseded:
 
 ```bash
+# set phrase to a distinctive line from the file, matched as fixed text
 # --search reads titles, bodies and comments, never the changed lines, so ask
 # each open pull request for its own diff instead
 # an unavailable `gh` must not read as "nothing published": that is the same
 # silence, arriving one step earlier
-if ! command -v gh >/dev/null 2>&1 || ! gh auth status >/dev/null 2>&1
+if [ -z "${phrase:-}" ]
+  then echo "phrase is not set: this check did NOT run and is not evidence"
+elif ! command -v gh >/dev/null 2>&1 || ! gh auth status >/dev/null 2>&1
   then echo "gh missing or unauthenticated: this check did NOT run and is not evidence"
   else
     found=""
     for n in $(gh pr list --state open --json number --jq '.[].number'); do
-      if gh pr diff "$n" 2>/dev/null | grep -qF '<a distinctive phrase from the file>'
+      if gh pr diff "$n" 2>/dev/null | grep -qF -- "$phrase"
         then echo "#$n carries it"; found=y
       fi
     done
@@ -361,7 +364,7 @@ message rather than letting it open an editor nothing is watching:
 
 ```bash
 # set branch to the branch name
-git -C "$DEST" add -A &&
+: "${branch:?}" && git -C "$DEST" add -A &&
   git -C "$DEST" commit -m "Rescue uncommitted work from the shared checkout" &&
   git -C "$DEST" push -u "$REMOTE" HEAD &&
   gh pr create --base "$BASE" --head "${branch:?}"

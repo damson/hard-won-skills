@@ -53,7 +53,7 @@ adaptation, not the skill.
 
 ```bash
 # set cmd to the skill's command, exactly as written, e.g. cmd='git worktree list'
-out=$(eval "${cmd:?}" 2>&1); rc=$?
+: "${cmd:?}" && out=$(eval "${cmd:?}" 2>&1); rc=$?
 echo "rc=$rc"; echo "$out" | head
 ```
 
@@ -67,7 +67,7 @@ have:
 
 ```bash
 # set tool to the tool's command name
-command -v "${tool:?}"; "${tool:?}" --version 2>&1 | head -1
+: "${tool:?}" && command -v "${tool:?}"; "${tool:?}" --version 2>&1 | head -1
 ```
 
 A friendlier drop-in on `$PATH`, installed years ago and forgotten, accepts

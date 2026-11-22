@@ -91,7 +91,8 @@ silently regenerated, or the build handed over predates the last fix.
    touch -t "$(git log -1 --format=%cd --date=format:%Y%m%d%H%M.%S)" "$ref"
    apk=$(find . -name '*.apk' -newer "$ref" | head -1); rm -f "$ref"
    [ -n "$apk" ] || { echo "no APK newer than the last fix: it did not rebuild"; exit 1; }
-   cp "$apk" "app-$(git rev-parse --short HEAD)-round<N>.apk"
+   # set round to this fix round's number
+   cp "$apk" "app-$(git rev-parse --short HEAD)-round${round:?}.apk"
    ```
 
    The freshness test is the point of the step. Handing over a build that

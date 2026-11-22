@@ -30,8 +30,8 @@ only thing left working.
 
 ```bash
 # set pr to the pull request number
-mc=$(gh pr view "${pr:?}" --json mergeCommit --jq .mergeCommit.oid)
-base=$(gh pr view "${pr:?}" --json baseRefName --jq .baseRefName)
+: "${pr:?}" && mc=$(gh pr view "${pr:?}" --json mergeCommit --jq .mergeCommit.oid)
+: "${pr:?}" && base=$(gh pr view "${pr:?}" --json baseRefName --jq .baseRefName)
 case "$mc" in [0-9a-f]*[0-9a-f]) [ ${#mc} -eq 40 ] || exit 1;; *) exit 1;; esac
 ```
 
@@ -81,7 +81,8 @@ for w in $(git ls-tree --name-only "origin/$base" .github/workflows/); do
       inon && line ~ /(^|[^[:alnum:]_-])push([^[:alnum:]_-]|$)/ { found=1 }
       END { exit !found }' && echo "$w"
 done
-git show "origin/$base:.github/workflows/<file>" | sed -n '1,40p'   # one on: block
+# set workflow to one listed file name, e.g. deploy.yml
+: "${workflow:?}" && git show "origin/$base:.github/workflows/$workflow" | sed -n '1,40p'   # one on: block
 ```
 
 The scan reads text, not YAML, so its list is candidates rather than the
@@ -123,13 +124,13 @@ limit the run cannot exceed:
 # The LARGEST timeout in the file, not the first: a multi-job workflow's first
 # `timeout-minutes` may belong to a job you are not watching, and a bound that
 # is too short reports "no verdict" for a run still working.
-mins=$(git show "origin/$base:.github/workflows/${workflow:?}" | grep -oE 'timeout-minutes: *[0-9]+' | grep -oE '[0-9]+' | sort -n | tail -1)
+: "${workflow:?}" && mins=$(git show "origin/$base:.github/workflows/${workflow:?}" | grep -oE 'timeout-minutes: *[0-9]+' | grep -oE '[0-9]+' | sort -n | tail -1)
 tries=$(( ( ${mins:-15} + 1 ) * 3 ))            # 20s per try
 
 # --event push: a workflow_dispatch run can carry the same headSha and is not
 # what the merge started. The limit is a window, not a guess: raise it on a
 # busy branch rather than assuming the run is among the first few.
-for _ in $(seq 1 "$tries"); do
+: "${workflow:?}" && for _ in $(seq 1 "$tries"); do
   r=$(gh run list --workflow "${workflow:?}" --event push --limit 50 \
         --json databaseId,headSha,status,conclusion \
         --jq "[.[] | select(.headSha==\"$mc\")] | .[0] // empty")
@@ -175,7 +176,8 @@ projection above carries only a conclusion and a name and those cannot tell the
 two apart:
 
 ```bash
-gh run view "$run_id" --log | sed -n '/<the job name>/,$p' | head -40
+# set job to the job's name as the run lists it
+: "${job:?}" && gh run view "$run_id" --log | grep -F -A40 -- "$job" | head -40
 ```
 
 A job that "succeeded" having found nothing to do is a different fact from one

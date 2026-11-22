@@ -114,8 +114,8 @@ merge style the repo forbids, or while a review sits unanswered.
 
    ```bash
    # set pr to the pull request number
-   head=$(awk -v n="${pr:?}" '$(1) == n { h = $(2) } END { print h }' authorised.tsv)   # this PR's latest pin
-   [ -n "$head" ] || { echo "no pin recorded for #${pr:?}"; exit 1; }
+   : "${pr:?}" && head=$(awk -v n="${pr:?}" '$(1) == n { h = $(2) } END { print h }' authorised.tsv)   # this PR's latest pin
+   [ -n "$head" ] || { echo "no pin recorded for #$pr"; exit 1; }
    gh pr merge "${pr:?}" --squash --match-head-commit "$head"        # --merge or --rebase, per step 4
    ```
 
@@ -135,7 +135,7 @@ merge style the repo forbids, or while a review sits unanswered.
 
    ```bash
    # set child to the stacked child pull request number
-   for _ in $(seq 1 24); do
+   : "${child:?}" && for _ in $(seq 1 24); do
      state=$(gh pr view "${child:?}" --json mergeable --jq .mergeable) || state=
      [ -n "$state" ] && [ "$state" != "UNKNOWN" ] && break
      sleep 5
@@ -156,7 +156,7 @@ merge style the repo forbids, or while a review sits unanswered.
    # set pr to the pull request number
    # set base to the base branch
    git fetch --prune
-   mc=$(gh pr view "${pr:?}" --json mergeCommit --jq .mergeCommit.oid)
+   : "${pr:?}" && mc=$(gh pr view "${pr:?}" --json mergeCommit --jq .mergeCommit.oid)
    git merge-base --is-ancestor "$mc" origin/"${base:?}" && echo landed
    ```
 
@@ -173,7 +173,7 @@ merge style the repo forbids, or while a review sits unanswered.
 
    # after it, against the authorised head rather than a branch that may not exist
    git fetch origin "refs/pull/${pr:?}/head:refs/pr/${pr:?}"
-   git diff --stat origin/"${base:?}" "refs/pr/${pr:?}" -- $(cat paths.txt)
+   : "${base:?}" "${pr:?}" && git diff --stat origin/"${base:?}" "refs/pr/${pr:?}" -- $(cat paths.txt)
    ```
 
    Empty output means those paths are identical on the base. Read it the same
