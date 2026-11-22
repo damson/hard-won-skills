@@ -87,6 +87,8 @@ BARE = {
     "in a subshell that opens a substitution": ("x=$((gh pr view <n>); true)\n", ["<n>"]),
     "in a subshell that opens a quoted substitution": ('echo "$((echo <pa>) ; echo b)"\n', ["<pa>"]),
     "in a nested subshell at command start": ("((echo <pa>) ; echo b)\n", ["<pa>"]),
+    "after a case pattern inside a substitution": ('x="$(case x in x) gh pr view <n> ;; esac)"\n', ["<n>"]),
+    "after a heredoc with a partly quoted terminator": ('cat <<E"OF"\ntext\nEOF\ngh pr view <n> --json title\n', ["<n>"]),
 }
 
 
@@ -123,6 +125,9 @@ NOT_BARE = {
     "two heredocs on one line": "paste <<A <<B\n<one>\nA\n<two>\nB\n",
     "substitution in a quoted heredoc": "cat <<'EOF'\n$(gh pr view <n>)\nEOF\n",
     "substitution in a backslash-quoted heredoc": "cat <<\\EOF\n$(gh pr view <n>)\nEOF\n",
+    "substitution in a partly backslash-quoted heredoc": "cat <<E\\OF\n$(gh pr view <n>)\nEOF\n",
+    "substitution in a mixed-quote heredoc": "cat <<'E'OF\n$(gh pr view <n>)\nEOF\n",
+    "a case pattern ends no substitution early": 'x="$(case $y in a) echo "<text>" ;; esac)"\n',
     "comparison beside a substitution in arithmetic": "echo $(( $(wc -l < f) + a<b && c>d ))\n",
     "input and output redirects": "sort <in.txt >out.txt\n",
     "input redirect and a numbered one": "sort <in.txt 2>err.txt\n",

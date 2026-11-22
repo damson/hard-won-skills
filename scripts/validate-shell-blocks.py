@@ -7,15 +7,16 @@ and one shipped green because nothing here read the shell it publishes.
 
 `bash -n` parses without executing, so this never runs a skill's commands.
 
-A placeholder outside quotes is an error, though bash parses it happily: in
-`gh pr view <n>`, `<n>` is a redirect from a file named `n`, so the pasted line
-runs a different command or fails on a missing file. Blocks quote it instead
-(`gh pr view "<n>"`): one literal word, never a redirect, and nothing stored
-for a later line to reuse. A placeholder inside quotes, a comment or a heredoc
-body is text, not syntax, except inside a `$(...)` or backticks, which are
-commands wherever they sit, an unquoted heredoc body included. The parse blanks
-every placeholder before it runs, so what it reports is a real syntax error --
-an unbalanced quote, an unterminated loop, a `case` with no `esac`.
+A placeholder outside quotes is an error, though bash parses it happily: in `gh
+pr view <n> --json author`, `<n>` reads from a file named `n` and writes to one
+named `--json`, so the pasted line runs a different command or fails on a
+missing file. Blocks quote it instead (`gh pr view "<n>"`): one literal word,
+never a redirect, and nothing stored for a later line to reuse. A placeholder
+inside quotes, a comment or a heredoc body is text, not syntax, except inside a
+`$(...)` or backticks, which are commands wherever they sit, an unquoted
+heredoc body included. The parse blanks every placeholder before it runs, so
+what it reports is a real syntax error -- an unbalanced quote, an unterminated
+loop, a `case` with no `esac`.
 
 Usage:
   python3 scripts/validate-shell-blocks.py              # every plugin here
@@ -57,9 +58,39 @@ SHELL_LANGS = {"bash", "sh", "shell"}
 # A console block is a recorded run: only its `$ ` lines are commands.
 CONSOLE_LANGS = {"console"}
 
-# `<<EOF`, `<<-'EOF'`, `<< "EOF"`, `<<\EOF`, `<<END-MSG`: the body that follows
-# is text until the terminator line, so a placeholder there is not a redirect.
-HEREDOC = re.compile(r"<<(-?)[ \t]*(?:'([^'\n]+)'|\"([^\"\n]+)\"|\\?([^\s;&|<>()'\"]+))")
+# Characters that end a shell word outside quotes.
+WORD_END = set(" \t\n;&|<>()")
+
+
+def _heredoc(code: str, i: int) -> tuple[str, bool, bool, int] | None:
+    """Read a heredoc operator at i: `<<EOF`, `<<-'EOF'`, `<< "EOF"`, `<<\\EOF`,
+    `<<E"OF"`. Returns (terminator, dash, quoted, end) or None. Bash takes the
+    whole word, removes its quotes to get the terminator, and treats the body as
+    text when any part of the word was quoted; unquoted, it still expands."""
+    if not code.startswith("<<", i):
+        return None
+    n, j = len(code), i + 2
+    dash = j < n and code[j] == "-"
+    j += dash
+    while j < n and code[j] in " \t":
+        j += 1
+    word: list[str] = []
+    quoted = False
+    while j < n and code[j] not in WORD_END:
+        c = code[j]
+        if c in "'\"":
+            end = code.find(c, j + 1)
+            if end < 0:
+                return None
+            word.append(code[j + 1 : end])
+            quoted, j = True, end + 1
+        elif c == "\\" and j + 1 < n:
+            word.append(code[j + 1])
+            quoted, j = True, j + 2
+        else:
+            word.append(c)
+            j += 1
+    return ("".join(word), dash, quoted, j) if word else None
 
 
 def closes(marker: str, line: str) -> bool:
@@ -130,11 +161,18 @@ def _scan(code: str, i: int, stop: str | None, found: list[tuple[int, int]]) -> 
     n = len(code)
     pending: list[tuple[str, bool, bool]] = []
     depth = 0  # subshells opened inside this scan, so `$( (a); b )` ends at the last `)`
+    cases = 0  # open `case` commands, whose pattern `x)` closes nothing
     while i < n:
         c = code[i]
-        if c == ")" and depth:
-            depth -= 1
+        if c == ")" and (depth or cases):
+            depth -= bool(depth)
             i += 1
+            continue
+        if code.startswith(("case", "esac"), i) and _command_start(code, i) and (
+            i + 4 >= n or code[i + 4] in WORD_END
+        ):
+            cases += 1 if c == "c" else -bool(cases)
+            i += 4
             continue
         if stop and c == stop:
             return i + 1
@@ -167,13 +205,11 @@ def _scan(code: str, i: int, stop: str | None, found: list[tuple[int, int]]) -> 
         elif code.startswith("<<<", i):
             i += 3
         elif c == "<":
-            heredoc = HEREDOC.match(code, i)
+            heredoc = _heredoc(code, i)
             placeholder = PLACEHOLDER.match(code, i)
             if heredoc and not placeholder:
-                word = heredoc.group(2) or heredoc.group(3) or heredoc.group(4)
-                quoted = heredoc.group(4) is None or code[heredoc.start(4) - 1] == "\\"
-                pending.append((word, heredoc.group(1) == "-", quoted))
-                i = heredoc.end()
+                word, dash, quoted, i = heredoc
+                pending.append((word, dash, quoted))
             elif placeholder:
                 found.append(placeholder.span())
                 i = placeholder.end()
