@@ -356,6 +356,17 @@ in the pull request rather than being assumed.
 
 ### 7. Land the rescue branch from the worktree, never from the shared tree
 
+Step 3 copied untracked files nobody chose to commit, and some of those are
+credentials a `.gitignore` missed. Screen the names before anything is staged,
+and read every hit; a name is only the cheapest signal, and `pre-publication-sweep`
+(data-safety plugin) is the full check before a push others can read:
+
+```bash
+git -C "$DEST" status --short --untracked-files=all |
+  grep -iE '\.env|\.pem$|\.key$|\.p12$|id_[rd]sa|credential|secret|token' &&
+  echo "STOP: read these before landing anything"
+```
+
 Chain it, so a failed stage or a rejected push cannot be followed by a pull
 request describing work that never left the machine, and give `commit` its
 message rather than letting it open an editor nothing is watching. The chain
