@@ -73,15 +73,10 @@ error into an empty string, which is also not `UNKNOWN`, and the loop would
 exit on it looking satisfied.
 
 When the authorised set shares a file, the skill finds the shared files before
-the first merge and orders the set around them, because each merge leaves the
-others conflicting there. After every merge it refreshes each authorised pull
-request still open by merging the base in, never by rebasing, so nothing is
-force-pushed. A conflict confined to the shared files keeps both sides, since
-taking either compiles, passes and reverts the other pull request's line; a
-conflict anywhere else stops it. Every refresh stops before anything is pushed:
-the user sees the new commit, its diff and the shared files, and only their
-go-ahead pushes it and lets it merge. After the last merge it reads the shared
-files against what actually landed.
+the first merge and orders the set around them. Each merge then changes the base
+under the pull requests still open, and a go-ahead covers a head rather than what
+it becomes on a new base, so after each merge it stops and names the ones that
+need a refresh and a new go-ahead. It never refreshes or pushes a branch itself.
 
 Landing is confirmed with the merge commit, not the branch tip. A squash is not
 the commits it squashed, so asking whether the head is an ancestor of the base

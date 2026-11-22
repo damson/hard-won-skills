@@ -3,8 +3,7 @@ name: merge-on-go-ahead
 description: >
   Use when the user authorises merging pull requests they name: "merge #4",
   "12 and 13 are ready", "land 21 and 22", or a bare "go ahead" in a thread
-  about one identified PR. Owns the merge, and the refresh a shared file forces
-  between merges: it confirms the authorisation covers
+  about one identified PR. Owns only the merge itself: it confirms the authorisation covers
   this PR at its current head, checks the gates the repo actually enforces,
   merges in the repo's own convention, orders a set that shares a file, and
   waits out the recomputation before touching a dependent PR. Do NOT fire without an authorisation
@@ -30,7 +29,7 @@ merge style the repo forbids, or while a review sits unanswered.
    were named, then pin each head:
 
    ```bash
-   gh pr view <n> --json number,headRefOid,headRefName,isCrossRepository,baseRefName,isDraft,mergeable,mergeStateStatus
+   gh pr view <n> --json number,headRefOid,baseRefName,isDraft,mergeable,mergeStateStatus
    # one line per authorised PR, kept for step 7; a single `head` variable is
    # overwritten by the next PR and then matches the wrong one
    gh pr view <n> --json number,headRefOid --jq '[.number, .headRefOid] | @tsv' >> authorised.tsv
@@ -39,14 +38,10 @@ merge style the repo forbids, or while a review sits unanswered.
    An authorisation is per pull request and per head. It does not roll forward
    to a sibling PR, to the next one in a stack, or to a new commit pushed after
    it was given, however small. If the head moved, the go-ahead was for
-   something the reader no longer sees; say so and ask again. Where the
-   go-ahead names a SHA, or follows a stop that showed the user one, the full
-   head pinned here must start with it.
+   something the reader no longer sees; say so and ask again.
 
 2. **When the authorised PRs share a file, find it and order them before the
-   first merge.** Each merge dirties every sibling still open, and each of
-   those needs a refresh and a fresh go-ahead before it can merge. With the
-   authorised numbers in place of these:
+   first merge.** With the authorised numbers in place of these:
 
    ```bash
    d=$(mktemp -d); ok=1
@@ -58,69 +53,23 @@ merge style the repo forbids, or while a review sits unanswered.
 
    A failed read stops the procedure, since a missing list compares as no
    overlap. Order the whole set by dependency whatever the output: a PR whose
-   branch contains another's commits (`git merge-base --is-ancestor` on the
-   two heads) lands after that one. Where there is
+   branch contains another's commits lands after that one. Where there is
    output, among PRs free to go in either order, land the widest edit to the
-   shared files first (most lines changed there, per
-   `gh pr view <n> --json files`), so each refresh resolves against a base
-   that already says the most. The set and its shared files are fixed here,
-   before the first merge.
+   shared files first, so each later PR meets a base that already says the
+   most.
 
-   After each merge, once steps 8 and 9 have settled and proved it, refresh
-   the PRs still open, one at a time:
-
-   a. **Pick them: every authorised PR still open in the set**, after every
-      merge, whatever its `mergeStateStatus` or its own file list. One that
-      would merge cleanly still combines with content its go-ahead never
-      covered, and one picked by a narrower test is missed as soon as a third
-      PR lands between. A PR owed a refresh does not reach step 7 until
-      sub-step f has run for it.
-   b. **Refuse what is not yours to push.** A fork's branch
-      (`isCrossRepository`) is the contributor's to refresh. Run this per PR,
-      with its number in place of `<n>`; it compares host, owner and name, and
-      prints no URL, since a remote URL can carry a token:
-
-      ```bash
-      head=$(gh pr view <n> --json headRefName --jq .headRefName)
-      printf '%s' "$head" | grep -qE '^[A-Za-z0-9._/-]+$' \
-        || { echo "branch name not safe to pass to git: stop"; exit 1; }
-      default=$(gh repo view --json defaultBranchRef --jq .defaultBranchRef.name)
-      [ "$head" != "$default" ] \
-        || { echo "head is the default branch: stop"; exit 1; }
-      want=$(gh pr view <n> --json url --jq .url | sed -E 's#^https://##; s#/pull/[0-9]+$##')
-      have=$(git remote get-url origin | sed -E 's#\.git$##; s#^[a-z+]+://##; s#^[^@]*@##; s#:#/#')
-      [ -n "$want" ] && [ "$want" = "$have" ] \
-        || { echo "origin is not the PR's repository: stop"; exit 1; }
-      ```
-
-      A head that is any authorised PR's `baseRefName` from step 1, such as a
-      back-merge or a release PR, is refused the same way. Use the checked
-      `"$head"`, quoted, wherever the commands below say `<headRefName>`.
-   c. **Merge, never rebase.** `git fetch origin`, a new worktree from
-      `origin/<headRefName>`, and a plain `git merge origin/<base>` in it; no
-      rebase and no force-push, so not `branch-hygiene`'s rebase here. If the
-      merge exits non-zero, list the unmerged paths
-      (`git diff --name-only --diff-filter=U`): where every one is a shared
-      file, keep both sides' lines, since taking either side compiles, passes
-      and reverts the other PR's work, and commit the resolution; anything
-      else, an empty list included, stops the procedure.
-   d. **Read the shared files, conflict or not.** Two edits can merge cleanly
-      and still be wrong together: two PRs that each raised a count from 10 to
-      11 merge to 11, where 12 may have been meant. Where the two disagree
-      about meaning, that is the STOP below for a shared file that cannot keep
-      both sides.
-   e. **Stop before pushing anything.** Show the user the new SHA,
-      `git diff <authorised head> HEAD`, and
-      `git diff origin/<base> HEAD -- <shared file>`, which must show only
-      this PR's own lines, and wait.
-   f. **On a go-ahead given after they have seen that SHA**, push exactly it
-      (`git push origin <shown sha>:<headRefName>`), check the PR's head now
-      equals it, wait as step 8 does, and carry on from step 1 for this PR,
-      which pins that SHA.
-
-   After the last merge, read the shared files against what landed: a count
-   or list every PR edited is where the result goes wrong, and a statement
-   that stays true beats a maintained tally.
+   Where there is output, every merge changes the base under the PRs still
+   open, and a go-ahead covers a head, not what it becomes on a new base. So
+   **after each merge, stop**: name the authorised PRs still open and say each
+   needs refreshing against the new base, and a new go-ahead, before it
+   merges. The refresh is not this skill's job; whoever does it keeps both
+   sides' lines wherever both PRs only added to the shared files, and reads
+   those files against what both meant, since two edits can merge cleanly and
+   still be wrong together (two PRs that each raised a count from 10 to 11
+   merge to 11, where 12 may have been meant). A refreshed PR comes back
+   through step 1 like any other. After the last merge, read the shared files
+   against what landed: a count or list every PR edited is where the result
+   goes wrong, and a statement that stays true beats a maintained tally.
 
 3. **Confirm the gates the repo enforces, not the ones you remember.** Read the
    required contexts rather than eyeballing a checks list:
@@ -181,10 +130,7 @@ merge style the repo forbids, or while a review sits unanswered.
    against it. Retarget the children first, or delete the parent branch as part
    of the merge if that is what retargets them on this host. Polling a child's
    mergeability does not repair a stale base, and `branch-hygiene` owns the
-   full post-merge sequence, except for a child that is itself authorised:
-   once retargeted and its parent has landed, it is refreshed by step 2's
-   sub-steps whatever its file overlap, never rebased or force-pushed, and
-   merges only on a go-ahead given after its new head was shown.
+   full post-merge sequence.
 
 7. **Merge one at a time, in the stated method, bound to the authorised head.**
    Let the merge command own the line it runs on: some tool wrappers classify a
@@ -207,9 +153,8 @@ merge style the repo forbids, or while a review sits unanswered.
    that counts.
 
 8. **Between dependent merges, wait for the recomputation, and do not read a
-   failure as an answer.** After a parent lands or a refresh is pushed, a
-   child's `mergeable` reads `UNKNOWN` until the host recomputes it, and
-   `UNKNOWN` is not `false`. A bare
+   failure as an answer.** After a parent lands, a child's `mergeable` reads
+   `UNKNOWN` until the host recomputes it, and `UNKNOWN` is not `false`. A bare
    command substitution in the loop test turns a failed API call into an empty
    string, which is also not `UNKNOWN`, so the loop exits on the error:
 
@@ -270,13 +215,8 @@ merge style the repo forbids, or while a review sits unanswered.
   identical in a summary and are opposites; treat missing as pending.
 - **A review posted findings that have no reply.** Answer them first, or hand
   back; merging closes the thread by force.
-- **A sibling cannot be refreshed here**: a fork's branch, an integration or
-  install branch as its head, an `origin` that is not its repository, or a
-  merge that fails outside the shared files. Report it and stop; the merges
-  already landed stay.
-- **The shared file cannot keep both sides**, because two PRs changed the same
-  line's meaning rather than both adding to it. Which one is right is a
-  decision, not a resolution: ask.
+- **The authorised PRs share a file and one has just merged.** The rest wait
+  for a refresh and a new go-ahead, as step 2 says.
 - **The repo allows several merge methods and states no preference.** Ask which
   one. Guessing here is the one mistake in this procedure that rewrites history
   for everybody.
