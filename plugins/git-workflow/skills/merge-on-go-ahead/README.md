@@ -75,9 +75,9 @@ exit on it looking satisfied.
 When the authorised set shares a file, the skill finds the shared files before
 the first merge and orders the set around them. A merge then changes the base
 under the others that touch those files, and a go-ahead covers a head rather
-than what it becomes on a new base, so once one such pull request has merged the
-run ends for the rest: their go-ahead lapses, and each needs a refresh and a
-fresh go-ahead, which starts the skill again. It never refreshes or pushes a
+than what it becomes on a new base, so once one such pull request has landed,
+the go-ahead of the others that touch those files lapses, and each needs a
+refresh and a fresh go-ahead, which starts the skill again. It never refreshes or pushes a
 branch itself.
 
 Landing is confirmed with the merge commit, not the branch tip. A squash is not
