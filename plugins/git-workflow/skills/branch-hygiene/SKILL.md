@@ -93,9 +93,10 @@ helping.
    add` refuses a branch already checked out, and forcing it races two worktrees
    over a branch you are about to force-push.
 
-   Every command in the rest of step 3 runs against `$wt`, so check it names
-   this PR's branch first: a `wt` left over from an earlier PR in the same
-   shell points the rebase and the force-push at that PR instead.
+   Every command in the rest of step 3 runs against `$wt`, and a `wt` left over
+   from an earlier PR in the same shell points them at that PR instead. So the
+   rebase and the push below each open with a check that `$wt` is on this PR's
+   branch:
    ```bash
    git -C "$wt" branch --show-current   # must print <branch>
    ```
@@ -106,7 +107,8 @@ helping.
    ```bash
    # Parent was MERGED (a merge commit): its commits are ancestors of the base,
    # so a plain rebase recognises and skips the duplicates.
-   git -C "$wt" rebase origin/<base-branch>
+   [ "$(git -C "$wt" branch --show-current)" = "<branch>" ] &&
+     git -C "$wt" rebase "origin/<base-branch>"
    ```
    Git auto-skips commits whose patches are already on the base (the duplicate
    ones). Watch the `warning: skipped previously applied commit <sha>` lines:
@@ -116,7 +118,8 @@ helping.
    # Parent was SQUASH-merged: its commits are NOT ancestors of anything, so the
    # plain form replays this PR's work onto changes it already contains and
    # conflicts on every hunk. Replay only this PR's own commits instead.
-   git -C "$wt" rebase --onto origin/<base-branch> <parent-branch-tip-sha> <branch>
+   [ "$(git -C "$wt" branch --show-current)" = "<branch>" ] &&
+     git -C "$wt" rebase --onto "origin/<base-branch>" "<parent-branch-tip-sha>" "<branch>"
    ```
    `<parent-branch-tip-sha>` is where this PR forked: the parent's last commit,
    which `git log --oneline <branch>` still shows even after the parent branch
