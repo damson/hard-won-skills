@@ -38,7 +38,8 @@ merge style the repo forbids, or while a review sits unanswered.
    An authorisation is per pull request and per head. It does not roll forward
    to a sibling PR, to the next one in a stack, or to a new commit pushed after
    it was given, however small. If the head moved, the go-ahead was for
-   something the reader no longer sees; say so and ask again.
+   something the reader no longer sees; say so and ask again. Where the
+   go-ahead names a SHA, the head pinned here must equal it.
 
 2. **When the authorised PRs share a file, find it and order them before the
    first merge.** Each merge dirties the others there, so the set becomes N
@@ -59,21 +60,20 @@ merge style the repo forbids, or while a review sits unanswered.
    already says the most.
 
    Between merges, once step 9 has proved the last one landed and step 8's
-   wait has settled, refresh only the authorised siblings the merge dirtied:
-   `git fetch origin` and a plain `git merge origin/<base>` into each, never a
-   rebase and never a force-push (so not `branch-hygiene`'s rebase here). A
-   conflict in the shared file keeps both sides' lines, since taking either
-   side compiles, passes and reverts the other PR's work; stage the resolution
-   and commit the merge before pushing. Conflict or not, read the shared file
-   against what both PRs contributed: two that each raised a count from 10 to
-   11 merge cleanly to 11, where 12 was meant. Push to the PR's own branch
-   (`git push origin HEAD:<branch>`) and show the user the new head's SHA with
-   `git diff origin/<base> -- <shared file>`, which must show only this PR's
-   own lines. A refresh moves the head, so its go-ahead is a new one. Record
-   the SHA the user saw rather than re-reading the head, which a later push
-   could have moved (`printf '%s\t%s\n' <n> <sha> >> authorised.tsv`), stop
-   if the PR's head no longer equals it, and run steps 3 and 4 at it. After
-   the last merge, read the shared file against what landed: a count or list
+   wait has settled, refresh only the authorised siblings the merge dirtied,
+   each from a worktree on its own branch (`headRefName`): `git fetch origin`
+   and a plain `git merge origin/<base>`, never a rebase or a force-push (so
+   not `branch-hygiene`'s rebase here). A conflict in the shared file keeps
+   both sides' lines, since taking either side compiles, passes and reverts
+   the other PR's work; commit the resolution. Conflict or not, read the
+   shared file against what both PRs contributed (two that each raised a count
+   from 10 to 11 merge cleanly to 11, where 12 was meant), and fix it in a
+   further commit where it is wrong. Push (`git push origin HEAD:<branch>`; a
+   refused push ends the step), then **stop**: show the user the new SHA and
+   `git diff origin/<base> HEAD -- <shared file>`, which must show only this
+   PR's own lines, and wait. A refresh moves the head, so only a go-ahead that
+   names the new SHA lets this PR merge, starting again at step 1. After the
+   last merge, read the shared file against what landed: a count or list
    every PR edited is where the result goes wrong, and a statement that stays
    true beats a maintained tally.
 
@@ -136,9 +136,9 @@ merge style the repo forbids, or while a review sits unanswered.
    against it. Retarget the children first, or delete the parent branch as part
    of the merge if that is what retargets them on this host. Polling a child's
    mergeability does not repair a stale base, and `branch-hygiene` owns the
-   full post-merge sequence, except for a child that is itself authorised: it
-   is refreshed as step 2 refreshes a sibling, never rebased or force-pushed,
-   and its new head is authorised again before it merges.
+   full post-merge sequence, except for a child that is itself authorised:
+   once its parent lands it is refreshed as step 2 refreshes a sibling, never
+   rebased or force-pushed, and merges only on a go-ahead naming its new head.
 
 7. **Merge one at a time, in the stated method, bound to the authorised head.**
    Let the merge command own the line it runs on: some tool wrappers classify a
