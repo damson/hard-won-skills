@@ -75,16 +75,17 @@ ids in the todo file, so a literal `<sha>` matches nothing and the rebase
 replays the branch unchanged, which looks like success.
 
 ```bash
-# set drop to the commit to drop
-# set base to the base branch
-export DROP=$(git rev-parse --short=7 "${drop:?}")
-GIT_SEQUENCE_EDITOR='f() { sed "s/^pick $DROP/drop $DROP/" "${1}" > "${1}.todo" && mv "${1}.todo" "${1}"; }; f' \
-  git rebase -i "${base:?}"
+# set drop to the commit to drop, base to the base branch
+: "${drop:?}" "${base:?}" && DROP=$(git rev-parse --verify --short=7 "${drop:?}^{commit}") && [ -n "$DROP" ] &&
+  export DROP && GIT_SEQUENCE_EDITOR='f() { sed "s/^pick $DROP/drop $DROP/" "${1}" > "${1}.todo" && mv "${1}.todo" "${1}"; }; f' \
+  git rebase -i "${base:?}" || echo "NOT rebased: drop did not resolve to a commit, or the rebase stopped"
 ```
 
 Seven characters on purpose: git abbreviates the todo's ids to whatever the
 repository needs, and a seven-character prefix still matches a longer one, while
-a full forty-character id matches nothing at all.
+a full forty-character id matches nothing at all. The chain is the guard: an
+empty `DROP` turns the sed into `s/^pick /drop /`, which drops every commit, so
+nothing after the lookup runs unless it resolved to a real commit.
 
 **If the rebase stops on a conflict**: resolve the conflicted files, `git add`
 them, `git rebase --continue`; repeat per commit. If a resolution is not
