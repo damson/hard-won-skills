@@ -195,8 +195,13 @@ helping.
      [ "$info" = "MERGED $(git rev-parse "$b")" ] && echo "$b" >> "$list"
    done
    grep -qxE "<base-branch>|$def" "$list" && { echo "ABORT"; exit 1; }
-   [ -s "$list" ] && xargs -n1 git branch -D < "$list"   # -d refuses a squash-merged branch
-   git push origin --delete "<branch>"      # skip if the merge already deleted it
+   # Local first: a branch a worktree still holds refuses, and keeps its remote.
+   # The lease refuses the remote delete if origin moved past the merged head;
+   # a branch the merge already deleted just reports it is gone.
+   while IFS= read -r b; do
+     tip=$(git rev-parse "$b") && git branch -D "$b" &&   # -d refuses a squash-merged branch
+       git push origin --delete --force-with-lease="$b:$tip" "$b"
+   done < "$list"
    ```
 
 5. **Close the issues the merge did not**: this one is about the PR that just
