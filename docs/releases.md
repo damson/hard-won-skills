@@ -228,14 +228,15 @@ fenced shell block in every skill with `bash -n`, which never executes them.
 The blocks are what a reader pastes into a terminal, and nothing else here
 reads them: an unbalanced quote or an unterminated loop ships green and is
 found by whoever tries to follow the step. It also rejects a placeholder
-outside quotes, which parses fine and is the worse bug: in `gh pr view <n>`
-bash reads `<n>` as a redirect from a file named `n`, so the pasted line runs
-another command or fails on a missing file. Blocks quote it instead, `gh pr
-view "<n>"`: one literal word, never a redirect, and nothing stored for a later
-line to reuse. It is still a value to fill in before running: most commands
-refuse the literal, but a search for it finds nothing, which reads as clean.
-Named variables (`"${pr:?}"`) are not the convention, because a pasted block
-runs line by line in a shell that keeps its variables: a guard that skips one
+outside quotes, which parses fine and is the worse bug: in `gh pr view <n>
+--json author` bash reads `<n>` as two redirects, input from a file named `n`
+and output to one named `--json`, so the pasted line runs another command or
+fails on a missing file. Blocks quote it instead, `gh pr view "<n>"`: one
+literal word, never a redirect, and nothing stored for a later line to reuse.
+It is still a value to fill in before running: most commands refuse the
+literal, but a search for it finds nothing, which reads as clean. Named
+variables (`"${pr:?}"`) are not the convention, because a pasted block runs
+line by line in a shell that keeps its variables: a guard that skips one
 assignment leaves the previous value for the next line to act on. A placeholder
 inside quotes, a comment or a heredoc body is text, and is swapped for a plain
 word before the parse; one inside a `$(...)` or backticks is a command again,
