@@ -80,20 +80,25 @@ helping.
    while a review bot's `StatusContext` sat pending, and the check-runs endpoint
    listed three entries where the rollup listed four.
 
-   a. Pick the worktree to work in: call it `$wt`:
+   a. Pick the worktree to work in, and set `wt` to it:
    ```bash
-   git worktree list                  # find any path already on <branch>
-   git -C <path> status --porcelain   # empty → reuse it as $wt
+   git worktree list                    # find any path already on <branch>
+   git -C "<path>" status --porcelain   # empty → reuse it: wt="<path>"
    ```
    No worktree holds the branch → add a temp one, which step 4 removes again:
    ```bash
-   git worktree add /tmp/rebase-pr-<n> <branch>
+   wt="/tmp/rebase-pr-<n>" && git worktree add "$wt" "<branch>"
    ```
    A worktree holds it but is **dirty** → skip this PR and say so; `git worktree
    add` refuses a branch already checked out, and forcing it races two worktrees
    over a branch you are about to force-push.
 
-   Every command in the rest of step 3 runs against `$wt`.
+   Every command in the rest of step 3 runs against `$wt`, so check it names
+   this PR's branch first: a `wt` left over from an earlier PR in the same
+   shell points the rebase and the force-push at that PR instead.
+   ```bash
+   git -C "$wt" branch --show-current   # must print <branch>
+   ```
 
    b. Rebase onto the PR's new base, **which of the two forms depends on how
    the parent landed**:
@@ -151,9 +156,11 @@ helping.
    test`, `go test ./...`). If none of these resolves, ask rather than guess: a
    skipped test suite reads exactly like a green one.
 
-   e. Force-push with lease (refuses to clobber if upstream moved):
+   e. Force-push with lease (refuses to clobber if upstream moved), only from
+   this PR's branch:
    ```bash
-   git -C "$wt" push --force-with-lease
+   [ "$(git -C "$wt" branch --show-current)" = "<branch>" ] &&
+     git -C "$wt" push --force-with-lease
    ```
 
 4. **Worktree cleanup**:
