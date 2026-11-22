@@ -10,8 +10,8 @@ and one shipped green because nothing here read the shell it publishes.
 A placeholder outside quotes is an error, though bash parses it happily: in
 `gh pr view <n>`, `<n>` is a redirect from a file named `n`, so the pasted line
 runs a different command or fails on a missing file. Blocks quote it instead
-(`gh pr view "<n>"`), so an unedited paste hands the command a literal it
-refuses, and stores nothing a later line could reuse. A placeholder left
+(`gh pr view "<n>"`): one literal word, never a redirect, and nothing stored
+for a later line to reuse. A placeholder left
 inside quotes, a comment or a heredoc body is text, not syntax. Those quoted
 ones are replaced with a plain word before the parse, so what the parse reports
 is a real syntax error -- an unbalanced quote, an unterminated loop, a `case`
@@ -123,33 +123,18 @@ def bare_spans(code: str) -> list[tuple[int, int]]:
     return found
 
 
-def _skip_balanced(code: str, i: int, opener: str, closer: str) -> int:
-    """Index just past the closer matching the opener at code[i - 1]."""
-    depth, n = 1, len(code)
-    while i < n and depth:
-        c = code[i]
-        if c == "\\":
-            i += 2
-            continue
-        if c == "'":
-            end = code.find("'", i + 1)
-            i = n if end < 0 else end + 1
-            continue
-        if c == opener:
-            depth += 1
-        elif c == closer:
-            depth -= 1
-        i += 1
-    return i
-
-
 def _scan(code: str, i: int, stop: str | None, found: list[tuple[int, int]]) -> int:
     """Scan command text from i until `stop` (`)` or a backtick) or the end,
     collecting bare placeholders; returns the index just past the stop."""
     n = len(code)
-    pending: list[tuple[str, bool]] = []
+    pending: list[tuple[str, bool, bool]] = []
+    depth = 0  # subshells opened inside this scan, so `$( (a); b )` ends at the last `)`
     while i < n:
         c = code[i]
+        if c == ")" and depth:
+            depth -= 1
+            i += 1
+            continue
         if stop and c == stop:
             return i + 1
         if c == "\\":
@@ -165,7 +150,7 @@ def _scan(code: str, i: int, stop: str | None, found: list[tuple[int, int]]) -> 
         elif c == '"':
             i = _scan_double(code, i + 1, found)
         elif code.startswith("$((", i) or (code.startswith("((", i) and _command_start(code, i)):
-            i = _skip_balanced(code, i + (3 if c == "$" else 2), "(", ")")
+            i = _skip_arith(code, i + (3 if c == "$" else 2), found)
             i = i + 1 if i < n and code[i] == ")" else i
         elif code.startswith("$(", i):
             i = _scan(code, i + 2, ")", found)
@@ -173,6 +158,9 @@ def _scan(code: str, i: int, stop: str | None, found: list[tuple[int, int]]) -> 
             i = _scan_brace(code, i + 2, found)
         elif c == "`":
             i = _scan(code, i + 1, "`", found)
+        elif c == "(":
+            depth += 1
+            i += 1
         elif c == "#" and (i == 0 or code[i - 1] in " \t\n;&|()"):
             end = code.find("\n", i)
             i = n if end < 0 else end
@@ -183,7 +171,8 @@ def _scan(code: str, i: int, stop: str | None, found: list[tuple[int, int]]) -> 
             placeholder = PLACEHOLDER.match(code, i)
             if heredoc and not placeholder:
                 word = heredoc.group(2) or heredoc.group(3) or heredoc.group(4)
-                pending.append((word, heredoc.group(1) == "-"))
+                quoted = heredoc.group(4) is None or code[heredoc.start(4) - 1] == "\\"
+                pending.append((word, heredoc.group(1) == "-", quoted))
                 i = heredoc.end()
             elif placeholder:
                 found.append(placeholder.span())
@@ -191,7 +180,7 @@ def _scan(code: str, i: int, stop: str | None, found: list[tuple[int, int]]) -> 
             else:
                 i += 1
         elif c == "\n" and pending:
-            i = _skip_heredoc_bodies(code, i + 1, pending)
+            i = _skip_heredoc_bodies(code, i + 1, pending, found)
             pending = []
         else:
             i += 1
@@ -223,7 +212,7 @@ def _scan_brace(code: str, i: int, found: list[tuple[int, int]]) -> int:
         elif c == '"':
             i = _scan_double(code, i + 1, found)
         elif code.startswith("$((", i):
-            i = _skip_balanced(code, i + 3, "(", ")")
+            i = _skip_arith(code, i + 3, found)
             i = i + 1 if i < n and code[i] == ")" else i
         elif code.startswith("$(", i):
             i = _scan(code, i + 2, ")", found)
@@ -252,7 +241,7 @@ def _scan_double(code: str, i: int, found: list[tuple[int, int]]) -> int:
         elif c == '"':
             return i + 1
         elif code.startswith("$((", i):
-            i = _skip_balanced(code, i + 3, "(", ")")
+            i = _skip_arith(code, i + 3, found)
             i = i + 1 if i < n and code[i] == ")" else i
         elif code.startswith("$(", i):
             i = _scan(code, i + 2, ")", found)
@@ -265,12 +254,15 @@ def _scan_double(code: str, i: int, found: list[tuple[int, int]]) -> int:
     return i
 
 
-def _skip_heredoc_bodies(code: str, i: int, pending: list[tuple[str, bool]]) -> int:
+def _skip_heredoc_bodies(
+    code: str, i: int, pending: list[tuple[str, bool, bool]], found: list[tuple[int, int]]
+) -> int:
     """Index of the newline ending the last pending heredoc body, starting at
     the line after the opener. A terminator matches its line exactly; `<<-`
-    allows leading tabs."""
+    allows leading tabs. A body whose terminator is unquoted still expands
+    `$(...)` and backticks, so those are scanned; the rest of it is text."""
     n = len(code)
-    for word, dash in pending:
+    for word, dash, quoted in pending:
         while i < n:
             end = code.find("\n", i)
             end = n if end < 0 else end
@@ -278,8 +270,57 @@ def _skip_heredoc_bodies(code: str, i: int, pending: list[tuple[str, bool]]) -> 
             if (line.lstrip("\t") if dash else line) == word:
                 i = end + 1
                 break
+            if not quoted:
+                reached = _scan_expansions(code, i, end, found)
+                if reached > end:
+                    end = code.find("\n", reached)
+                    end = n if end < 0 else end
             i = end + 1
     return max(i - 1, 0) if i <= n else n
+
+
+def _scan_expansions(code: str, i: int, end: int, found: list[tuple[int, int]]) -> int:
+    """Scan the commands in text that only expands, such as an unquoted
+    heredoc body, from i to end; returns where scanning stopped."""
+    n = len(code)
+    while i < end:
+        c = code[i]
+        if c == "\\":
+            i += 2
+        elif code.startswith("$((", i):
+            i = _skip_arith(code, i + 3, found)
+            i = i + 1 if i < n and code[i] == ")" else i
+        elif code.startswith("$(", i):
+            i = _scan(code, i + 2, ")", found)
+        elif code.startswith("${", i):
+            i = _scan_brace(code, i + 2, found)
+        elif c == "`":
+            i = _scan(code, i + 1, "`", found)
+        else:
+            i += 1
+    return i
+
+
+def _skip_arith(code: str, i: int, found: list[tuple[int, int]]) -> int:
+    """Skip arithmetic from i, just past its opening parentheses, to just past
+    the first `)` that closes them. A `<` there is a comparison or a shift, but
+    a `$(...)`, backticks or a `${...}` inside it are scanned."""
+    depth, n = 1, len(code)
+    while i < n and depth:
+        c = code[i]
+        if c == "\\":
+            i += 2
+        elif code.startswith("$(", i) and not code.startswith("$((", i):
+            i = _scan(code, i + 2, ")", found)
+        elif c == "`":
+            i = _scan(code, i + 1, "`", found)
+        elif code.startswith("${", i):
+            i = _scan_brace(code, i + 2, found)
+        else:
+            depth += c == "("
+            depth -= c == ")"
+            i += 1
+    return i
 
 
 def console_commands(code: str) -> str:

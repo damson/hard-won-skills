@@ -79,6 +79,11 @@ BARE = {
     "in a substitution inside an expansion": ("t=${t:-$(gh pr view <n> --json title)}\n", ["<n>"]),
     "in a substitution inside a quoted expansion": ('t="${t:-$(gh pr view <n>)}"\n', ["<n>"]),
     "in backticks inside an expansion": ("t=${t:-`gh pr view <n>`}\n", ["<n>"]),
+    "in a substitution in an unquoted heredoc": ("cat <<EOF\nPR $(gh pr view <n>)\nEOF\n", ["<n>"]),
+    "in backticks in an unquoted heredoc": ("cat <<-EOF\n\t`cat <f>`\n\tEOF\n", ["<f>"]),
+    "after a subshell inside a substitution": ('t="$( (true); gh pr view <n> --json title )"\n', ["<n>"]),
+    "in a substitution inside arithmetic": ('echo "$(( $(gh pr view <n> --json number) + 1 ))"\n', ["<n>"]),
+    "in a substitution inside an arithmetic command": ("(( $(cat <f>) > 1 ))\n", ["<f>"]),
 }
 
 
@@ -113,6 +118,9 @@ NOT_BARE = {
     "backslash-quoted terminator": "cat <<\\EOF\n<text>\nEOF\n",
     "terminator holding a dash": "cat <<'END-MSG'\n<text>\nEND-MSG\n",
     "two heredocs on one line": "paste <<A <<B\n<one>\nA\n<two>\nB\n",
+    "substitution in a quoted heredoc": "cat <<'EOF'\n$(gh pr view <n>)\nEOF\n",
+    "substitution in a backslash-quoted heredoc": "cat <<\\EOF\n$(gh pr view <n>)\nEOF\n",
+    "comparison beside a substitution in arithmetic": "echo $(( $(wc -l < f) <3 ))\n",
     "input and output redirects": "sort <in.txt >out.txt\n",
     "input redirect and a numbered one": "sort <in.txt 2>err.txt\n",
     "C-style for loop": "for (( i=0; i<n; i++ )); do echo $i >> log; done\n",
