@@ -46,7 +46,7 @@ trusts its own output ships a diff that "fixes" files that were already correct.
    that does not exist on a platform the project supports.
 
    ```bash
-   for f in "<family glob>"; do
+   for f in plugins/*/skills/*/SKILL.md; do   # the family's own glob, unquoted so it expands
      grep -q '^## Example' "$f" || echo "  candidate: $f"
    done
    ```

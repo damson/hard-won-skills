@@ -52,6 +52,7 @@ Do not adapt the command to make it work: an adapted command validates your
 adaptation, not the skill.
 
 ```bash
+# Replace the quoted placeholder, quotes included, with the skill's command as written.
 out=$("<command from the skill>" 2>&1); rc=$?
 echo "rc=$rc"; echo "$out" | head
 ```
