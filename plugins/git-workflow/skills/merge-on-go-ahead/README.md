@@ -74,9 +74,12 @@ exit on it looking satisfied.
 
 When the authorised set shares a file, the skill finds that file before the
 first merge and orders the set around it, because each merge leaves the others
-conflicting there. A refresh that takes either side of the shared file compiles,
-passes and reverts the other pull request's line, so it keeps both, and after
-the last merge it reads the shared file against what actually landed.
+conflicting there. It refreshes each sibling by merging the base in, never by
+rebasing, so nothing is force-pushed. A refresh that conflicts keeps both sides
+of the shared file, since taking either compiles, passes and reverts the other
+pull request's line, and that resolution is shown to the user before it merges,
+because nobody authorised it. After the last merge it reads the shared file
+against what actually landed.
 
 Landing is confirmed with the merge commit, not the branch tip. A squash is not
 the commits it squashed, so asking whether the head is an ancestor of the base

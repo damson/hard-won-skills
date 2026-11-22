@@ -38,28 +38,40 @@ merge style the repo forbids, or while a review sits unanswered.
    An authorisation is per pull request and per head. It does not roll forward
    to a sibling PR, to the next one in a stack, or to a new commit pushed after
    it was given, however small. If the head moved, the go-ahead was for
-   something the reader no longer sees; say so and ask again.
+   something the reader no longer sees; say so and ask again. The one
+   exception is step 2's conflict-free refresh, which adds only the base's
+   work.
 
 2. **When the authorised PRs share a file, find it and order them before the
-   first merge.** Each merge then dirties the others, so the set is N merges
-   and N-1 refreshes, each moving a head:
+   first merge.** Each merge dirties the others there, so the set becomes N
+   merges and N-1 refreshes. With the authorised numbers in place of these:
 
    ```bash
-   for n in 12 13 14; do   # the authorised numbers, nothing else
-     gh pr view "$n" --json files --jq '.files[].path'
-   done | sort | uniq -d
+   d=$(mktemp -d); ok=1
+   for n in 12 13 14; do
+     gh pr diff "$n" --name-only > "$d/$n" || { echo "cannot read #$n"; ok=0; }
+   done
+   [ "$ok" = 1 ] && cat "$d"/* | sort | uniq -d
    ```
 
-   No output means they merge independently. `files` stops at 100 paths per
-   pull request, so a wider one needs `gh pr diff <n> --name-only`. Otherwise
-   land a PR whose branch merged another's after it, then the widest edit to
-   the shared file first, so each refresh resolves against a base that already
-   says the most. Refresh each sibling the merge dirtied (`branch-hygiene`)
-   keeping both sides' lines in the shared file, since taking either side
-   compiles, passes and reverts the other PR's work, and pin its new head as
-   step 1 does. After the last merge, read the shared file against what
-   landed: each diff looked right alone, and a count or list every PR edited
-   is where the result goes wrong.
+   A failed read stops the procedure, since a missing list compares as no
+   overlap. No output means they merge independently. Otherwise land a PR
+   whose branch contains another's commits after that one, then the widest
+   edit to the shared file first, so each refresh resolves against a base that
+   already says the most.
+
+   Between merges, after step 8's wait, refresh only the authorised siblings
+   the merge dirtied, by merging the base into each rather than rebasing, so
+   nothing is force-pushed. A refresh that merges cleanly adds only the base's
+   work: push it, pin the commit you pushed (`git rev-parse HEAD`), check the
+   PR's head equals it, and run steps 3 and 4 again at that head. A refresh
+   that conflicts in the shared file keeps both sides' lines, since taking
+   either side compiles, passes and reverts the other PR's work, and
+   `git diff origin/<base> -- <shared file>` must then show only this PR's own
+   lines. That resolution is content nobody authorised: show its diff and ask
+   again before merging it. After the last merge, read the shared file against
+   what landed: a count or list every PR edited is where the result goes
+   wrong, and a statement that stays true beats a maintained tally.
 
 3. **Confirm the gates the repo enforces, not the ones you remember.** Read the
    required contexts rather than eyeballing a checks list:
@@ -199,8 +211,9 @@ merge style the repo forbids, or while a review sits unanswered.
 
 - **No authorisation names this PR.** "Looks good", an approving review, or a
   go-ahead given for a different PR is not one. Report the PR as ready and stop.
-- **The head moved after the authorisation.** Re-ask against the new commit
-  rather than deciding the change was too small to matter.
+- **The head moved after the authorisation**, other than by step 2's
+  conflict-free refresh. Re-ask against the new commit rather than deciding
+  the change was too small to matter.
 - **A required check is missing rather than failing.** Absent and passing look
   identical in a summary and are opposites; treat missing as pending.
 - **A review posted findings that have no reply.** Answer them first, or hand
