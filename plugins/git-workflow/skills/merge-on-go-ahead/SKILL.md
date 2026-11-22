@@ -62,35 +62,42 @@ merge style the repo forbids, or while a review sits unanswered.
    shared files first, by lines changed there, so each refresh resolves
    against a base that already says the most.
 
-   Between merges, once step 9 has proved the last one landed and step 8's
-   wait has settled, refresh each authorised sibling the merge left `DIRTY` or
-   `BEHIND`, and only those whose head is on this repository: a fork's branch
-   (`isCrossRepository`) is the contributor's to refresh, so say so and stop.
-   Check `git remote get-url origin` names the PR's repository, or stop. Then
-   `git fetch origin`, a new worktree from `origin/<headRefName>`, and a plain
-   `git merge origin/<base>` in it, never a rebase or a force-push (so not
-   `branch-hygiene`'s rebase here). A failed fetch or push ends the step, and
-   so does a merge whose unmerged paths
-   (`git diff --name-only --diff-filter=U`) are not all shared files: a
-   conflict anywhere else is not this step's to resolve, so stop and ask.
+   Between merges, once step 9 has proved the last one landed, refresh the
+   siblings it dirtied, one at a time:
 
-   A conflict in a shared file keeps both sides' lines, since taking either
-   side compiles, passes and reverts the other PR's work; commit the
-   resolution, and read the shared file against what both PRs meant: where the
-   two disagree (two that each raised a count from 10 to 11 merge cleanly to
-   11, where 12 may have been meant), that is the STOP below for a shared file
-   that cannot keep both sides. Then **stop** for that sibling and show the
-   user what would land on it: the new SHA, everything that changed since the
-   head they last authorised (`git diff <authorised head> HEAD`), and
-   `git diff origin/<base> HEAD -- <shared file>`, which must show only this
-   PR's own lines. A clean refresh is pushed first
-   (`git push origin HEAD:<headRefName>`), so its checks start; a refresh that
-   resolved a conflict is pushed only once the user has read it. Either way the
-   head moves, so the PR merges only on a go-ahead given after the user has
-   seen that SHA, starting again at step 1. After the last merge, read the
-   shared files against what landed: a count or list every PR edited is where
-   the result goes wrong, and a statement that stays true beats a maintained
-   tally.
+   a. **Pick them.** After step 8's wait, take each authorised sibling that
+      shares a file with what just landed and whose `mergeStateStatus` now
+      reads `DIRTY` or `BEHIND`; read it again while it reads `UNKNOWN`.
+   b. **Refuse what is not yours to push.** A fork's branch
+      (`isCrossRepository`) is the contributor's to refresh: say so and stop.
+      Compare `git remote get-url origin` with the PR's repository without
+      printing it, since a remote URL can carry a token, and stop if they
+      differ.
+   c. **Merge, never rebase.** `git fetch origin`, a new worktree from
+      `origin/<headRefName>`, and a plain `git merge origin/<base>` in it; no
+      rebase and no force-push, so not `branch-hygiene`'s rebase here. If the
+      merge exits non-zero, list the unmerged paths
+      (`git diff --name-only --diff-filter=U`): where every one is a shared
+      file, keep both sides' lines, since taking either side compiles, passes
+      and reverts the other PR's work, and commit the resolution; anything
+      else, an empty list included, stops the step.
+   d. **Read the shared files, conflict or not.** Two edits can merge cleanly
+      and still be wrong together: two PRs that each raised a count from 10 to
+      11 merge to 11, where 12 may have been meant. Where the two disagree
+      about meaning, that is the STOP below for a shared file that cannot keep
+      both sides.
+   e. **Stop before pushing anything.** Show the user the new SHA,
+      `git diff <authorised head> HEAD`, and
+      `git diff origin/<base> HEAD -- <shared file>`, which must show only
+      this PR's own lines, and wait.
+   f. **On a go-ahead given after they have seen that SHA**, push it
+      (`git push origin HEAD:<headRefName>`), check the PR's head now equals
+      it, wait as step 8 does, and carry on from step 1 for this PR, which
+      pins that SHA.
+
+   After the last merge, read the shared files against what landed: a count
+   or list every PR edited is where the result goes wrong, and a statement
+   that stays true beats a maintained tally.
 
 3. **Confirm the gates the repo enforces, not the ones you remember.** Read the
    required contexts rather than eyeballing a checks list:

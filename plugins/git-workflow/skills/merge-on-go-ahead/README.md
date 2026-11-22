@@ -77,9 +77,9 @@ first merge and orders the set around it, because each merge leaves the others
 conflicting there. It refreshes each sibling by merging the base in, never by
 rebasing, so nothing is force-pushed. A conflict keeps both sides of the shared
 file, since taking either compiles, passes and reverts the other pull request's
-line. Every refresh moves the head, so the user sees the new commit, and the
-resolved diff where there was a conflict, and authorises it again before it
-merges. After the last merge it reads the shared file against what actually
+line. Every refresh stops before anything is pushed: the user sees the new
+commit, its diff and the shared files, and only their go-ahead pushes it and
+lets it merge. After the last merge it reads the shared file against what actually
 landed.
 
 Landing is confirmed with the merge commit, not the branch tip. A squash is not
