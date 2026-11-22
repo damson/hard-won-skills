@@ -11,11 +11,11 @@ A placeholder outside quotes is an error, though bash parses it happily: in
 `gh pr view <n>`, `<n>` is a redirect from a file named `n`, so the pasted line
 runs a different command or fails on a missing file. Blocks quote it instead
 (`gh pr view "<n>"`): one literal word, never a redirect, and nothing stored
-for a later line to reuse. A placeholder left
-inside quotes, a comment or a heredoc body is text, not syntax. Those quoted
-ones are replaced with a plain word before the parse, so what the parse reports
-is a real syntax error -- an unbalanced quote, an unterminated loop, a `case`
-with no `esac`.
+for a later line to reuse. A placeholder inside quotes, a comment or a heredoc
+body is text, not syntax, except inside a `$(...)` or backticks, which are
+commands wherever they sit, an unquoted heredoc body included. The parse blanks
+every placeholder before it runs, so what it reports is a real syntax error --
+an unbalanced quote, an unterminated loop, a `case` with no `esac`.
 
 Usage:
   python3 scripts/validate-shell-blocks.py              # every plugin here
@@ -111,8 +111,9 @@ def iter_blocks(text: str):
 
 def bare_placeholders(code: str) -> list[str]:
     """Each `<name>` bash would read as a redirect: in command position, outside
-    quotes, comments, heredoc bodies, `${...}` and arithmetic. Commands inside
-    `$(...)` and backticks are scanned too, wherever they sit."""
+    quotes, comments, heredoc bodies, `${...}` text and arithmetic. Commands
+    inside `$(...)` and backticks are scanned wherever they sit, unquoted
+    heredoc bodies included."""
     return [code[start:end] for start, end in bare_spans(code)]
 
 
@@ -150,8 +151,7 @@ def _scan(code: str, i: int, stop: str | None, found: list[tuple[int, int]]) -> 
         elif c == '"':
             i = _scan_double(code, i + 1, found)
         elif code.startswith("$((", i) or (code.startswith("((", i) and _command_start(code, i)):
-            i = _skip_arith(code, i + (3 if c == "$" else 2), found)
-            i = i + 1 if i < n and code[i] == ")" else i
+            i = _skip_double_paren(code, i, found)
         elif code.startswith("$(", i):
             i = _scan(code, i + 2, ")", found)
         elif code.startswith("${", i):
@@ -194,7 +194,7 @@ KEYWORD_BEFORE = re.compile(r"(?:^|[\s;&|(])(?:for|if|elif|while|until|do|then|e
 def _command_start(code: str, i: int) -> bool:
     """True when position i begins a command: at a line start, after ; & | (,
     or after a keyword such as `for`, `if` or `while`."""
-    before = code[:i].rstrip(" \t")
+    before = code[max(0, i - 64):i].rstrip(" \t")  # a bounded tail: the test needs one keyword
     return not before or before[-1] in "\n;&|(" or bool(KEYWORD_BEFORE.search(before))
 
 
@@ -212,8 +212,7 @@ def _scan_brace(code: str, i: int, found: list[tuple[int, int]]) -> int:
         elif c == '"':
             i = _scan_double(code, i + 1, found)
         elif code.startswith("$((", i):
-            i = _skip_arith(code, i + 3, found)
-            i = i + 1 if i < n and code[i] == ")" else i
+            i = _skip_double_paren(code, i, found)
         elif code.startswith("$(", i):
             i = _scan(code, i + 2, ")", found)
         elif c == "`":
@@ -241,8 +240,7 @@ def _scan_double(code: str, i: int, found: list[tuple[int, int]]) -> int:
         elif c == '"':
             return i + 1
         elif code.startswith("$((", i):
-            i = _skip_arith(code, i + 3, found)
-            i = i + 1 if i < n and code[i] == ")" else i
+            i = _skip_double_paren(code, i, found)
         elif code.startswith("$(", i):
             i = _scan(code, i + 2, ")", found)
         elif code.startswith("${", i):
@@ -288,8 +286,7 @@ def _scan_expansions(code: str, i: int, end: int, found: list[tuple[int, int]]) 
         if c == "\\":
             i += 2
         elif code.startswith("$((", i):
-            i = _skip_arith(code, i + 3, found)
-            i = i + 1 if i < n and code[i] == ")" else i
+            i = _skip_double_paren(code, i, found)
         elif code.startswith("$(", i):
             i = _scan(code, i + 2, ")", found)
         elif code.startswith("${", i):
@@ -299,6 +296,21 @@ def _scan_expansions(code: str, i: int, end: int, found: list[tuple[int, int]]) 
         else:
             i += 1
     return i
+
+
+def _skip_double_paren(code: str, start: int, found: list[tuple[int, int]]) -> int:
+    """Skip a `$((` or `((` construct from start. Bash reads it as arithmetic
+    when it closes with `))`, and otherwise as a subshell opening a
+    substitution or a command, `$((gh pr view <n>); true)`, whose text is
+    commands again and is scanned as such."""
+    n = len(code)
+    dollar = code[start] == "$"
+    inside: list[tuple[int, int]] = []
+    end = _skip_arith(code, start + (3 if dollar else 2), inside)
+    if end >= n or code[end] == ")":
+        found.extend(inside)
+        return min(end + 1, n)
+    return _scan(code, start + (2 if dollar else 1), ")", found)
 
 
 def _skip_arith(code: str, i: int, found: list[tuple[int, int]]) -> int:
@@ -356,7 +368,18 @@ def check(root: Path) -> int:
     sources = sorted(root.glob("plugins/*/skills/*/*.md")) or sorted(root.glob("**/*.md"))
     blocks = failures = 0
     for source in sources:
-        for block in iter_blocks(source.read_text()):
+        if source.is_symlink() or not source.is_file():
+            # A link can point at a FIFO or a device, which a read never finishes.
+            failures += 1
+            print(f"✘ {source} — not a regular file; skills are plain files", file=sys.stderr)
+            continue
+        try:
+            text = source.read_text(encoding="utf-8")
+        except UnicodeDecodeError as error:
+            failures += 1
+            print(f"✘ {source} — not UTF-8 ({error.reason} at byte {error.start})", file=sys.stderr)
+            continue
+        for block in iter_blocks(text):
             rel = source.relative_to(root) if source.is_relative_to(root) else source
             if not block.closed:
                 failures += 1
@@ -365,7 +388,12 @@ def check(root: Path) -> int:
                 continue
             blocks += 1
             console = block.lang in CONSOLE_LANGS
-            bare = bare_placeholders(console_commands(block.code) if console else block.code)
+            try:
+                bare = bare_placeholders(console_commands(block.code) if console else block.code)
+            except RecursionError:
+                failures += 1
+                print(f"✘ {rel}:{block.line} — too deeply nested to scan", file=sys.stderr)
+                continue
             if bare:
                 failures += 1
                 print(

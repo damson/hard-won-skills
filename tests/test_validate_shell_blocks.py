@@ -84,6 +84,9 @@ BARE = {
     "after a subshell inside a substitution": ('t="$( (true); gh pr view <n> --json title )"\n', ["<n>"]),
     "in a substitution inside arithmetic": ('echo "$(( $(gh pr view <n> --json number) + 1 ))"\n', ["<n>"]),
     "in a substitution inside an arithmetic command": ("(( $(cat <f>) > 1 ))\n", ["<f>"]),
+    "in a subshell that opens a substitution": ("x=$((gh pr view <n>); true)\n", ["<n>"]),
+    "in a subshell that opens a quoted substitution": ('echo "$((echo <pa>) ; echo b)"\n', ["<pa>"]),
+    "in a nested subshell at command start": ("((echo <pa>) ; echo b)\n", ["<pa>"]),
 }
 
 
@@ -120,7 +123,7 @@ NOT_BARE = {
     "two heredocs on one line": "paste <<A <<B\n<one>\nA\n<two>\nB\n",
     "substitution in a quoted heredoc": "cat <<'EOF'\n$(gh pr view <n>)\nEOF\n",
     "substitution in a backslash-quoted heredoc": "cat <<\\EOF\n$(gh pr view <n>)\nEOF\n",
-    "comparison beside a substitution in arithmetic": "echo $(( $(wc -l < f) <3 ))\n",
+    "comparison beside a substitution in arithmetic": "echo $(( $(wc -l < f) + a<b && c>d ))\n",
     "input and output redirects": "sort <in.txt >out.txt\n",
     "input redirect and a numbered one": "sort <in.txt 2>err.txt\n",
     "C-style for loop": "for (( i=0; i<n; i++ )); do echo $i >> log; done\n",
@@ -297,3 +300,27 @@ def test_a_closed_block_is_marked_closed():
 
 def test_this_marketplace_parses():
     assert vsb.check(Path(__file__).parent.parent) == 0
+
+
+def test_deep_nesting_is_reported_not_raised(tmp_path, capsys):
+    # One recursion frame per nested substitution: past Python's limit the
+    # block is a failure line, not a traceback that hides every other result.
+    deep = "x=" + "$(" * 1200 + "true" + ")" * 1200 + "\n"
+    (tmp_path / "SKILL.md").write_text(md(deep))
+    assert vsb.main([str(tmp_path)]) == 1
+    assert "too deeply nested" in capsys.readouterr().err
+
+
+def test_a_symlinked_skill_file_is_reported_not_read(tmp_path, capsys):
+    # A link to a FIFO would block the read forever; the link is the finding.
+    import os
+    os.mkfifo(tmp_path / "pipe")
+    (tmp_path / "SKILL.md").symlink_to(tmp_path / "pipe")
+    assert vsb.main([str(tmp_path)]) == 1
+    assert "not a regular file" in capsys.readouterr().err
+
+
+def test_a_file_that_is_not_utf8_is_reported_not_raised(tmp_path, capsys):
+    (tmp_path / "SKILL.md").write_bytes(b"```bash\necho \xff\n```\n")
+    assert vsb.main([str(tmp_path)]) == 1
+    assert "not UTF-8" in capsys.readouterr().err
