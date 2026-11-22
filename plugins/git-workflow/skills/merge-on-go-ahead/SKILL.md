@@ -63,15 +63,19 @@ merge style the repo forbids, or while a review sits unanswered.
    `git fetch origin` and a plain `git merge origin/<base>` into each, never a
    rebase and never a force-push (so not `branch-hygiene`'s rebase here). A
    conflict in the shared file keeps both sides' lines, since taking either
-   side compiles, passes and reverts the other PR's work, and
-   `git diff origin/<base> -- <shared file>` must then show only this PR's own
-   lines. Push to the PR's own branch (`git push origin HEAD:<branch>`), then
-   show the user the new head's SHA, with that diff where there was a conflict,
-   and ask again: a refresh moves the head, so step 1 records a new go-ahead,
-   and steps 3 and 4 run again at it. After the last merge, read the shared
-   file against what landed: a count or list every PR edited is where the
-   result goes wrong, and a statement that stays true beats a maintained
-   tally.
+   side compiles, passes and reverts the other PR's work; stage the resolution
+   and commit the merge before pushing. Conflict or not, read the shared file
+   against what both PRs contributed: two that each raised a count from 10 to
+   11 merge cleanly to 11, where 12 was meant. Push to the PR's own branch
+   (`git push origin HEAD:<branch>`) and show the user the new head's SHA with
+   `git diff origin/<base> -- <shared file>`, which must show only this PR's
+   own lines. A refresh moves the head, so its go-ahead is a new one. Record
+   the SHA the user saw rather than re-reading the head, which a later push
+   could have moved (`printf '%s\t%s\n' <n> <sha> >> authorised.tsv`), stop
+   if the PR's head no longer equals it, and run steps 3 and 4 at it. After
+   the last merge, read the shared file against what landed: a count or list
+   every PR edited is where the result goes wrong, and a statement that stays
+   true beats a maintained tally.
 
 3. **Confirm the gates the repo enforces, not the ones you remember.** Read the
    required contexts rather than eyeballing a checks list:
@@ -132,7 +136,9 @@ merge style the repo forbids, or while a review sits unanswered.
    against it. Retarget the children first, or delete the parent branch as part
    of the merge if that is what retargets them on this host. Polling a child's
    mergeability does not repair a stale base, and `branch-hygiene` owns the
-   full post-merge sequence.
+   full post-merge sequence, except for a child that is itself authorised: it
+   is refreshed as step 2 refreshes a sibling, never rebased or force-pushed,
+   and its new head is authorised again before it merges.
 
 7. **Merge one at a time, in the stated method, bound to the authorised head.**
    Let the merge command own the line it runs on: some tool wrappers classify a
