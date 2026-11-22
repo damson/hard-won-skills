@@ -87,7 +87,7 @@ helping.
    ```
    No worktree holds the branch → add a temp one, which step 4 removes again:
    ```bash
-   wt="/tmp/rebase-pr-<n>" && git worktree add "$wt" "<branch>"
+   wt="$(mktemp -d)/rebase-pr-<n>" && git worktree add "$wt" "<branch>"   # private, not a guessable /tmp path
    ```
    A worktree holds it but is **dirty** → skip this PR and say so; `git worktree
    add` refuses a branch already checked out, and forcing it races two worktrees
@@ -172,7 +172,7 @@ helping.
    ```
    Remove a worktree with no uncommitted changes (`git -C <path> status
    --porcelain` empty) when **either** its branch no longer exists on origin
-   (it was deleted post-merge), **or** it is one of the `/tmp/rebase-pr-*`
+   (it was deleted post-merge), **or** it is one of the `rebase-pr-*`
    temporaries step 3a added: those outlive their branch and step 4 is the only
    thing that collects them:
    ```bash
