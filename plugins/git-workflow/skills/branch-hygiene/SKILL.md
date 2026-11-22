@@ -195,12 +195,17 @@ helping.
      [ "$info" = "MERGED $(git rev-parse "$b")" ] && echo "$b" >> "$list"
    done
    grep -qxE "<base-branch>|$def" "$list" && { echo "ABORT"; exit 1; }
-   # Local first: a branch a worktree still holds refuses, and keeps its remote.
-   # The lease refuses the remote delete if origin moved past the merged head;
-   # a branch the merge already deleted just reports it is gone.
+   # Remote first, behind a lease on the merged tip, so a remote that moved past
+   # it is refused; the local copy goes only once the remote is gone (by this
+   # push or by the merge), so nothing is left that a later sweep cannot see.
    while IFS= read -r b; do
-     tip=$(git rev-parse "$b") && git branch -D "$b" &&   # -d refuses a squash-merged branch
-       git push origin --delete --force-with-lease="$b:$tip" "$b"
+     git worktree list --porcelain | grep -qxF "branch refs/heads/$b" &&
+       { echo "KEPT $b: a worktree holds it"; continue; }
+     tip=$(git rev-parse "$b") || continue
+     git push -q origin --delete --force-with-lease="$b:$tip" "$b" 2>/dev/null
+     git ls-remote --exit-code --heads origin "$b" >/dev/null
+     if [ $? = 2 ]; then git branch -D "$b"   # -d refuses a squash-merged branch
+     else echo "KEPT $b: origin moved past the merged head, or could not be read"; fi
    done < "$list"
    ```
 
