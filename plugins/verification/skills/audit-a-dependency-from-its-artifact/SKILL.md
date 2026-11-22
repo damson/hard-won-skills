@@ -29,9 +29,7 @@ a measurement is numeric, so it reads as authoritative whatever it measured.
 
 ```bash
 # every published version, from the repository that serves the artifact
-# set registry to its base URL, group to the group id, artifact to the artifact id
-: "${registry:?}" "${group:?}" "${artifact:?}" &&
-  curl -sfL "$registry/$(printf '%s' "$group" | tr '.' '/')/$artifact/maven-metadata.xml"
+curl -sfL "<repo>/<group with slashes>/<artifact>/maven-metadata.xml"
 ```
 
 Translate the group with `tr '.' '/'` or the host language's own replace. Do
@@ -71,8 +69,7 @@ report; "27 checked" is not.
 A tool that enforces a floor carries that floor inside itself:
 
 ```bash
-# set plugin to the plugin name
-unzip -p "${plugin:?}".jar | strings          # or unzip -o to a temp dir, then javap
+unzip -p "<plugin>.jar" | strings          # or unzip -o to a temp dir, then javap
 ```
 
 Find the class that does the enforcing and read its constants. This answers the

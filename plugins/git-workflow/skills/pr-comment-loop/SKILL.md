@@ -20,12 +20,10 @@ are usually free for public repos only, and their config file grants nothing
 without the app also having access. Ask whether one has ever run there:
 
 ```bash
-# set repo to owner/name of the repository, pr to the pull request number
 #.user.type is the account's own kind: matching logins against "bot|ai"
 # counts a human called chair as a reviewer and misses a bot called sentry
-: "${repo:?}" "${pr:?}" && {
-  gh api "repos/$repo/issues/$pr/comments" --paginate --jq '.[]|select(.user.type=="Bot")|.user.login'
-  gh api "repos/$repo/pulls/$pr/reviews"   --paginate --jq '.[]|select(.user.type=="Bot")|.user.login'
+{ gh api "repos/<owner>/<repo>/issues/<n>/comments" --paginate --jq '.[]|select(.user.type=="Bot")|.user.login'
+  gh api "repos/<owner>/<repo>/pulls/<n>/reviews"   --paginate --jq '.[]|select(.user.type=="Bot")|.user.login'
 } | sort -u
 ```
 
@@ -51,10 +49,9 @@ current repo if no explicit list:
 
 1. **Snapshot state**:
    ```bash
-   # set pr to the pull request number
    # reviews as well as comments: `--json` returns only what it is asked for,
    # and step 3 reads `.reviews[].body`, where a review's own findings live
-   gh pr view "${pr:?}" --json mergeable,mergeStateStatus,statusCheckRollup,comments,reviews,baseRefName
+   gh pr view "<n>" --json mergeable,mergeStateStatus,statusCheckRollup,comments,reviews,baseRefName
    ```
 
 2. **Identify NEW comments** since your last reply on that PR. Your last reply
@@ -67,8 +64,7 @@ current repo if no explicit list:
    me=$(gh api user -q .login)
    # REST, not `gh pr view`: its objects carry the numeric id and updated_at
    # MY comments whose body STARTS WITH the marker. Never `contains`, never the reviewer's
-   # repo and pr as in step 0
-   : "${repo:?}" "${pr:?}" && mine=$(gh api "repos/$repo/issues/$pr/comments" --paginate \
+   mine=$(gh api "repos/<owner>/<repo>/issues/<n>/comments" --paginate \
      --jq "[.[] | select(.user.login == \"$me\" and (.body | startswith(\"$marker\")))]")
    ```
 
@@ -92,7 +88,7 @@ current repo if no explicit list:
    answered a round, most of those were fixed by the commits that answered it.
 
    ```bash
-   : "${repo:?}" "${pr:?}" && gh api "repos/$repo/pulls/$pr/comments" \
+   gh api "repos/<owner>/<repo>/pulls/<n>/comments" \
      --jq '.[] | select(.subject_type == "line" and .line == null)
            | {id, path, body, diff_hunk,
               was: .original_line, from: .original_start_line,
@@ -148,9 +144,8 @@ current repo if no explicit list:
    change: the reply in step 6 still goes out, with its `Pushed as` line
    replaced by "No code change this round"):
    ```bash
-   # set pr to the pull request number
    git push
-   gh pr view "${pr:?}" --json mergeable,mergeStateStatus
+   gh pr view "<n>" --json mergeable,mergeStateStatus
    # confirm CLEAN before reporting back
    ```
 
@@ -168,11 +163,9 @@ current repo if no explicit list:
    rather than editing in place.
 
    ```bash
-   # set repo to owner/name of the repository
-   # set pr to the pull request number
-   : "${pr:?}" "${repo:?}" && case "$(jq length <<<"$mine")" in
-     0) gh pr comment "${pr:?}" --body-file reply.md ;;
-     1) gh api -X PATCH "repos/${repo:?}/issues/comments/$(jq -r '.[0].id' <<<"$mine")" -F body=@reply.md ;;
+   case "$(jq length <<<"$mine")" in
+     0) gh pr comment "<n>" --body-file reply.md ;;
+     1) gh api -X PATCH "repos/<owner>/<repo>/issues/comments/$(jq -r '.[0].id' <<<"$mine")" -F body=@reply.md ;;
      *) echo "more than one sticky match: refusing to patch" >&2; exit 1;;
    esac
    ```
@@ -215,8 +208,7 @@ current repo if no explicit list:
    come off the same REST object you clobbered (`.node_id`, `.id`):
 
    ```bash
-   # set node_id to the clobbered comment's .node_id
-   : "${node_id:?}" && gh api graphql -f query='query { node(id: "'"$node_id"'") {
+   gh api graphql -f query='query { node(id: "<node_id>") {
      ... on IssueComment {
        userContentEdits(first: 20) { nodes { editedAt editor { login } diff } }
    } } }'
@@ -227,8 +219,7 @@ current repo if no explicit list:
    **separate** comment:
 
    ```bash
-   # set id to the clobbered comment's numeric .id
-   : "${repo:?}" "${id:?}" && gh api -X PATCH "repos/$repo/issues/comments/$id" -F body=@restored.md
+   gh api -X PATCH "repos/<owner>/<repo>/issues/comments/<id>" -F body=@restored.md
    ```
 
 7. **Report back to the user** with a single line per PR:

@@ -130,19 +130,16 @@ working may have opened a pull request minutes ago, and a rescue then lands a
 staler copy of the same lines, to be closed later as superseded:
 
 ```bash
-# set phrase to a distinctive line from the file, matched as fixed text
 # --search reads titles, bodies and comments, never the changed lines, so ask
 # each open pull request for its own diff instead
 # an unavailable `gh` must not read as "nothing published": that is the same
 # silence, arriving one step earlier
-if [ -z "${phrase:-}" ]
-  then echo "phrase is not set: this check did NOT run and is not evidence"
-elif ! command -v gh >/dev/null 2>&1 || ! gh auth status >/dev/null 2>&1
+if ! command -v gh >/dev/null 2>&1 || ! gh auth status >/dev/null 2>&1
   then echo "gh missing or unauthenticated: this check did NOT run and is not evidence"
   else
     found=""
     for n in $(gh pr list --state open --json number --jq '.[].number'); do
-      if gh pr diff "$n" 2>/dev/null | grep -qF -- "$phrase"
+      if gh pr diff "$n" 2>/dev/null | grep -qF '<a distinctive phrase from the file>'
         then echo "#$n carries it"; found=y
       fi
     done
@@ -175,9 +172,8 @@ which is the destructive answer, on the exact case this check was added to catch
 characters a regex would read as syntax.
 
 ```bash
-# the AHEAD paths step 1 listed, NUL-delimited
-cat "$TRACKED" "$UNTRACKED" | xargs -0 stat -f '%Sm %N'   # BSD/macOS
-cat "$TRACKED" "$UNTRACKED" | xargs -0 stat -c '%y %n'    # GNU
+stat -f '%Sm %N' "<paths>"   # BSD/macOS
+stat -c '%y %n' "<paths>"    # GNU
 date
 ```
 
@@ -190,8 +186,7 @@ advisory, say in the pull request which of them you ran, and where a writer can
 be asked, ask instead. For a second opinion, ask who holds the files open:
 
 ```bash
-# set watch_dir to the directory the writer works in
-lsof +D "${watch_dir:?}" 2>/dev/null | awk 'NR>1 {print $(1), $NF}' | sort -u
+lsof +D "<dir>" 2>/dev/null | awk 'NR>1 {print $(1), $NF}' | sort -u
 ```
 
 Cluster the timestamps too: a group of files sharing one timestamp to the
@@ -216,8 +211,7 @@ a deletion, a rename, a mode bit. `git apply` reproduces all of them, and
 `--binary` keeps a changed image or fixture intact:
 
 ```bash
-# set branch to the branch name
-git worktree add "$DEST" -b "${branch:?}" "$REMOTE/$BASE"
+git worktree add "$DEST" -b "<branch>" "$REMOTE/$BASE"
 xargs -0 git diff --binary "$REMOTE/$BASE" -- < "$TRACKED" |
   git -C "$DEST" apply --binary --index
 ```
@@ -249,9 +243,7 @@ done < "$UNTRACKED"
 ### 4. Prove the copy is faithful
 
 ```bash
-# set source to the original file
-# set copy to the copied file
-diff -q "${source:?}" "${copy:?}" || echo "MISMATCH"
+diff -q "<source>" "<copy>" || echo "MISMATCH"
 ```
 
 Cheap, and it catches an editor that reflowed on save or a copy that silently
@@ -363,11 +355,10 @@ request describing work that never left the machine, and give `commit` its
 message rather than letting it open an editor nothing is watching:
 
 ```bash
-# set branch to the branch name
-: "${branch:?}" && git -C "$DEST" add -A &&
+git -C "$DEST" add -A &&
   git -C "$DEST" commit -m "Rescue uncommitted work from the shared checkout" &&
   git -C "$DEST" push -u "$REMOTE" HEAD &&
-  gh pr create --base "$BASE" --head "${branch:?}"
+  gh pr create --base "$BASE" --head "<branch>"
 ```
 
 ### 8. Attribute honestly, and mark what you cannot verify

@@ -34,11 +34,10 @@ frame changed since the action.
 2. **Launch and wait for a real frame**, not for the command to return:
 
    ```bash
-   # set pkg to the application package name
-   adb shell am force-stop "${pkg:?}"
+   adb shell am force-stop "<pkg>"
    adb logcat -c                       # BEFORE the launch, or see below
-   adb shell monkey -p "${pkg:?}" 1 >/dev/null 2>&1
-   : "${pkg:?}"; until adb logcat -d | grep -q "Displayed $pkg/.*MainActivity"; do sleep 1; done
+   adb shell monkey -p "<pkg>" 1 >/dev/null 2>&1
+   until adb logcat -d | grep -q "Displayed <pkg>/.*MainActivity"; do sleep 1; done
    ```
 
    **Clear the buffer first, or the wait is not a wait.** `logcat -d` dumps the
@@ -110,9 +109,7 @@ frame changed since the action.
    about:
 
    ```bash
-   # set pkg to the application package name
-   # set prefs to the shared-preferences file name, without .xml
-   adb shell run-as "${pkg:?}" cat /data/data/"${pkg:?}"/shared_prefs/"${prefs:?}".xml
+   adb shell run-as "<pkg>" cat "/data/data/<pkg>/shared_prefs/<name>.xml"
    ```
 
    `run-as` works only on a debuggable build. "package not debuggable" means

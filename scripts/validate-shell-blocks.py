@@ -9,14 +9,13 @@ and one shipped green because nothing here read the shell it publishes.
 
 A placeholder outside quotes is an error, though bash parses it happily: in
 `gh pr view <n>`, `<n>` is a redirect from a file named `n`, so the pasted line
-runs a different command or fails on a missing file. Blocks name the value
-instead (`"${pr:?}"`, with a comment saying what to set, and a leading
-`: "${pr:?}" &&` where the use sits in a pipeline, a substitution or a loop,
-which the guard alone would not stop), and a placeholder
-left inside quotes, a comment or a heredoc body is text, not syntax. Those
-quoted ones are replaced with a plain word before the parse, so what the parse
-reports is a real syntax error -- an unbalanced quote, an unterminated loop, a
-`case` with no `esac`.
+runs a different command or fails on a missing file. Blocks quote it instead
+(`gh pr view "<n>"`), so an unedited paste hands the command a literal it
+refuses, and stores nothing a later line could reuse. A placeholder left
+inside quotes, a comment or a heredoc body is text, not syntax. Those quoted
+ones are replaced with a plain word before the parse, so what the parse reports
+is a real syntax error -- an unbalanced quote, an unterminated loop, a `case`
+with no `esac`.
 
 Usage:
   python3 scripts/validate-shell-blocks.py              # every plugin here
@@ -112,7 +111,12 @@ def bare_placeholders(code: str) -> list[str]:
     """Each `<name>` bash would read as a redirect: in command position, outside
     quotes, comments, heredoc bodies, `${...}` and arithmetic. Commands inside
     `$(...)` and backticks are scanned too, quoted or not."""
-    found: list[str] = []
+    return [code[start:end] for start, end in bare_spans(code)]
+
+
+def bare_spans(code: str) -> list[tuple[int, int]]:
+    """Where each bare placeholder sits in `code`, as (start, end) offsets."""
+    found: list[tuple[int, int]] = []
     _scan(code, 0, None, found)
     return found
 
@@ -137,7 +141,7 @@ def _skip_balanced(code: str, i: int, opener: str, closer: str) -> int:
     return i
 
 
-def _scan(code: str, i: int, stop: str | None, found: list[str]) -> int:
+def _scan(code: str, i: int, stop: str | None, found: list[tuple[int, int]]) -> int:
     """Scan command text from i until `stop` (`)` or a backtick) or the end,
     collecting bare placeholders; returns the index just past the stop."""
     n = len(code)
@@ -180,7 +184,7 @@ def _scan(code: str, i: int, stop: str | None, found: list[str]) -> int:
                 pending.append((word, heredoc.group(1) == "-"))
                 i = heredoc.end()
             elif placeholder:
-                found.append(placeholder.group(0))
+                found.append(placeholder.span())
                 i = placeholder.end()
             else:
                 i += 1
@@ -198,7 +202,7 @@ def _command_start(code: str, i: int) -> bool:
     return not before or before[-1] in "\n;&|("
 
 
-def _scan_double(code: str, i: int, found: list[str]) -> int:
+def _scan_double(code: str, i: int, found: list[tuple[int, int]]) -> int:
     """Skip a double-quoted string from i, scanning the commands inside it."""
     n = len(code)
     while i < n:
@@ -285,7 +289,7 @@ def check(root: Path) -> int:
                 failures += 1
                 print(
                     f"✘ {rel}:{block.line} — bash reads {', '.join(bare)} as a redirect;"
-                    " quote it or name the value, e.g. \"${pr:?}\"",
+                    " quote it, e.g. gh pr view \"<n>\"",
                     file=sys.stderr,
                 )
             complaint = None if console else parse_error(block.code)

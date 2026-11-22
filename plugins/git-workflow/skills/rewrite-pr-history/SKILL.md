@@ -18,8 +18,7 @@ show the plan before rewriting. Every step is recoverable if interrupted.
 ### 1. Read PR state
 
 ```bash
-# set pr to the pull request number
-gh pr view "${pr:?}" --json baseRefName,headRefName,mergeable,mergeStateStatus,reviewDecision,commits
+gh pr view "<N>" --json baseRefName,headRefName,mergeable,mergeStateStatus,reviewDecision,commits
 ```
 
 Confirm:
@@ -35,9 +34,8 @@ Confirm:
 ### 2. Sync working tree
 
 ```bash
-# set head_branch to the pull request's head branch
 git fetch origin --prune
-git checkout "${head_branch:?}"
+git checkout "<head-branch>"
 ```
 
 Verify clean working tree (`git status -s` returns empty). If dirty, stop and
@@ -75,17 +73,14 @@ ids in the todo file, so a literal `<sha>` matches nothing and the rebase
 replays the branch unchanged, which looks like success.
 
 ```bash
-# set drop to the commit to drop, base to the base branch
-: "${drop:?}" "${base:?}" && DROP=$(git rev-parse --verify --short=7 "${drop:?}^{commit}") && [ -n "$DROP" ] &&
-  export DROP && GIT_SEQUENCE_EDITOR='f() { sed "s/^pick $DROP/drop $DROP/" "${1}" > "${1}.todo" && mv "${1}.todo" "${1}"; }; f' \
-  git rebase -i "${base:?}" || echo "NOT rebased: drop did not resolve to a commit, or the rebase stopped"
+export DROP=$(git rev-parse --short=7 "<commit-to-drop>")
+GIT_SEQUENCE_EDITOR='f() { sed "s/^pick $DROP/drop $DROP/" "${1}" > "${1}.todo" && mv "${1}.todo" "${1}"; }; f' \
+  git rebase -i "<base>"
 ```
 
 Seven characters on purpose: git abbreviates the todo's ids to whatever the
 repository needs, and a seven-character prefix still matches a longer one, while
-a full forty-character id matches nothing at all. The chain is the guard: an
-empty `DROP` turns the sed into `s/^pick /drop /`, which drops every commit, so
-nothing after the lookup runs unless it resolved to a real commit.
+a full forty-character id matches nothing at all.
 
 **If the rebase stops on a conflict**: resolve the conflicted files, `git add`
 them, `git rebase --continue`; repeat per commit. If a resolution is not
@@ -112,8 +107,7 @@ locally first.
 ### 6. Force-push with lease
 
 ```bash
-# set branch to the branch name
-git push --force-with-lease origin "${branch:?}"
+git push --force-with-lease origin "<branch>"
 ```
 
 **Never** plain `--force`. `--force-with-lease` refuses to clobber if the
@@ -123,8 +117,7 @@ between expected and actual remote state.
 ### 7. Verify on the platform
 
 ```bash
-# set pr to the pull request number
-gh pr view "${pr:?}" --json mergeable,mergeStateStatus,commits -q \
+gh pr view "<N>" --json mergeable,mergeStateStatus,commits -q \
   '{state:.mergeStateStatus,mergeable:.mergeable,commits:[.commits[].messageHeadline]}'
 ```
 

@@ -225,13 +225,13 @@ reads them: an unbalanced quote or an unterminated loop ships green and is
 found by whoever tries to follow the step. It also rejects a placeholder
 outside quotes, which parses fine and is the worse bug: in `gh pr view <n>`
 bash reads `<n>` as a redirect from a file named `n`, so the pasted line runs
-another command. Blocks name the value instead, `"${pr:?}"` under a comment
-saying what to set. An empty value then stops the statement, naming the
-variable, but only from the statement's first simple command: inside a
-pipeline stage, a `$(...)`, a loop or a later link of an `&&` chain the rest
-runs on, so those statements open with `: "${pr:?}" &&` instead. The validator
-checks for bare placeholders, not for that placement. A placeholder inside
-quotes, a comment or a heredoc body is text, and is swapped for a plain word
-before the parse; one inside a `$(...)` or backticks is a command again, quoted
-or not. A `console` block is a recorded run, so only its `$ ` lines are checked,
-and none of it is parsed.
+another command or fails on a missing file. Blocks quote it instead,
+`gh pr view "<n>"`: pasted unedited, the command gets a literal it cannot use
+and fails saying so, and nothing is stored for a later line to reuse. Named
+variables (`"${pr:?}"`) are not the convention, because a pasted block runs
+line by line in a shell that keeps its variables: a guard that skips one
+assignment leaves the previous value for the next line to act on. A
+placeholder inside quotes, a comment or a heredoc body is text, and is swapped
+for a plain word before the parse; one inside a `$(...)` or backticks is a
+command again, quoted or not. A `console` block is a recorded run, so only its
+`$ ` lines are checked, and none of it is parsed.

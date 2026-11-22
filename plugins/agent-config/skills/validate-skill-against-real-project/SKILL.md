@@ -52,8 +52,7 @@ Do not adapt the command to make it work: an adapted command validates your
 adaptation, not the skill.
 
 ```bash
-# set cmd to the skill's command, exactly as written, e.g. cmd='git worktree list'
-: "${cmd:?}" && out=$(eval "${cmd:?}" 2>&1); rc=$?
+out=$("<command from the skill>" 2>&1); rc=$?
 echo "rc=$rc"; echo "$out" | head
 ```
 
@@ -66,8 +65,7 @@ Before believing any "this tool rejects that" claim, find out which binary you
 have:
 
 ```bash
-# set tool to the tool's command name
-: "${tool:?}" && command -v "${tool:?}"; "${tool:?}" --version 2>&1 | head -1
+command -v "<tool>"; "<tool>" --version 2>&1 | head -1
 ```
 
 A friendlier drop-in on `$PATH`, installed years ago and forgotten, accepts
@@ -94,9 +92,8 @@ simple one. Run the skill's discovery steps against:
 You rarely have such a project to hand, so make one. These are cheap:
 
 ```bash
-# set url to a real project's clone URL
 d=$(mktemp -d); (cd "$d" && git init -q)        # empty tree, nothing built
-git clone --depth 1 "${url:?}" "$d/fresh"       # real project, never built
+git clone --depth 1 "<repo>" "$d/fresh"           # real project, never built
 ```
 
 Run the skill's *discovery* steps there (its greps, its `find`s, its "locate the
@@ -125,11 +122,8 @@ this work goes wrong.
 One issue per skill, in the repo that owns it:
 
 ```bash
-# set name to the skill's name, breaks to what breaks in a few words
-# set repo to owner/name of the repository
-# set report to the file holding the issue body
-gh issue create --repo "${repo:?}" --title "skill: ${name:?} (${breaks:?})" \
-  --body-file "${report:?}"
+gh issue create --repo "<owner>/<repo>" --title "skill: <name> (<what breaks>)" \
+  --body-file "<file>"
 ```
 
 `gh` assumes GitHub: check `git remote get-url origin` first and use the

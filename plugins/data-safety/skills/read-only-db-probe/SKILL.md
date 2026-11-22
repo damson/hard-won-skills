@@ -53,9 +53,8 @@ query looking right, and never from memory of a previous run.
 4. **Run it with the repo's env sourced by absolute path:**
 
    ```bash
-   # set scratch to a scratch directory outside the repo
    set -a; source /absolute/path/to/repo/.env; set +a
-   npx tsx "${scratch:?}"/probe.ts
+   npx tsx "<scratchpad>/probe.ts"
    ```
 
    Absolute, because the working directory resets between shell calls and a

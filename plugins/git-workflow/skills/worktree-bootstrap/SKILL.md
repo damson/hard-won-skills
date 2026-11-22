@@ -134,8 +134,7 @@ Run the cheapest command that exercises real config + deps, not just a lockfile 
   macOS does not have it, so the bound is the shell's:
 
   ```bash
-  # set pm to the package manager: npm, pnpm or yarn
-  "${pm:?}" run dev & pid=$!
+  "<pm>" run dev & pid=$!
   ready=
   for _ in $(seq 1 30); do
     curl -sf --max-time 2 "$url" >/dev/null && { ready=1; break; }   # --max-time, or one hung request outlasts the loop
@@ -151,9 +150,8 @@ Run the cheapest command that exercises real config + deps, not just a lockfile 
   name no module that:
 
   ```bash
-  # set module to the Gradle module, e.g. app
   ./gradlew -q projects                         # the module paths that exist
-  ./gradlew -q :"${module:?}":tasks --all | grep -E '^assembleDebug( |$)'
+  ./gradlew -q ":<module>:tasks" --all | grep -E '^assembleDebug( |$)'
   ```
 
   Take the module the change touches, or the smallest one that compiles where it

@@ -37,9 +37,7 @@ that no longer exists. The skill:
    is gone from upstream), so the answer comes from tree identity instead:
 
    ```bash
-   # set old_sha to the currently pinned SHA
-   # set new_sha to the SHA being pinned
-   git rev-parse "${old_sha:?}^{tree}" "${new_sha:?}^{tree}"
+   git rev-parse "<old>^{tree}" "<new>^{tree}"
    ```
 
    Identical trees mean the rewrite changed commit identity only; the tree

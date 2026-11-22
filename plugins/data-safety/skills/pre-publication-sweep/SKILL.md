@@ -22,36 +22,33 @@ deletion. The deliverable is the list of commands run and their empty result
    is sensitive. You cannot grep for a name you were never told, and a sweep
    against a guessed list reports a confident false clean.
 
-2. **Sweep the working tree**: with `terms` set to that list as one
-   alternation (`'alice@|acme-internal|sk-'`), `grep -rIiE "${terms:?}" . --exclude-dir=.git`,
+2. **Sweep the working tree**: `grep -rIiE '<terms>' . --exclude-dir=.git`,
    adding `--exclude-dir` for any vendored tree you will sweep as its own repo.
 
 3. **Sweep every blob in every commit on every branch**: a file deleted years
    ago still publishes with the history:
 
    ```bash
-   # set terms to the term list as one alternation, e.g. 'alice@|acme-internal|sk-'
-   : "${terms:?}" && git rev-list --all --remotes | while read -r c; do
-     git grep -iIlE "$terms" "$c"
+   git rev-list --all --remotes | while read -r c; do
+     git grep -iIlE '<terms>' "$c"
    done | sort -u
    ```
 
 4. **Sweep commit metadata**: messages carry names, and author/committer emails
    publish through `.patch` URLs and the API: `git log --all --format='%ae %ce
-   %s' | grep -iE "${terms:?}"`.
+   %s' | grep -iE '<terms>'`.
 
 5. **Re-verify on the remote, never only a local clone.** The remote is what
    gets published, and a clone can be stale in either direction: including
    showing clean where the remote is not:
 
    ```bash
-   # set repo to owner/name of the repository, branch to the branch to read
-   : "${repo:?}" "${branch:?}" && gh api "repos/$repo/commits?sha=$branch&per_page=100" \
+   gh api 'repos/<owner>/<repo>/commits?sha=<branch>&per_page=100' \
      --jq '.[].commit | .author.email, .committer.email' | sort -u
    ```
 
    Run it per branch, enumerate them with `gh api --paginate
-   "repos/${repo:?}/branches" --jq '.[].name'`, because that endpoint
+   'repos/<owner>/<repo>/branches' --jq '.[].name'`, because that endpoint
    returns 30 branches without it and a repository with more skips the rest
    silently. Add `--paginate` to the commit walk too when a branch holds more
    than 100 commits, or the tail of the history escapes the sweep the same way.
@@ -63,17 +60,11 @@ deletion. The deliverable is the list of commands run and their empty result
    own, then re-run those two sweeps against it:
 
    ```bash
-   # set remote to the remote name, e.g. origin; terms as in step 3
-   # sweep only what this fetch brought: stale or absent sweep refs read as clean
-   : "${remote:?}" "${terms:?}" &&
-   if git fetch "$remote" '+refs/heads/*:refs/remotes/sweep/*' --prune; then
-     git rev-list --remotes=sweep | while read -r c; do
-       git grep -iIlE "$terms" "$c"
-     done | sort -u
-     git log --remotes=sweep --format='%ae %ce %s' | grep -iE "$terms"
-   else
-     echo "fetch failed: the remote was NOT swept"
-   fi
+   git fetch "<remote>" '+refs/heads/*:refs/remotes/sweep/*' --prune
+   git rev-list --remotes=sweep | while read -r c; do
+     git grep -iIlE '<terms>' "$c"
+   done | sort -u
+   git log --remotes=sweep --format='%ae %ce %s' | grep -iE '<terms>'
    ```
 
    A separate namespace rather than the usual remote-tracking refs, so this

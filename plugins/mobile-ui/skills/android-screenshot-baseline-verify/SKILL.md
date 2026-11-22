@@ -21,8 +21,7 @@ ships clean. Green is not the evidence: *comparisons performed* is.
 ### 1. Find the verify task, not the test task
 
 ```bash
-# set module to the Gradle module, e.g. app
-./gradlew :"${module:?}":tasks --all | grep -i "screenshot\|roborazzi\|paparazzi"
+./gradlew ":<module>:tasks" --all | grep -i "screenshot\|roborazzi\|paparazzi"
 ```
 
 | Framework | Verify task | Not this |
@@ -41,8 +40,7 @@ table is the shape to look for, not the answer.
 ### 2. Confirm baselines exist first
 
 ```bash
-# set module_dir to the module directory
-: "${module_dir:?}" && BASE=$(find "${module_dir:?}" -type d \( -name screenshots -o -name snapshots -o -name reference \))
+BASE=$(find "<module-dir>" -type d \( -name screenshots -o -name snapshots -o -name reference \))
 [ -n "$BASE" ] && echo "$BASE" | xargs -I{} find {} -name '*.png' | wc -l || echo "no baseline directory"
 ```
 
@@ -61,10 +59,7 @@ verification one. Send it to `android-screenshot-baseline-record`.
 ### 3. Run the verify task
 
 ```bash
-# set module to the Gradle module, e.g. app
-# set verify_task to the verify task from step 1
-# set test_class to the test's fully qualified class name
-./gradlew :"${module:?}":"${verify_task:?}" --tests "${test_class:?}*"
+./gradlew ":<module>:<verify-task>" --tests "<fully.qualified.TestClass>*"
 ```
 
 `--tests` is a unit-test filter, so it fits Roborazzi and Paparazzi. AGP's
