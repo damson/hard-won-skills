@@ -31,10 +31,11 @@ commits after a parent landed); that is mechanical cleanup and belongs to
    never auto-stashes).
 3. Shows the plan (`git log --oneline origin/<base>..HEAD`, the diff stat, and
    the intended command in plain words), then **waits for "go"**.
-4. Rewrites with the smallest-blast-radius command; for a mid-branch drop:
+4. Rewrites with the smallest-blast-radius command; a mid-branch drop replays
+   the later commits onto the dropped commit's parent:
 
    ```bash
-   git rebase --onto <base> <commit-to-drop> <branch>
+   git rebase --onto "<commit-to-drop>^" "<commit-to-drop>" "<branch>"
    ```
 
    Reordering has no terminal to run `git rebase -i` in, so the todo-list edit
