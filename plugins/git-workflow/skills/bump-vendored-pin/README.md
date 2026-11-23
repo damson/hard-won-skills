@@ -37,7 +37,7 @@ that no longer exists. The skill:
    is gone from upstream), so the answer comes from tree identity instead:
 
    ```bash
-   git rev-parse <old>^{tree} <new>^{tree}
+   git rev-parse "<old>^{tree}" "<new>^{tree}"
    ```
 
    Identical trees mean the rewrite changed commit identity only; the tree

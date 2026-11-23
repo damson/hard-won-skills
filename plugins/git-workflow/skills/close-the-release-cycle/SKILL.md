@@ -39,7 +39,7 @@ refuses to call it done on a signal that has not been checked.
    it does listen for rather than working around it.
 
    ```bash
-   gh workflow view <file.yml> --yaml | sed -n '/^on:/,/^jobs:/p'
+   gh workflow view "<file.yml>" --yaml | sed -n '/^on:/,/^jobs:/p'
    ```
 
 2. **Confirm there is something to promote, by content and not by commit
@@ -47,7 +47,7 @@ refuses to call it done on a signal that has not been checked.
    "ahead" by commits that carry nothing new.
 
    ```bash
-   gh api repos/<owner>/<repo>/compare/<main>...<develop> \
+   gh api "repos/<owner>/<repo>/compare/<main>...<develop>" \
      --jq '{status, ahead: .ahead_by, files: (.files | length)}'
    ```
 
@@ -62,7 +62,7 @@ refuses to call it done on a signal that has not been checked.
    a PR that has nothing to do with the mistake.
 
    ```bash
-   gh pr merge <n> --merge
+   gh pr merge "<n>" --merge
    ```
 
 4. **Tag the release point, and check that it happened.** Tagging is the step
@@ -71,7 +71,7 @@ refuses to call it done on a signal that has not been checked.
    workflow gated on a push to the release branch never runs. Nothing goes red.
 
    ```bash
-   git ls-remote --tags <url> "refs/tags/<vX.Y.Z>"   # the tag itself
+   git ls-remote --tags "<url>" "refs/tags/<vX.Y.Z>"   # the tag itself
    gh release list --limit 3                        # the Release object, where the repo publishes one
    ```
 
@@ -88,7 +88,7 @@ refuses to call it done on a signal that has not been checked.
    than the newest release, is one.
 
    ```bash
-   git ls-remote --tags <url> | grep -vE 'v?[0-9]+\.[0-9]+\.[0-9]+(\^\{\})?$'
+   git ls-remote --tags "<url>" | grep -vE 'v?[0-9]+\.[0-9]+\.[0-9]+(\^\{\})?$'
    ```
 
    That filter returns candidates, not an answer: `nightly`, `beta` and `docs`
@@ -103,8 +103,8 @@ refuses to call it done on a signal that has not been checked.
    # /commits/<ref> resolves a tag to its COMMIT. Reading the ref instead gives
    # the tag object's own sha whenever the release tag is annotated, and the
    # floating tag would then be repointed at a tag object rather than the commit
-   sha=$(gh api repos/<owner>/<repo>/commits/<vX.Y.Z> --jq .sha)
-   gh api -X PATCH repos/<owner>/<repo>/git/refs/tags/<vX> -f sha="$sha" -F force=true
+   sha=$(gh api "repos/<owner>/<repo>/commits/<vX.Y.Z>" --jq .sha)
+   gh api -X PATCH "repos/<owner>/<repo>/git/refs/tags/<vX>" -f sha="$sha" -F force=true
    ```
 
 6. **Bring the promotion commit back, once you have checked it carries
@@ -113,7 +113,7 @@ refuses to call it done on a signal that has not been checked.
 
    ```bash
    # non-merge commits the release branch holds and the integration branch cannot reach
-   git log <main> --not <develop> --no-merges --oneline
+   git log "<main>" --not "<develop>" --no-merges --oneline
    ```
 
    Empty is `bookkeeping`; any line is `required`, and the line names the commit
@@ -155,9 +155,9 @@ refuses to call it done on a signal that has not been checked.
    the release branch; check before opening a second.
 
    ```bash
-   gh pr list --base <develop> --head <main> --json number --jq '.[].number'
-   gh pr create --base <develop> --head <main> --title "Bring <main> back into <develop>"
-   gh pr merge <n> --merge          # after its checks pass
+   gh pr list --base "<develop>" --head "<main>" --json number --jq '.[].number'
+   gh pr create --base "<develop>" --head "<main>" --title "Bring <main> back into <develop>"
+   gh pr merge "<n>" --merge          # after its checks pass
    ```
 
 7. **Prove the cycle closed** rather than assuming it. Each of these has caught
@@ -171,16 +171,16 @@ refuses to call it done on a signal that has not been checked.
    # permanent resting state, so the field stops carrying information. Read the
    # FILE COUNT, which answers the same question under both regimes: zero files
    # means the branches carry the same content whatever the shape says
-   gh api repos/<owner>/<repo>/compare/<main>...<develop> \
+   gh api "repos/<owner>/<repo>/compare/<main>...<develop>" \
      --jq '{status, files: (.files | length)}'
-   gh release view <vX.Y.Z> --json tagName,targetCommitish
+   gh release view "<vX.Y.Z>" --json tagName,targetCommitish
 
    # both of these are the commit, for an annotated tag as well as a lightweight
    # one, and they have to match; comparing against the tag REF instead reports a
    # mismatch on a cycle that closed perfectly, which is the whole failure this
    # skill exists to name
-   gh api repos/<owner>/<repo>/commits/<vX> --jq .sha
-   gh api repos/<owner>/<repo>/git/ref/heads/<main> --jq .object.sha
+   gh api "repos/<owner>/<repo>/commits/<vX>" --jq .sha
+   gh api "repos/<owner>/<repo>/git/ref/heads/<main>" --jq .object.sha
    ```
 
 8. **Update whatever pins this release.** Find the consumers rather than
@@ -189,7 +189,7 @@ refuses to call it done on a signal that has not been checked.
    who moves with it.
 
    ```bash
-   gh search code "<previous-sha-or-tag>" --owner <owner> --limit 100
+   gh search code "<previous-sha-or-tag>" --owner "<owner>" --limit 100
    ```
 
    Then move each pin in its own change, with the evidence that earned the new

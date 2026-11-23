@@ -54,7 +54,7 @@ query looking right, and never from memory of a previous run.
 
    ```bash
    set -a; source /absolute/path/to/repo/.env; set +a
-   npx tsx <scratchpad>/probe.ts
+   npx tsx "<scratchpad>/probe.ts"
    ```
 
    Absolute, because the working directory resets between shell calls and a

@@ -42,11 +42,11 @@ class of problem is spent fixing something that was never broken.
 
    ```bash
    # A run that failed with no jobs is a startup failure, not your code
-   gh api repos/<o>/<r>/actions/runs/<id>/jobs --jq .total_count
+   gh api "repos/<o>/<r>/actions/runs/<id>/jobs" --jq .total_count
 
    # A step's own conclusion, which a "do not fail the build" setting hides from
    # the job's rolled-up status; read it before reading the log for a reason why
-   gh api repos/<o>/<r>/actions/runs/<id>/jobs \
+   gh api "repos/<o>/<r>/actions/runs/<id>/jobs" \
      --jq '.jobs[].steps[] | select(.conclusion != "success") | {name, conclusion}'
 
    # An image is not data: parse the text node, never grep the markup

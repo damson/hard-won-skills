@@ -48,7 +48,7 @@ stays in the report; the stand-in is what stops the work stalling meanwhile.
    actually wrote:
 
    ```bash
-   pr=<n>; repo=<owner>/<repo>; reviewer=<reviewer-login>
+   pr="<n>"; repo="<owner>/<repo>"; reviewer="<reviewer-login>"
    head=$(gh pr view "$pr" --json headRefOid --jq .headRefOid)
 
    # The gate can be a commit status OR a check run, and one API does not

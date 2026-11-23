@@ -38,7 +38,7 @@ called:
 ```bash
 grep -rln "MaterialTheme\|ProvideTextStyle\|lightColorScheme" --include="*.kt" . \
   | sed 's|/src/.*||' | sort -u
-grep -rn "<ComponentName>\|<SimilarConcept>" --include="*.kt" <that-module>/
+grep -rn "<ComponentName>\|<SimilarConcept>" --include="*.kt" "<that-module>/"
 ```
 
 Take that output as the answer rather than pre-judging it:
@@ -64,9 +64,9 @@ colour, typography, shape, elevation:
 
 ```bash
 grep -rn "val spacing\|val colors\|val typography\|val shapes" \
-  --include="*.kt" <that-module>/ | head -40          # a custom token scale?
-grep -rnE "(object|fun) [A-Za-z]*Theme" --include="*.kt" <that-module>/ | head
-grep -rn "MaterialTheme\." --include="*.kt" <that-module>/ | head
+  --include="*.kt" "<that-module>/" | head -40          # a custom token scale?
+grep -rnE "(object|fun) [A-Za-z]*Theme" --include="*.kt" "<that-module>/" | head
+grep -rn "MaterialTheme\." --include="*.kt" "<that-module>/" | head
 ```
 
 A theme is as often a `@Composable fun <Name>Theme` as it is an `object`, so

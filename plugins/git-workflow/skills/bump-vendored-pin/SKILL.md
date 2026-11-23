@@ -28,8 +28,8 @@ earned it: a test count or a tree identity, cited in the commit.
    checkout: the same one the next commands run from:
 
    ```bash
-   git fetch <url> <branch>
-   git log --oneline <old>..<new>
+   git fetch "<url>" "<branch>"
+   git log --oneline "<old>..<new>"
    ```
 
    If that range errors *after a successful fetch* because the old SHA no
